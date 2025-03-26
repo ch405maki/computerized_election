@@ -9,7 +9,7 @@ class VoterStatus extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['voter_id', 'voted'];
+    protected $fillable = ['voter_id', 'voted', 'activated'];
 
     // Relationship: Each status belongs to one voter
     public function voter()
