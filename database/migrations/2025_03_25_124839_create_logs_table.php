@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null'); // Nullable FK to users
             $table->foreignId('voter_id')->nullable()->constrained('voters')->onDelete('set null'); // Nullable FK to voters
             $table->string('action', 255); // Example: 'Voted', 'Updated Candidate', 'Logged In'
+            $table->timestamps(); 
         });
     }
 

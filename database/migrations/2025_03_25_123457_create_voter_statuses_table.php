@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id(); // Primary Key
             $table->foreignId('voter_id')->constrained('voters')->onDelete('cascade');
             $table->boolean('voted')->default(false); // 1 = Yes, 0 = No
+            $table->boolean('activated')->default(false);
             $table->timestamps();
         });
     }

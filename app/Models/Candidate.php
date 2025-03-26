@@ -11,6 +11,7 @@ class Candidate extends Model
 
     protected $fillable = [
         'candidate_code',
+        'election_id',
         'position_id',
         'candidate_name',
         'candidate_party',
@@ -21,5 +22,10 @@ class Candidate extends Model
     public function position()
     {
         return $this->belongsTo(Position::class, 'position_id');
+    }
+    // Relationship: A candidate belongs to an election
+    public function election()
+    {
+        return $this->belongsTo(Election::class);
     }
 }

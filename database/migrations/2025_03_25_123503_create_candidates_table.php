@@ -10,7 +10,8 @@ return new class extends Migration {
         Schema::create('candidates', function (Blueprint $table) {
             $table->id(); // Primary Key
             $table->string('candidate_code')->unique();
-            $table->foreignId('position_id')->constrained('positions')->onDelete('cascade'); // FK to positions table
+            $table->foreignId('position_id')->constrained('positions')->onDelete('cascade');
+            $table->foreignId('election_id')->constrained('elections')->onDelete('cascade');
             $table->string('candidate_name');
             $table->string('candidate_party')->nullable(); // Example: 'Independent', 'Party A'
             $table->string('candidate_picture')->nullable(); // Image file path

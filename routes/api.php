@@ -9,6 +9,7 @@ use App\Http\Controllers\Candidate\CandidateController;
 use App\Http\Controllers\Candidate\PositionController;
 use App\Http\Controllers\Vote\VoteController;
 use App\Http\Controllers\Voter\VoterStatusController;
+use App\Http\Controllers\Election\ElectionController;
 use App\Http\Controllers\Log\LogController;
 
 Route::get('/user', function (Request $request) {
@@ -30,4 +31,5 @@ Route::apiResource('voter-status', VoterStatusController::class);
 Route::apiResource('candidates', CandidateController::class);
 Route::apiResource('positions', PositionController::class);
 Route::apiResource('votes', VoteController::class);
+Route::apiResource('elections', ElectionController::class);
 Route::apiResource('logs', LogController::class);

@@ -10,8 +10,8 @@ return new class extends Migration {
         Schema::create('votes', function (Blueprint $table) {
             $table->id(); // Primary Key
             $table->foreignId('voter_id')->constrained('voters')->onDelete('cascade');
-            $table->unsignedBigInteger('candidate_id');
-            $table->foreign('candidate_id')->references('id')->on('candidates')->onDelete('cascade');
+            $table->foreignId('candidate_id')->constrained('candidates')->onDelete('cascade');
+            $table->foreignId('election_id')->constrained('elections')->onDelete('cascade'); // Link vote to an election
             $table->timestamps();
         });
     }
@@ -21,4 +21,3 @@ return new class extends Migration {
         Schema::dropIfExists('votes');
     }
 };
-
