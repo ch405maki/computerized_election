@@ -22,6 +22,7 @@
         FileBox,
         Package2,
         Logs,
+        Cog,
         UserRound
     } from 'lucide-vue-next';
     import AppLogo from './AppLogo.vue';
@@ -80,6 +81,13 @@
         ],
     },
     ]);
+    const configNavItems = ref<DropdownNavItem[]>([
+        {
+            title: 'Election',
+            href: '/election',
+            icon: Cog,
+        },
+    ]);
 
     const footerNavItems: NavItem[] = [];
 </script>
@@ -99,7 +107,8 @@
         </SidebarHeader>
 
         <SidebarContent>
-        <NavMain :items="mainNavItems" group-label="Navigation" />
+        <NavMain :items="mainNavItems" group-label="Navigations" />
+        <NavMain :items="configNavItems" group-label="Configuration" />
         </SidebarContent>
 
         <SidebarFooter>

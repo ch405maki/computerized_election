@@ -11,31 +11,42 @@ use App\Http\Controllers\Vote\VoteController;
 use App\Http\Controllers\Voter\VoterStatusController;
 use App\Http\Controllers\Log\LogController;
 use App\Http\Controllers\Report\ReportController;
+use App\Http\Controllers\Election\ElectionController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+// Dashboard Routes
 Route::get('dashboard', function () {   
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// User Routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
 });
 
+// Voters Routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
 
     Route::get('/voters/status', [VoterStatusController::class, 'index'])->name('status.index');
 });
 
+// Candidate Routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/candidates', [CandidateController::class, 'index'])->name('candidates.index');
 
     Route::get('/candidates/positions', [PositionController::class, 'index'])->name('positions.index');
 });
 
+// Election Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/election', [ElectionController::class, 'index'])->name('elections.index');
+});
+
+// Report Routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports/result', [ReportController::class, 'index'])->name('candidates.index');
 

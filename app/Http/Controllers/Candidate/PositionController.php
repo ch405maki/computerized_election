@@ -15,7 +15,11 @@ class PositionController extends Controller
      */
     public function index()
     {
-        return Inertia::render('Candidates/Position/Index');
+        $positions = Position::latest()->get();
+        
+        return Inertia::render('Candidates/Position/Index', [
+            'positions' => $positions,
+        ]);
     }
 
 

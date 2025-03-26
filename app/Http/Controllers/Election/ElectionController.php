@@ -6,8 +6,19 @@ use App\Models\Election;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+use Inertia\Inertia;
+
 class ElectionController extends Controller
 {
+
+    public function index()
+    {
+        $elections = Election::latest()->get();
+        return Inertia::render('Elections/Index', [
+            'elections' => $elections
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

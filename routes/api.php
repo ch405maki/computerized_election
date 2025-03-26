@@ -17,19 +17,25 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
+// User Routes
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::post('/users', [UserController::class, 'store']);
 Route::post('/upload-users', [UserController::class, 'uploadUsers']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
 
-
+// Voter Routes
 Route::patch('/activate-voter/{id}', [VoterStatusController::class, 'activate']);
-Route::apiResource('voters', VoterController::class);
-Route::apiResource('voter-status', VoterStatusController::class);
+Route::post('/voters', [VoterController::class, 'store'])->name('voters.store');
+Route::post('/voters/status/activate/{id}', [VoterStatusController::class, 'activate']);
+Route::post('/voters/status/activate-all', [VoterStatusController::class, 'activateAll']);
+
+// Candidate Routes
+Route::post('/positions', [PositionController::class, 'store']);
+
+// Election Routes
+Route::post('/elections', [ElectionController::class, 'store']);
 
 Route::apiResource('candidates', CandidateController::class);
-Route::apiResource('positions', PositionController::class);
 Route::apiResource('votes', VoteController::class);
-Route::apiResource('elections', ElectionController::class);
 Route::apiResource('logs', LogController::class);

@@ -3,52 +3,43 @@
 namespace App\Http\Controllers\Voter;
 
 use App\Http\Controllers\Controller;
+use App\Models\Voter;
 use App\Models\VoterStatus;
 use App\Models\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
 use Inertia\Inertia;
 
 class VoterStatusController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display inactive voters
      */
     public function index()
     {
-        return Inertia::render('Voters/Status/Index');
-    }
+        // Get voters with inactive status and their voter details
+        $inactiveVoters = VoterStatus::with('voter')
+            ->where('activated', false)
+            ->get()
+            ->map(function ($status) {
+                return [
+                    'id' => $status->voter_id,
+                    'student_number' => $status->voter->student_number,
+                    'full_name' => $status->voter->full_name,
+                    'student_year' => $status->voter->student_year,
+                    'class_type' => $status->voter->class_type,
+                    'created_at' => $status->voter->created_at->format('Y-m-d H:i:s'),
+                ];
+            });
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'voter_id' => 'required|exists:voters,id',
-            'voted' => 'required|boolean',
+        return Inertia::render('Voters/Status/Index', [
+            'inactiveVoters' => $inactiveVoters
         ]);
-
-        $voterStatus = VoterStatus::updateOrCreate(
-            ['voter_id' => $validated['voter_id']],
-            ['voted' => $validated['voted']]
-        );
-
-        return response()->json([
-            'message' => 'Voter status updated successfully!',
-            'voter_status' => $voterStatus
-        ], 201);
     }
 
+    /**
+     * Activate a voter
+     */
     public function activate($id)
     {
         $voterStatus = VoterStatus::where('voter_id', $id)->first();
@@ -75,34 +66,33 @@ class VoterStatusController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Activate all inactive voters
      */
-    public function show(string $id)
+    public function activateAll()
     {
-        //
-    }
+        $inactiveVoters = VoterStatus::where('activated', false)->get();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        if ($inactiveVoters->isEmpty()) {
+            return response()->json(['message' => 'No inactive voters found'], 404);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+        $activatedCount = 0;
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        foreach ($inactiveVoters as $voterStatus) {
+            $voterStatus->update(['activated' => true]);
+            
+            Log::create([
+                'user_id' => Auth::id(),
+                'voter_id' => $voterStatus->voter_id,
+                'action' => 'Activated voter (bulk)'
+            ]);
+            
+            $activatedCount++;
+        }
+
+        return response()->json([
+            'message' => "Successfully activated {$activatedCount} voters",
+            'count' => $activatedCount
+        ]);
     }
 }
