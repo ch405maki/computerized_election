@@ -8,6 +8,8 @@ use App\Models\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use Inertia\Inertia;
+
 class VoterStatusController extends Controller
 {
     /**
@@ -15,7 +17,7 @@ class VoterStatusController extends Controller
      */
     public function index()
     {
-        //
+        return Inertia::render('Voters/Status/Index');
     }
 
     /**

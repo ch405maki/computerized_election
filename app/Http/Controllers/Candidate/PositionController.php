@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Position;
 use Illuminate\Http\Request;
 
+use Inertia\Inertia;
+
 class PositionController extends Controller
 {
     /**
@@ -13,8 +15,9 @@ class PositionController extends Controller
      */
     public function index()
     {
-        //
+        return Inertia::render('Candidates/Position/Index');
     }
+
 
     /**
      * Show the form for creating a new resource.

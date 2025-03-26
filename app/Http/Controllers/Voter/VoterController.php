@@ -8,6 +8,8 @@
     use Illuminate\Http\Request;
     use Illuminate\Support\Facades\Hash;
 
+    use Inertia\Inertia;
+
     class VoterController extends Controller
     {
     /**
@@ -15,7 +17,7 @@
      */
     public function index()
     {
-        //
+        return Inertia::render('Voters/Index');
     }
 
     /**
