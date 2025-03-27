@@ -18,10 +18,9 @@ class Candidate extends Model
         'candidate_picture',
     ];
 
-    // Relationship: A candidate belongs to one position
     public function position()
     {
-        return $this->belongsTo(Position::class, 'position_id');
+        return $this->belongsTo(Position::class);
     }
     // Relationship: A candidate belongs to an election
     public function election()

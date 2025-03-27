@@ -7,7 +7,10 @@ use App\Models\Log;
 use App\Models\Vote;
 use App\Models\VoterStatus;
 use App\Models\Election;
+use App\Models\Position;
+use App\Models\Candidate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 use Inertia\Inertia;
 
@@ -18,8 +21,17 @@ class VoteController extends Controller
      */
     public function index()
     {
-        return Inertia::render('Vote/Index');
+        $elections = Election::where('status', 'active')
+            ->with(['candidates' => function($query) {
+                $query->with('position'); // Always load the position relationship
+            }])
+            ->get();
+
+        return Inertia::render('Vote/Index', [
+            'elections' => $elections,
+        ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -33,50 +45,78 @@ class VoteController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'voter_id' => 'required|exists:voters,id',
-            'candidate_id' => 'required|exists:candidates,id',
-            'election_id' => 'required|exists:elections,id',
-        ]);
+{
+    $validated = $request->validate([
+        'voter_id' => 'required|exists:voters,id',
+        'votes' => 'required|array|min:1',
+        'votes.*.candidate_id' => 'required|exists:candidates,id',
+        'votes.*.election_id' => 'required|exists:elections,id',
+    ]);
 
-        // Check if the election is active
-        $election = Election::find($validated['election_id']);
-        if (!$election || $election->status !== 'active') {
-            return response()->json(['message' => 'This election is not active.'], 403);
+    DB::beginTransaction();
+
+    try {
+        $voterId = $validated['voter_id'];
+        $electionId = $validated['votes'][0]['election_id'];
+
+        // Basic validations
+        $election = Election::findOrFail($electionId);
+        $voterStatus = VoterStatus::where('voter_id', $voterId)->firstOrFail();
+        
+        if ($election->status !== 'active') {
+            throw new \Exception('Election is not active.');
         }
 
-        // Check if the voter is activated
-        $voterStatus = VoterStatus::where('voter_id', $validated['voter_id'])->first();
-        if (!$voterStatus || !$voterStatus->activated) {
-            return response()->json(['message' => 'This voter is not activated. Cannot vote.'], 403);
+        if (!$voterStatus->activated) {
+            throw new \Exception('Voter account not activated.');
         }
 
-        // Check if the voter has already voted in this election
-        $hasVoted = Vote::where('voter_id', $validated['voter_id'])
-                        ->where('election_id', $validated['election_id'])
-                        ->exists();
-        if ($hasVoted) {
-            return response()->json(['message' => 'This voter has already voted in this election.'], 403);
+        if (Vote::where('voter_id', $voterId)->where('election_id', $electionId)->exists()) {
+            throw new \Exception('Already voted in this election.');
         }
 
-        // Store the vote
-        $vote = Vote::create($validated);
+        // Process votes
+        $votes = [];
+        $positionsVoted = [];
 
-        // Mark the voter as voted
+        foreach ($validated['votes'] as $voteData) {
+            $candidate = Candidate::with('position')
+                ->findOrFail($voteData['candidate_id']);
+
+            // Check for duplicate positions
+            if (in_array($candidate->position_id, $positionsVoted)) {
+                throw new \Exception('Multiple votes for position: ' . $candidate->position->name);
+            }
+            $positionsVoted[] = $candidate->position_id;
+
+            $votes[] = Vote::create([
+                'voter_id' => $voterId,
+                'candidate_id' => $voteData['candidate_id'],
+                'election_id' => $electionId,
+                'position_id' => $candidate->position_id
+            ]);
+        }
+
+        // Update voter status
         $voterStatus->update(['voted' => true]);
 
-        // Log the voting action
-        Log::create([
-            'voter_id' => $validated['voter_id'],
-            'action' => 'Voted in election ' . $election->name,
-        ]);
+        DB::commit();
 
         return response()->json([
-            'message' => 'Vote submitted successfully!',
-            'vote' => $vote
-        ], 201);
+            'success' => true,
+            'message' => 'Votes submitted successfully!',
+            'data' => $votes
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException ? 404 : 400);
     }
+}
+
     /**
      * Display the specified resource.
      */

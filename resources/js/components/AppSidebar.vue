@@ -61,6 +61,15 @@
         ],
     },
     {
+        title: 'Voting Page',
+        href: '#',
+        icon: Vote,
+        isOpen: false,
+        children: [
+        { title: 'Vote', href: '/vote', icon: List },
+        ],
+    },
+    {
         title: 'Candidates',
         href: '#',
         icon: UserRound,
