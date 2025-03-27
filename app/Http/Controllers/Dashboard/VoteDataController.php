@@ -18,14 +18,14 @@ class VoteDataController extends Controller
             ->orderByDesc('vote_count')
             ->get();
 
-        // Map and attach candidate and position names correctly
         $formattedRankings = $rankings->map(function ($rank) {
             $candidate = Candidate::find($rank->candidate_id);
             $position = Position::find($rank->position_id);
 
             return [
                 'position' => $position ? $position->name : 'Unknown Position',
-                'candidate' => $candidate ? $candidate->candidate_name : 'Unknown Candidate', // FIXED
+                'candidate' => $candidate ? $candidate->candidate_name : 'Unknown Candidate',
+                'image' => $candidate ? $candidate->candidate_picture : null, // Ensure image is included
                 'votes' => $rank->vote_count,
             ];
         });
@@ -35,5 +35,6 @@ class VoteDataController extends Controller
             'rankings' => $formattedRankings,
         ]);
     }
+
 }
 

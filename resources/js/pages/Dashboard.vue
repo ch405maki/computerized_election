@@ -4,7 +4,8 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios';
 import { RefreshCw, Plus, Users, Settings, Eye, Layers, Activity, BarChart2 } from "lucide-vue-next";
 import {
   Table,
@@ -73,10 +74,67 @@ const getElectionStatus = (election: {start_date: string, end_date: string}) => 
   return 'active';
 };
 
-// For refreshing data (if needed)
-const refreshData = () => {
+// Vote ranking data
+const voteRanking = ref<PositionVotes[]>([]);
+
+interface CandidateVote {
+  name: string;
+  votes: number;
+  image?: string;  // Optional image property
+}
+
+interface PositionVotes {
+  position: string;
+  candidates: CandidateVote[];
+}
+
+// Fetch vote ranking data
+const fetchVoteRanking = async () => {
+  isLoading.value = true;
+  try {
+    const response = await axios.get('/api/vote-ranking');
+    
+    // Transform the flat API response into grouped position data
+    if (response.data.rankings && Array.isArray(response.data.rankings)) {
+      const groupedData: Record<string, CandidateVote[]> = {};
+      
+      response.data.rankings.forEach((item: any) => {
+        if (!groupedData[item.position]) {
+          groupedData[item.position] = [];
+        }
+        groupedData[item.position].push({
+          name: item.candidate,
+          votes: item.votes,
+          image: item.image || undefined
+        });
+      });
+
+      // Convert to the expected array format
+      voteRanking.value = Object.entries(groupedData).map(([position, candidates]) => ({
+        position,
+        candidates: candidates.sort((a, b) => b.votes - a.votes) // Sort by votes descending
+      }));
+    } else {
+      console.warn('Unexpected response format:', response.data);
+      voteRanking.value = [];
+    }
+  } catch (error) {
+    toast.error("Failed to load vote rankings");
+    console.error("Error fetching vote rankings:", error);
+    voteRanking.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Fetch data on component mount
+onMounted(fetchVoteRanking);
+
+// Refresh function
+const refreshData = async () => {
+  await fetchVoteRanking();
   window.location.reload();
-  toast.success("Dashboard refreshed");
+  toast.success("Vote rankings updated!");
 };
 </script>
 
@@ -169,6 +227,54 @@ const refreshData = () => {
                     </CardContent>
                 </Card>
 
+                <!-- Vote Ranking Table -->
+<Card>
+    <CardHeader>
+        <CardTitle>Vote Ranking</CardTitle>
+    </CardHeader>
+    <CardContent>
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Candidate</TableHead>
+                    <TableHead class="text-right">Votes</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <template v-if="voteRanking.length > 0">
+                    <template v-for="group in voteRanking" :key="group.position">
+                        <TableRow>
+                            <TableCell class="font-bold" colspan="3">{{ group.position }}</TableCell>
+                        </TableRow>
+                        <TableRow v-for="(candidate, index) in group.candidates" :key="candidate.name">
+                            <TableCell></TableCell>
+                            <TableCell class="font-medium">
+                                <div class="flex items-center gap-3">
+                                    <img 
+                                        v-if="candidate.image" 
+                                        :src="`/storage/${candidate.image}`"  
+                                        class="h-8 w-8 rounded-full object-cover"
+                                        :alt="candidate.name"
+                                    >
+                                    <span>{{ index + 1 }}. {{ candidate.name }}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell class="text-right">{{ candidate.votes }}</TableCell>
+                        </TableRow>
+                    </template>
+                </template>
+                <template v-else>
+                    <TableRow>
+                        <TableCell colspan="3" class="text-center py-8 text-muted-foreground">
+                            {{ isLoading ? 'Loading vote rankings...' : 'No vote ranking data available' }}
+                        </TableCell>
+                    </TableRow>
+                </template>
+            </TableBody>
+        </Table>
+    </CardContent>
+</Card>
                 <!-- Recent Elections Table -->
                 <Card>
                     <CardHeader>
