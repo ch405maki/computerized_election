@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Candidate;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage; // Correct import for Storage facade
+use Illuminate\Support\Facades\Validator;
 use App\Models\Candidate;
+use App\Models\Election;
+use App\Models\Position;
 use Illuminate\Http\Request;
-
 use Inertia\Inertia;
 
 class CandidateController extends Controller
@@ -15,15 +18,13 @@ class CandidateController extends Controller
      */
     public function index()
     {
-        return Inertia::render('Candidates/Index');
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return Inertia::render('Candidates/Index', [
+            'candidates' => Candidate::with(['election', 'position'])
+                ->latest()
+                ->get(),
+            'positions' => Position::all(),
+            'elections' => Election::where('status', '!=', 'completed')->get()
+        ]);
     }
 
     /**
@@ -31,51 +32,56 @@ class CandidateController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'candidate_code' => 'required|string|unique:candidates|max:255',
+        $validator = Validator::make($request->all(), [
+            'election_id' => 'required|exists:elections,id',
             'position_id' => 'required|exists:positions,id',
+            'candidate_code' => 'required|string|unique:candidates|max:10',
             'candidate_name' => 'required|string|max:255',
             'candidate_party' => 'nullable|string|max:255',
-            'candidate_picture' => 'nullable|string|max:255', // Store image path
+            'candidate_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $candidate = Candidate::create($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $data = $validator->validated();
+
+        // Handle file upload
+        if ($request->hasFile('candidate_picture')) {
+            $path = $request->file('candidate_picture')->store('candidates', 'public');
+            $data['candidate_picture'] = $path;
+        }
+
+        $candidate = Candidate::create($data);
 
         return response()->json([
-            'message' => 'Candidate created successfully!',
-            'candidate' => $candidate
+            'success' => true,
+            'message' => 'Candidate created successfully',
+            'data' => $candidate->load(['election', 'position'])
         ], 201);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        //
+        $candidate = Candidate::findOrFail($id);
+        
+        // Delete candidate picture from storage if it exists
+        if ($candidate->candidate_picture) {
+            Storage::disk('public')->delete($candidate->candidate_picture);
+        }
+
+        $candidate->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidate deleted successfully'
+        ]);
     }
 }

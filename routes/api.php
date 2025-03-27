@@ -35,7 +35,10 @@ Route::post('/positions', [PositionController::class, 'store']);
 
 // Election Routes
 Route::post('/elections', [ElectionController::class, 'store']);
+Route::delete('/elections/{election}', [ElectionController::class, 'destroy']);
 
-Route::apiResource('candidates', CandidateController::class);
-Route::apiResource('votes', VoteController::class);
+// Candidate Routes
+Route::post('/candidates', [CandidateController::class, 'store']);
+Route::delete('/candidates/{id}', [CandidateController::class, 'destroy']);
+
 Route::apiResource('logs', LogController::class);

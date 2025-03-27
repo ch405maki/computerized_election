@@ -1,36 +1,52 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
+import { type BreadcrumbItem } from '@/types';
+import CandidateForm from '@/components/candidate/CandidateForm.vue';
+import CandidatesList from '@/components/candidate/CandidatesList.vue';
+
+const props = defineProps<{
+  candidates: Array<{
+    id: number;
+    candidate_code: string;
+    candidate_name: string;
+    candidate_party: string;
+    candidate_picture: string;
+    election: {
+      id: number;
+      name: string;
+    };
+    position: {
+      id: number;
+      name: string;
+    };
+  }>;
+  positions: Array<{
+    id: number;
+    name: string;
+  }>;
+  elections: Array<{
+    id: number;
+    name: string;
+  }>;
+}>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Candidates',
-        href: '/candidates',
-    },
+  { title: 'Candidates', href: '/candidates' },
 ];
 </script>
 
 <template>
-    <Head title="Candidates" />
-
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
-                </div>
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
-                </div>
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
-                </div>
-            </div>
-            <div class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border md:min-h-min">
-                <PlaceholderPattern />
-            </div>
-        </div>
-    </AppLayout>
+  <Head title="Candidates" />
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="container mx-auto py-8">
+      <div class="grid grid-cols-1 gap-8">
+        <CandidateForm 
+          :positions="positions" 
+          :elections="elections" 
+        />
+        <CandidatesList :candidates="candidates" />
+      </div>
+    </div>
+  </AppLayout>
 </template>

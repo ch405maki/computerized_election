@@ -49,8 +49,14 @@ class ElectionController extends Controller
 
     public function destroy(Election $election)
     {
-        $election->delete();
-
-        return response()->json(['message' => 'Election deleted successfully!']);
+        try {
+            $election->delete();
+            return response()->json(['message' => 'Election deleted successfully!']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to delete election',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
