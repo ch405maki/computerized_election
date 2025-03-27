@@ -11,6 +11,8 @@ use App\Http\Controllers\Vote\VoteController;
 use App\Http\Controllers\Voter\VoterStatusController;
 use App\Http\Controllers\Election\ElectionController;
 use App\Http\Controllers\Log\LogController;
+use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\VoteDataController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -45,3 +47,6 @@ Route::delete('/candidates/{id}', [CandidateController::class, 'destroy']);
 Route::post('/votes', [VoteController::class, 'store']);
 
 Route::apiResource('logs', LogController::class);
+
+// Ranking Route
+Route::get('/vote-ranking', [VoteDataController::class, 'getVoteRanking']);

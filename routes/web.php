@@ -12,15 +12,16 @@ use App\Http\Controllers\Voter\VoterStatusController;
 use App\Http\Controllers\Log\LogController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Election\ElectionController;
+use App\Http\Controllers\Dashboard\DashboardController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
 // Dashboard Routes
-Route::get('dashboard', function () {   
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
 
 // User Routes
 Route::middleware(['auth', 'verified'])->group(function () {
