@@ -41,4 +41,7 @@ Route::delete('/elections/{election}', [ElectionController::class, 'destroy']);
 Route::post('/candidates', [CandidateController::class, 'store']);
 Route::delete('/candidates/{id}', [CandidateController::class, 'destroy']);
 
+// Vote Routes
+Route::post('/votes', [VoteController::class, 'store']);
+
 Route::apiResource('logs', LogController::class);

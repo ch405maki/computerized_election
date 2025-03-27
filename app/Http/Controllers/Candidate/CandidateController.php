@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Candidate;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Storage; // Correct import for Storage facade
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Candidate;
 use App\Models\Election;

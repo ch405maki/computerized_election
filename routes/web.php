@@ -53,5 +53,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports/log', [ReportController::class, 'index'])->name('positions.index');
 });
 
+// Vote Routes
+Route::get('/vote', [VoteController::class, 'index'])->name('vote.index');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
