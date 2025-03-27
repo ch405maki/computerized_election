@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 interface CandidateVote {
   name: string;
   votes: number;
+  party: string;
   image?: string;
 }
 
@@ -30,6 +31,7 @@ defineProps<{
           <TableRow>
             <TableHead>Position</TableHead>
             <TableHead>Candidate</TableHead>
+            <TableHead>Party</TableHead>
             <TableHead class="text-right">Votes</TableHead>
           </TableRow>
         </TableHeader>
@@ -37,23 +39,29 @@ defineProps<{
           <template v-if="voteRanking.length > 0">
             <template v-for="group in voteRanking" :key="group.position">
               <TableRow>
-                <TableCell class="font-bold" colspan="3">{{ group.position }}</TableCell>
+                <TableCell class="font-bold" colspan="4">{{ group.position }}</TableCell>
               </TableRow>
-              <TableRow v-for="(candidate, index) in group.candidates" :key="candidate.name">
+              <TableRow 
+                v-for="(candidate, index) in group.candidates" 
+                :key="candidate.name"
+                :class="index === 0 ? 'bg-muted/50' : ''"
+                >
                 <TableCell></TableCell>
                 <TableCell class="font-medium">
-                  <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3">
                     <img 
-                      v-if="candidate.image" 
-                      :src="`/storage/${candidate.image}`"  
-                      class="h-8 w-8 rounded-full object-cover"
-                      :alt="candidate.name"
+                        v-if="candidate.image" 
+                        :src="`/storage/${candidate.image}`"  
+                        class="h-8 w-8 rounded-full object-cover"
+                        :alt="candidate.name"
                     >
                     <span>{{ index + 1 }}. {{ candidate.name }}</span>
-                  </div>
+                    </div>
                 </TableCell>
+                <TableCell class="font-medium">{{ candidate.party }}</TableCell>
                 <TableCell class="text-right">{{ candidate.votes }}</TableCell>
-              </TableRow>
+                </TableRow>
+
             </template>
           </template>
           <template v-else>

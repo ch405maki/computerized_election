@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useToast } from "vue-toastification";
 
@@ -40,10 +40,14 @@ const toast = useToast();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 const isLoading = ref(false);
 const isChartView = ref(false); // Set to false for table to be default
+const voteRanking = ref<PositionVotes[]>([]);
+
+let refreshInterval: number | null = null;
 
 // Vote ranking data
 interface CandidateVote {
   name: string;
+  party: string;
   votes: number;
   image?: string;
 }
@@ -52,8 +56,6 @@ interface PositionVotes {
   position: string;
   candidates: CandidateVote[];
 }
-
-const voteRanking = ref<PositionVotes[]>([]);
 
 // Computed
 const maxVotes = computed(() => {
@@ -79,6 +81,7 @@ const getElectionStatus = (election: { start_date: string; end_date: string }) =
   return 'active';
 };
 
+// Function to fetch data
 const fetchVoteRanking = async () => {
   isLoading.value = true;
   try {
@@ -86,13 +89,14 @@ const fetchVoteRanking = async () => {
 
     if (response.data.rankings && Array.isArray(response.data.rankings)) {
       const groupedData: Record<string, CandidateVote[]> = {};
-
+      
       response.data.rankings.forEach((item: any) => {
         if (!groupedData[item.position]) {
           groupedData[item.position] = [];
         }
         groupedData[item.position].push({
           name: item.candidate,
+          party: item.party,
           votes: item.votes,
           image: item.image || undefined
         });
@@ -107,13 +111,25 @@ const fetchVoteRanking = async () => {
       voteRanking.value = [];
     }
   } catch (error) {
-    toast.error('Failed to load vote rankings');
-    console.error('Error fetching vote rankings:', error);
+    toast.error("Failed to load vote rankings");
+    console.error("Error fetching vote rankings:", error);
     voteRanking.value = [];
   } finally {
     isLoading.value = false;
   }
 };
+
+// Auto-refresh every 30 seconds
+onMounted(() => {
+  fetchVoteRanking();
+  refreshInterval = setInterval(fetchVoteRanking, 30000);
+});
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+});
 
 const refreshData = async () => {
   await fetchVoteRanking();

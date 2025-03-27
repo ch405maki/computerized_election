@@ -25,7 +25,8 @@ class VoteDataController extends Controller
             return [
                 'position' => $position ? $position->name : 'Unknown Position',
                 'candidate' => $candidate ? $candidate->candidate_name : 'Unknown Candidate',
-                'image' => $candidate ? $candidate->candidate_picture : null, // Ensure image is included
+                'party' => $candidate ? $candidate->candidate_party : 'Unknown Party',
+                'image' => $candidate ? $candidate->candidate_picture : null,
                 'votes' => $rank->vote_count,
             ];
         });

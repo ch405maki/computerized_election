@@ -40,14 +40,12 @@ const props = defineProps<{
 
 // Function to generate dynamic colors
 const generateColors = (count: number) => {
-  const colors = [
-    'rgba(59, 130, 246, 0.7)',  // Blue
-    'rgba(239, 68, 68, 0.7)',   // Red
-    'rgba(245, 158, 11, 0.7)',  // Amber
-    'rgba(16, 185, 129, 0.7)',  // Green
-    'rgba(139, 92, 246, 0.7)',  // Violet
+  const grayShades = [
+    'rgba(75, 85, 99, 0.7)',   // Dark Gray
+    'rgba(107, 114, 128, 0.7)', // Medium Gray
+    'rgba(156, 163, 175, 0.7)', // Light Gray
   ];
-  return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
+  return Array.from({ length: count }, (_, i) => grayShades[i % grayShades.length]);
 };
 
 // Prepare chart data (Top 2 candidates per position)
