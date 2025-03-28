@@ -2,7 +2,7 @@
 <template>
     <Dialog v-model:open="isOpen" class="dark:bg-gray-800">
         <DialogTrigger as-child>
-            <Button @click="openDialog" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 dark:bg-gray-700 dark:text-gray-200">
+            <Button @click="openDialog">
                 <UserRoundPlus class="w-4 h-4 mr-2" /> Create
             </Button>
         </DialogTrigger>

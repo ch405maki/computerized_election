@@ -6,12 +6,15 @@
         <!-- Search and Buttons -->
         <div class="flex items-center justify-between gap-4">
           <!-- Search Input -->
-          <Input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search users..."
-            class="w-full max-w-xs h-9"
-          />
+          <div class="relative w-full max-w-xs">
+            <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search users..."
+              class="w-full pl-9 h-9"
+            />
+          </div>
   
           <!-- Buttons -->
           <div class="flex items-center gap-4">
@@ -26,7 +29,7 @@
             <Button
               @click="triggerFileInput"
               :disabled="loading"
-              class="bg-green-600 hover:bg-green-700 text-white"
+              variant="outline" 
             >
               <Upload class="w-4 h-4 mr-2" />
               <span v-if="loading">Uploading...</span>
@@ -58,6 +61,7 @@
   import axios from "axios";
   import type { AxiosError } from "axios";
   import { useToast } from "vue-toastification";
+  import { Search } from "lucide-vue-next";
   
   // Define the User type
   interface User {

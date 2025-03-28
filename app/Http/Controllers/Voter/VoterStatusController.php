@@ -15,12 +15,22 @@ class VoterStatusController extends Controller
     /**
      * Display inactive voters
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Get voters with inactive status and their voter details
-        $inactiveVoters = VoterStatus::with('voter')
-            ->where('activated', false)
-            ->get()
+        $query = VoterStatus::with('voter')
+            ->where('activated', false);
+
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->whereHas('voter', function($q) use ($search) {
+                $q->where('student_number', 'like', "%{$search}%")
+                ->orWhere('full_name', 'like', "%{$search}%")
+                ->orWhere('student_year', 'like', "%{$search}%")
+                ->orWhere('class_type', 'like', "%{$search}%");
+            });
+        }
+
+        $inactiveVoters = $query->get()
             ->map(function ($status) {
                 return [
                     'id' => $status->voter_id,

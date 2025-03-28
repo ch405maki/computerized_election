@@ -17,7 +17,9 @@
      */
     public function index()
     {
-        return Inertia::render('Voters/Index');
+        $voters = Voter::latest()->get();
+
+        return Inertia::render('Voters/Index', [ 'voters' => $voters ]);
     }
 
     /**
