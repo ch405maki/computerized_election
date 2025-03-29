@@ -6,16 +6,28 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 
 const props = defineProps<{
   positions: Array<{ id: number; name: string }>;
   elections: Array<{ id: number; name: string }>;
 }>();
 
+const emit = defineEmits(['candidateCreated']);
+
 const toast = useToast();
 const imagePreview = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const isLoading = ref(false);
+const isOpen = ref(false);
 
 // Form fields
 const election_id = ref<string>('');
@@ -62,6 +74,23 @@ const triggerFileInput = () => {
   fileInput.value?.click();
 };
 
+const resetForm = () => {
+  election_id.value = '';
+  position_id.value = '';
+  candidate_code.value = '';
+  candidate_name.value = '';
+  candidate_party.value = '';
+  candidate_picture.value = null;
+  imagePreview.value = null;
+  if (fileInput.value) fileInput.value.value = '';
+  errors.value = {
+    election_id: '',
+    position_id: '',
+    candidate_code: '',
+    candidate_name: '',
+  };
+};
+
 const onSubmit = () => {
   if (!validateForm()) {
     toast.error("Please fix the form errors.");
@@ -85,20 +114,9 @@ const onSubmit = () => {
   })
   .then(response => {
     toast.success(response.data.message);
-    // Reset form
-    election_id.value = '';
-    position_id.value = '';
-    candidate_code.value = '';
-    candidate_name.value = '';
-    candidate_party.value = '';
-    candidate_picture.value = null;
-    imagePreview.value = null;
-    if (fileInput.value) fileInput.value.value = '';
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-
+    resetForm();
+    emit('candidateCreated');
+    isOpen.value = false;
   })
   .catch(error => {
     toast.error(error.response?.data?.message || 'Failed to create candidate');
@@ -110,92 +128,127 @@ const onSubmit = () => {
 </script>
 
 <template>
-  <div class="bg-card rounded-lg shadow-sm border p-6">
-    <h2 class="text-2xl font-bold mb-6">Add New Candidate</h2>
-    <form @submit.prevent="onSubmit">
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        
-        <!-- Election Field -->
-        <div>
-          <label class="font-medium">Election</label>
-          <Select v-model="election_id">
-            <SelectTrigger>
-              <SelectValue placeholder="Select election" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="election in elections" :key="election.id" :value="String(election.id)">
-                {{ election.name }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <p v-if="errors.election_id" class="text-red-500 text-sm">{{ errors.election_id }}</p>
-        </div>
+  <Dialog v-model:open="isOpen">
+    <DialogTrigger as-child>
+      <Button variant="default">
+        Add New Candidate
+      </Button>
+    </DialogTrigger>
+    <DialogContent class="sm:max-w-[625px]">
+      <DialogHeader>
+        <DialogTitle>Add New Candidate</DialogTitle>
+        <DialogDescription>
+          Fill out the form to register a new candidate for the election.
+        </DialogDescription>
+      </DialogHeader>
 
-        <!-- Position Field -->
-        <div>
-          <label class="font-medium">Position</label>
-          <Select v-model="position_id">
-            <SelectTrigger>
-              <SelectValue placeholder="Select position" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="position in positions" :key="position.id" :value="String(position.id)">
-                {{ position.name }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <p v-if="errors.position_id" class="text-red-500 text-sm">{{ errors.position_id }}</p>
-        </div>
+      <form @submit.prevent="onSubmit">
+        <div class="grid grid-cols-1 gap-2 py-4">
+          
+          <!-- Election Field -->
+          <FormField v-slot="{ componentField }" name="election_id">
+            <FormItem>
+              <FormLabel>Election</FormLabel>
+              <Select v-model="election_id" v-bind="componentField">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select election" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="election in elections" :key="election.id" :value="String(election.id)">
+                    {{ election.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          </FormField>
 
-        <!-- Candidate Code -->
-        <div>
-          <label class="font-medium">Candidate Code</label>
-          <Input type="text" v-model="candidate_code" placeholder="e.g. CAN-001" />
-          <p v-if="errors.candidate_code" class="text-red-500 text-sm">{{ errors.candidate_code }}</p>
-        </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Position Field -->
+            <FormField v-slot="{ componentField }" name="position_id">
+              <FormItem>
+                <FormLabel>Position</FormLabel>
+                <Select v-model="position_id" v-bind="componentField">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select position" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="position in positions" :key="position.id" :value="String(position.id)">
+                      {{ position.name }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            </FormField>
 
-        <!-- Candidate Name -->
-        <div>
-          <label class="font-medium">Full Name</label>
-          <Input type="text" v-model="candidate_name" placeholder="Candidate's full name" />
-          <p v-if="errors.candidate_name" class="text-red-500 text-sm">{{ errors.candidate_name }}</p>
-        </div>
-
-        <!-- Candidate Party -->
-        <div>
-          <label class="font-medium">Political Party</label>
-          <Input type="text" v-model="candidate_party" placeholder="Party affiliation (optional)" />
-        </div>
-
-        <!-- Candidate Picture -->
-        <div>
-          <label class="font-medium">Profile Picture</label>
-          <div class="flex items-center gap-4">
-            <div 
-              @click="triggerFileInput"
-              class="w-20 h-20 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden"
-            >
-              <img v-if="imagePreview" :src="imagePreview" class="w-full h-full object-cover" />
-              <span v-else class="text-gray-400 text-xs text-center">Upload Image</span>
-            </div>
-            <input 
-              ref="fileInput"
-              type="file" 
-              accept="image/*"
-              class="hidden"
-              @change="handleFileChange"
-            />
+            <!-- Candidate Code -->
+            <FormField v-slot="{ componentField }" name="candidate_code">
+              <FormItem>
+                <FormLabel>Candidate Code</FormLabel>
+                <FormControl>
+                  <Input type="text" v-model="candidate_code" placeholder="e.g. CAN-001" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
           </div>
+
+          <!-- Candidate Name -->
+          <FormField v-slot="{ componentField }" name="candidate_name">
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input type="text" v-model="candidate_name" placeholder="Candidate's full name" v-bind="componentField" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+
+          <!-- Candidate Party -->
+          <FormField v-slot="{ componentField }" name="candidate_party">
+            <FormItem>
+              <FormLabel>Political Party (Optional)</FormLabel>
+              <FormControl>
+                <Input type="text" v-model="candidate_party" placeholder="Party affiliation" v-bind="componentField" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+
+          <!-- Candidate Picture -->
+          <FormField v-slot="{ componentField }" name="candidate_picture">
+            <FormItem>
+              <FormLabel>Profile Picture</FormLabel>
+              <div class="flex items-center gap-4">
+                <div 
+                  @click="triggerFileInput"
+                  class="w-20 h-20 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden"
+                >
+                  <img v-if="imagePreview" :src="imagePreview" class="w-full h-full object-cover" />
+                  <span v-else class="text-gray-400 text-xs text-center">Upload Image</span>
+                </div>
+                <input 
+                  ref="fileInput"
+                  type="file" 
+                  accept="image/*"
+                  class="hidden"
+                  @change="handleFileChange"
+                />
+              </div>
+              <FormMessage />
+            </FormItem>
+          </FormField>
         </div>
 
-      </div>
-
-      <div class="flex justify-end mt-6">
-        <Button type="submit" :disabled="isLoading">
-          <span v-if="!isLoading">Create Candidate</span>
-          <span v-else>Creating...</span>
-        </Button>
-      </div>
-    </form>
-  </div>
-</template> 
+        <DialogFooter>
+          <Button variant="outline" @click="isOpen = false">Cancel</Button>
+          <Button type="submit" :disabled="isLoading">
+            <span v-if="!isLoading">Create Candidate</span>
+            <span v-else>Creating...</span>
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>
+</template>

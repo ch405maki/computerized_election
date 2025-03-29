@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ref } from 'vue';
 import axios from 'axios';
 import { useToast } from "vue-toastification";
+import { Trash } from "lucide-vue-next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,8 +71,7 @@ const deleteCandidate = async () => {
 </script>
 
 <template>
-  <div class="bg-card rounded-lg shadow-sm border p-6">
-    <h2 class="text-2xl font-bold mb-6">Current Candidates</h2>
+  <div class="bg-card">
     <div class="border rounded-lg overflow-hidden">
       <Table>
         <TableHeader>
@@ -82,12 +82,12 @@ const deleteCandidate = async () => {
             <TableHead>Party</TableHead>
             <TableHead>Position</TableHead>
             <TableHead>Election</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="candidates.length === 0">
-            <TableCell colspan="7" class="text-center py-8 text-muted-foreground">
+            <TableCell colspan="7" class="text-center">
               No candidates found
             </TableCell>
           </TableRow>
@@ -107,15 +107,15 @@ const deleteCandidate = async () => {
             <TableCell>{{ candidate.position.name }}</TableCell>
             <TableCell>{{ candidate.election.name }}</TableCell>
             <TableCell>
-              <Button variant="outline" size="sm" class="mr-2">Edit</Button>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                @click="openDeleteDialog(candidate)"
-                :disabled="isDeleting"
-              >
-                Delete
-              </Button>
+              <div  class="text-right">
+                <button 
+                    size="sm" 
+                    @click="openDeleteDialog(candidate)"
+                    :disabled="isDeleting"
+                  >
+                  <Trash class="w-4 h-4 text-red-600 hover:text-red-700" />
+                </button>
+              </div>
             </TableCell>
           </TableRow>
         </TableBody>

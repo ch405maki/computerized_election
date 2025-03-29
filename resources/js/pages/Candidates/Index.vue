@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import CandidateForm from '@/components/candidate/CandidateForm.vue';
 import CandidatesList from '@/components/candidate/CandidatesList.vue';
@@ -33,20 +33,30 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Candidates', href: '/candidates' },
+  { title: 'Current Candidates', href: '/candidates' },
 ];
+
+const refreshCandidates = () => {
+  router.reload({
+    only: ['candidates'],
+  });
+};
 </script>
 
 <template>
   <Head title="Candidates" />
-  <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="container mx-auto py-8">
-      <div class="grid grid-cols-1 gap-8">
-        <CandidateForm 
-          :positions="positions" 
-          :elections="elections" 
-        />
-        <CandidatesList :candidates="candidates" />
+    <AppLayout :breadcrumbs="breadcrumbs">
+      <div class="flex flex-col gap-4 p-4">
+        <div class="flex justify-end gap-2">
+          <CandidateForm 
+            :positions="positions" 
+            :elections="elections"
+            @candidateCreated="refreshCandidates"
+          />
+        </div>
+        <div>
+          <CandidatesList :candidates="candidates" />
+        </div>
       </div>
-    </div>
   </AppLayout>
 </template>
