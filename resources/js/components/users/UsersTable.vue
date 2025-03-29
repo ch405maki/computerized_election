@@ -20,7 +20,7 @@
             @update:checked="(checked) => handleToggle(user, checked)"
           />
         </TableCell>
-        <TableCell class="text-right">
+        <TableCell class="text-right flex justify-end items-center">
           <!-- Edit User -->
           <EditUserDialog :user="user" />
           <!-- Delete User -->

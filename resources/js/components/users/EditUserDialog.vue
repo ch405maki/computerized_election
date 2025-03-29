@@ -1,8 +1,12 @@
 <template>
     <Sheet>
       <!-- Sheet Trigger -->
-      <SheetTrigger @click="openDialog">
-        <UserRoundPen class="w-4 h-4 mr-2 text-blue-500 dark:text-blue-400 hover:text-blue-700" />
+      <SheetTrigger
+        variant="destructive" 
+       @click="openDialog">
+       <div class="bg-blue-50 hover:bg-blue-100 rounded-md mr-2 py-[10px] px-3">
+         <UserRoundPen class="w-4 h-4  text-blue-500 dark:text-blue-400 hover:text-blue-700" />
+       </div>
       </SheetTrigger>
   
       <!-- Sheet Content -->
@@ -81,6 +85,7 @@
   } from "@/components/ui/sheet"; // Adjust the import path as needed
   import { Button } from "@/components/ui/button"; // Adjust the import path as needed
   import { UserRoundPen } from "lucide-vue-next"; // Icon for the trigger
+  import { Trash, FilePenLine } from "lucide-vue-next";
   import axios from "axios";
   import { useToast } from "vue-toastification";
   

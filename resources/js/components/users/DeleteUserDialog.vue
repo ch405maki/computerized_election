@@ -1,9 +1,13 @@
 <template>
     <Dialog v-model:open="isOpen">
       <DialogTrigger as-child>
-        <button @click="openDialog">
-          <Trash class="w-4 h-4 mr-2 text-red-600 hover:text-red-700" />
-        </button>
+        <Button 
+            variant="destructive" 
+            size="sm"
+            @click="openDialog"
+          >
+          <Trash />
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import ElectionEditSheet from '@/components/election/ElectionEditSheet.vue';
+import { Trash, FilePenLine } from "lucide-vue-next";
 
 type ElectionStatus = 'active' | 'upcoming' | 'completed';
 
@@ -111,7 +112,7 @@ const handleElectionUpdated = () => {
             <TableHead>Status</TableHead>
             <TableHead>Start Date</TableHead>
             <TableHead>End Date</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -133,22 +134,22 @@ const handleElectionUpdated = () => {
             </TableCell>
             <TableCell>{{ new Date(election.start_date).toLocaleDateString() }}</TableCell>
             <TableCell>{{ new Date(election.end_date).toLocaleDateString() }}</TableCell>
-            <TableCell>
+            <TableCell class="text-right">
               <Button 
                 variant="outline" 
                 size="sm" 
                 class="mr-2"
                 @click="openEditSheet(election)"
               >
-                Edit
+                <FilePenLine />
               </Button>
               <Button 
                 variant="destructive" 
                 size="sm"
                 @click="openDeleteDialog(election.id)"
               >
-                Delete
-              </Button>
+              <Trash />
+                </Button>
             </TableCell>
           </TableRow>
         </TableBody>
