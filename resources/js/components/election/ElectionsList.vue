@@ -2,6 +2,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from "vue-toastification";
+import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import { ref } from 'vue';
 import {
@@ -14,25 +15,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import ElectionEditSheet from '@/components/election/ElectionEditSheet.vue';
+
+type ElectionStatus = 'active' | 'upcoming' | 'completed';
+
+interface Election {
+  id: number;
+  name: string;
+  status: ElectionStatus;
+  start_date: string;
+  end_date: string;
+}
 
 const toast = useToast();
 const props = defineProps<{
-    elections: Array<{
-        id: number;
-        name: string;
-        status: string;
-        start_date: string;
-        end_date: string;
-    }>;
+    elections: Election[]; 
 }>();
 
 // Modal state
 const isDeleteDialogOpen = ref(false);
 const electionToDelete = ref<number | null>(null);
+const hasAgreed = ref(false);
+const showFinalWarning = ref(false);
 
 const openDeleteDialog = (id: number) => {
   electionToDelete.value = id;
+  hasAgreed.value = false;
   isDeleteDialogOpen.value = true;
+};
+
+const proceedToFinalWarning = () => {
+  if (!hasAgreed.value) {
+    toast.error('You must acknowledge the consequences before deleting');
+    return;
+  }
+  showFinalWarning.value = true;
 };
 
 const deleteElection = async () => {
@@ -47,8 +64,9 @@ const deleteElection = async () => {
     });
     
     toast.success('Election deleted successfully!');
-    // Close the dialog
+    // Close the dialogs
     isDeleteDialogOpen.value = false;
+    showFinalWarning.value = false;
 
     setTimeout(() => {
       window.location.reload();
@@ -62,13 +80,29 @@ const deleteElection = async () => {
     }
   } finally {
     electionToDelete.value = null;
+    hasAgreed.value = false;
   }
 };
+
+const isEditSheetOpen = ref(false);
+const selectedElection = ref<Election | null>(null);
+
+const openEditSheet = (election: any) => {
+  selectedElection.value = election;
+  isEditSheetOpen.value = true;
+};
+
+const handleElectionUpdated = () => {
+  // Refresh data or update local state
+  setTimeout(() => {
+    window.location.reload();
+  }, 1500);
+};
+
 </script>
 
 <template>
-  <div class="bg-card rounded-lg shadow-sm border p-6">
-    <h2 class="text-2xl font-bold mb-6">Current Elections</h2>
+  <div class="bg-card rounded-lg">
     <div class="border rounded-lg overflow-hidden">
       <Table>
         <TableHeader>
@@ -100,7 +134,14 @@ const deleteElection = async () => {
             <TableCell>{{ new Date(election.start_date).toLocaleDateString() }}</TableCell>
             <TableCell>{{ new Date(election.end_date).toLocaleDateString() }}</TableCell>
             <TableCell>
-              <Button variant="outline" size="sm" class="mr-2">Edit</Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                class="mr-2"
+                @click="openEditSheet(election)"
+              >
+                Edit
+              </Button>
               <Button 
                 variant="destructive" 
                 size="sm"
@@ -114,18 +155,76 @@ const deleteElection = async () => {
       </Table>
     </div>
 
+        <!-- Edit Sheet -->
+        <ElectionEditSheet
+          v-if="selectedElection"
+          :election="selectedElection"
+          :open="isEditSheetOpen"
+          @close="isEditSheetOpen = false"
+          @updated="handleElectionUpdated"
+        />
+
     <!-- Delete Confirmation Dialog -->
     <AlertDialog v-model:open="isDeleteDialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Delete Election Confirmation</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the election and remove all associated data.
+            <div class="space-y-4">
+              <p class="font-medium">The following data will be permanently deleted:</p>
+              <ul class="list-disc pl-5 space-y-2">
+                <li>All candidate information and their profiles</li>
+                <li>All voter records and participation data</li>
+                <li>Vote tallies and election results</li>
+                <li>Any associated documents or media</li>
+              </ul>
+              
+              <div class="flex items-start space-x-2 pt-2">
+                <Checkbox id="delete-agreement" v-model:checked="hasAgreed" />
+                <label for="delete-agreement" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  I understand this action cannot be undone and all data will be permanently lost.
+                </label>
+              </div>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction @click="deleteElection">Continue</AlertDialogAction>
+          <AlertDialogAction 
+            @click="proceedToFinalWarning"
+            :disabled="!hasAgreed"
+            :class="{ 'bg-gray-400 cursor-not-allowed': !hasAgreed }"
+          >
+            Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- Final Warning Dialog -->
+    <AlertDialog v-model:open="showFinalWarning">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Final Confirmation Required</AlertDialogTitle>
+          <AlertDialogDescription class="space-y-4">
+            <p class="font-semibold text-red-600">You are about to permanently delete this election and all its data.</p>
+            <p>This action will:</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Immediately remove all election records</li>
+              <li>Affect all users associated with this election</li>
+              <li>Make recovery impossible</li>
+            </ul>
+            <p>Are you absolutely sure you want to proceed?</p>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>No, Go Back</AlertDialogCancel>
+          <AlertDialogAction 
+            @click="deleteElection"
+            class="bg-red-600 hover:bg-red-700"
+          >
+            Yes, Delete Permanently
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

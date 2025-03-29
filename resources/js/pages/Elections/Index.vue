@@ -5,14 +5,19 @@ import { Head } from '@inertiajs/vue3';
 import ElectionForm from '@/components/election/ElectionForm.vue';
 import ElectionsList from '@/components/election/ElectionsList.vue';
 
+// Define the election status type to match your other components
+type ElectionStatus = 'active' | 'upcoming' | 'completed';
+
+interface Election {
+  id: number;
+  name: string;
+  status: ElectionStatus;
+  start_date: string;
+  end_date: string;
+}
+
 const props = defineProps<{
-    elections: Array<{
-        id: number;
-        name: string;
-        status: string;
-        start_date: string;
-        end_date: string;
-    }>;
+    elections: Election[]; // Use the properly typed interface
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -23,10 +28,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 <template>
     <Head title="Elections" />
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="container mx-auto py-8">
-            <div class="grid grid-cols-1 gap-8">
+        <div class="flex flex-col gap-4 p-4">
+            <div class="flex justify-end gap-2">
                 <ElectionForm />
-                <ElectionsList :elections="props.elections" />
+            </div>
+            <div>
+                <ElectionsList :elections="elections" />
             </div>
         </div>
     </AppLayout>

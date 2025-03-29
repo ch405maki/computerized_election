@@ -66,7 +66,7 @@ defineProps<{
           </template>
           <template v-else>
             <TableRow>
-              <TableCell colspan="3" class="text-center py-8 text-muted-foreground">
+              <TableCell colspan="4" class="text-center py-8 text-muted-foreground">
                 {{ isLoading ? 'Loading vote rankings...' : 'No vote ranking data available' }}
               </TableCell>
             </TableRow>

@@ -44,7 +44,10 @@ class ElectionController extends Controller
 
         $election->update($validated);
 
-        return response()->json(['message' => 'Election updated successfully!', 'election' => $election]);
+        return response()->json([
+            'message' => 'Election updated successfully!',
+            'election' => $election->fresh()
+        ]);
     }
 
     public function destroy(Election $election)
