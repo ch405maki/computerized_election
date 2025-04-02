@@ -14,7 +14,7 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.post(route('voter.login'), { // Use voter login route
+  form.post(route('voter.login'), {
     onSuccess: () => toast.success("Login successful!"),
     onError: () => toast.error("Invalid credentials."),
   });

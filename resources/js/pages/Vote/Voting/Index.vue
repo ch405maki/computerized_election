@@ -1,24 +1,185 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useToast } from "vue-toastification";
+import ElectionSelector from '@/components/vote/ElectionSelector.vue';
+import ElectionDetails from '@/components/vote/ElectionDetails.vue';
+import VoteSubmitButton from '@/components/vote/VoteSubmitButton.vue';
+import axios from 'axios';
 import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
-import { ref } from 'vue';
-
-defineProps<{
-    voter: { full_name: string } | null;
-}>();
 
 const logout = () => {
     router.post(route('voter.logout'));
 };
+
+const props = defineProps<{
+  elections: Array<{
+    id: number;
+    name: string;
+    candidates: Array<{
+      id: number;
+      candidate_name: string;
+      candidate_picture: string;
+      position: { id: number; name: string } | null;
+    }>;
+  }>;
+  voter: { full_name: string; id: number } | null;
+}>();
+
+const toast = useToast();
+const selectedElection = ref<number | null>(null);
+const selectedCandidates = ref<{ [positionId: number]: number }>({});
+const isVoting = ref(false);
+const positionsInElection = ref<number[]>([]);
+
+// Automatically select the first election on component mount
+onMounted(() => {
+  if (props.elections.length > 0) {
+    selectedElection.value = props.elections[0].id;
+  }
+});
+
+watch(selectedElection, (newElectionId) => {
+  if (newElectionId) {
+    const election = props.elections.find(e => e.id === newElectionId);
+    if (election) {
+      positionsInElection.value = [...new Set(
+        election.candidates
+          .filter(c => c.position)
+          .map(c => c.position!.id)
+      )];
+    }
+  } else {
+    positionsInElection.value = [];
+  }
+  selectedCandidates.value = {};
+});
+
+const allPositionsSelected = computed(() => {
+  return positionsInElection.value.every(posId => 
+    selectedCandidates.value[posId] !== undefined
+  );
+});
+
+const selectedVotes = computed(() => {
+  return Object.entries(selectedCandidates.value).map(([positionId, candidateId]) => ({
+    position_id: parseInt(positionId),
+    candidate_id: candidateId,
+    election_id: selectedElection.value!
+  }));
+});
+
+const selectCandidate = (positionId: number, candidateId: number) => {
+  selectedCandidates.value = { 
+    ...selectedCandidates.value, 
+    [positionId]: candidateId 
+  };
+};
+
+const vote = async () => {
+  if (!selectedElection.value) {
+    toast.error("No election available.");
+    return;
+  }
+
+  if (!allPositionsSelected.value) {
+    toast.error("Please select one candidate for each position.");
+    return;
+  }
+
+  if (!props.voter?.id) {
+    toast.error("Voter information is missing.");
+    return;
+  }
+
+  isVoting.value = true;
+
+  try {
+    const response = await axios.post('/api/votes', {
+      voter_id: props.voter.id,
+      votes: selectedVotes.value
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      },
+      timeout: 10000
+    });
+
+    if (response.data.success) {
+      toast.success(response.data.message);
+      selectedCandidates.value = {};
+      // Don't reset selectedElection here since we want to keep showing the same election
+    } else {
+      toast.error(response.data.message || "Vote submission failed.");
+    }
+  } catch (error: any) {
+    if (error.response) {
+      if (error.response.status === 422 && error.response.data.errors) {
+        const errors = error.response.data.errors;
+        Object.values(errors).flat().forEach((message: any) => {
+          toast.error(message);
+        });
+      } else {
+        toast.error(error.response.data?.message || "Failed to submit votes.");
+      }
+    } else if (error.code === 'ECONNABORTED') {
+      toast.error("Request timed out. Please check your connection and try again.");
+    } else if (error.request) {
+      toast.error("Network error. Please check your connection.");
+    } else {
+      toast.error("An unexpected error occurred. Please try again.");
+    }
+    console.error("Voting error:", error);
+  } finally {
+    isVoting.value = false;
+  }
+};
 </script>
 
 <template>
+    <Head title="Vote" />
     <div class="p-6 text-center">
         <h1 class="text-2xl font-bold">Welcome to Voting Page</h1>
         <p v-if="voter" class="mt-2 text-lg">Hello, {{ voter.full_name }}!</p>
+        <p v-if="voter" class="mt-2 text-lg">ID, {{ voter.id }}!</p>
 
         <Button class="mt-4 bg-red-500 hover:bg-red-600" @click="logout">
             Logout
         </Button>
+    </div>
+    <div class="p-6 space-y-6">
+      <h1 class="text-2xl font-bold">Vote for Your Candidates</h1>
+
+      <div v-if="elections.length === 0" class="text-muted-foreground">
+        No active elections available.
+      </div>
+
+      <!-- Show election name instead of selector when there's only one election -->
+      <div v-if="elections.length === 1" class="mb-4">
+        <h2 class="text-xl font-semibold">{{ elections[0].name }}</h2>
+      </div>
+      
+
+      <ElectionDetails
+        v-if="selectedElection"
+        :elections="elections"
+        :selected-election="selectedElection"
+        :selected-candidates="selectedCandidates"
+        @select-candidate="selectCandidate"
+      />
+
+      <VoteSubmitButton
+        v-if="selectedElection"
+        :is-voting="isVoting"
+        :all-positions-selected="allPositionsSelected"
+        :selected-candidates="selectedCandidates"
+        :elections="elections"
+        :selected-election="selectedElection"
+        @vote="vote"
+      />
     </div>
 </template>
