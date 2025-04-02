@@ -12,6 +12,8 @@ use App\Models\Candidate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Auth;
+
 use Inertia\Inertia;
 
 class VoteController extends Controller
@@ -23,11 +25,27 @@ class VoteController extends Controller
     {
         $elections = Election::where('status', 'active')
             ->with(['candidates' => function($query) {
-                $query->with('position'); // Always load the position relationship
+                $query->with('position');
             }])
             ->get();
 
         return Inertia::render('Vote/Index', [
+            'elections' => $elections,
+        ]);
+    }
+
+    public function votingPage()
+    {
+        $voter = Auth::guard('voter')->user();
+
+        $elections = Election::where('status', 'active')
+            ->with(['candidates' => function($query) {
+                $query->with('position');
+            }])
+            ->get();
+
+        return Inertia::render('Vote/Voting/Index', [
+            'voter' => $voter,
             'elections' => $elections,
         ]);
     }
