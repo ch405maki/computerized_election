@@ -19,24 +19,22 @@
         <!-- Buttons -->
         <div class="flex items-center gap-4">
           <!-- Upload Excel Button -->
-          <div class="relative">
-            <input
-              type="file"
-              ref="fileInput"
-              accept=".xlsx, .xls, .csv"
-              class="hidden"
-              @change="handleFileUpload"
-            />
-            <Button
-              @click="triggerFileInput"
-              :disabled="loading"
-              variant="outline" 
-            >
-              <Upload class="w-4 h-4 mr-2" />
-              <span v-if="loading">Uploading...</span>
-              <span v-else>Upload Excel</span>
-            </Button>
-          </div>
+          <input
+            type="file"
+            ref="fileInput"
+            accept=".xlsx, .xls"
+            class="hidden"
+            @change="handleFileUpload"
+          />
+          <Button
+            @click="triggerFileInput"
+            :disabled="loading"
+            variant="outline" 
+          >
+            <Upload class="w-4 h-4 mr-2" />
+            <span v-if="loading">Uploading...</span>
+            <span v-else>Upload Excel</span>
+          </Button>
 
           <!-- Create User Button -->
           <CreateUserDialog />
@@ -48,24 +46,6 @@
         <UsersTable :users="filteredUsers" />
       </div>
     </div>
-
-    <!-- Upload Progress Modal -->
-    <Dialog :open="isUploading">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Uploading Users</DialogTitle>
-          <DialogDescription>
-            Please wait while we process your Excel file...
-          </DialogDescription>
-        </DialogHeader>
-        <div class="py-4">
-          <Progress :value="uploadProgress" class="h-2" />
-          <div class="mt-2 text-sm text-muted-foreground text-center">
-            {{ uploadStatus }}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   </AppLayout>
 </template>
 
@@ -77,19 +57,13 @@ import CreateUserDialog from "@/components/users/CreateUserDialog.vue";
 import UsersTable from "@/components/users/UsersTable.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input'
-import { Upload, Search } from "lucide-vue-next";
+import { Upload } from "lucide-vue-next";
 import axios from "axios";
 import type { AxiosError } from "axios";
 import { useToast } from "vue-toastification";
-import { Progress } from '@/components/ui/progress';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Search } from "lucide-vue-next";
 
+// Define the User type
 interface User {
   id: number;
   name: string;
@@ -98,19 +72,20 @@ interface User {
   status: string;
 }
 
+// Define props
 const props = defineProps<{ users: User[] }>();
 
 const breadcrumbs = [{ title: "Users Management", href: "/users" }];
 const fileInput = ref<HTMLInputElement | null>(null);
 const toast = useToast();
-const loading = ref(false);
-const searchQuery = ref("");
-const isUploading = ref(false);
-const uploadProgress = ref(0);
-const uploadStatus = ref("Preparing upload...");
+const loading = ref(false); // Loading state
+const searchQuery = ref(""); // Search query
 
+// Filtered Users
 const filteredUsers = computed(() => {
-  if (!searchQuery.value) return props.users;
+  if (!searchQuery.value) {
+    return props.users; // Return all users if no search query
+  }
 
   const query = searchQuery.value.toLowerCase();
   return props.users.filter(
@@ -122,59 +97,48 @@ const filteredUsers = computed(() => {
   );
 });
 
+// Trigger file input
 const triggerFileInput = () => {
   fileInput.value?.click();
 };
 
+// Handle file upload
 const handleFileUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
 
-  if (!file) return;
+  if (file) {
+    const formData = new FormData();
+    formData.append("file", file);
 
-  loading.value = true;
-  isUploading.value = true;
-  uploadProgress.value = 0;
-  uploadStatus.value = "Uploading file...";
+    try {
+      const response = await axios.post("/api/upload-users", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-  const formData = new FormData();
-  formData.append("file", file);
+      toast.success(response.data.message);
+      setTimeout(() => location.reload(), 2000); // Reload to reflect changes
+    } catch (err: unknown) {
+      const error = err as AxiosError;
+      if (error.response && error.response.data) {
+        const status: number = error.response.status;
+        const errorMessage: string = (error.response.data as any).message || "An error occurred.";
 
-  try {
-    const response = await axios.post("/api/upload-users", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          uploadProgress.value = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
+        if (status === 422) {
+          toast.error(`Validation Error: ${errorMessage}`);
+        } else if (status === 500) {
+          toast.error("Server Error: Please check your file data.");
+        } else {
+          toast.error(errorMessage);
         }
-      },
-    });
-
-    uploadStatus.value = "Processing data...";
-    uploadProgress.value = 100;
-
-    toast.success(response.data.message || "Users imported successfully!");
-    
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-  } catch (err: unknown) {
-    const error = err as AxiosError;
-    
-    if (error.response?.data) {
-      const responseData = error.response.data as any;
-      toast.error(responseData.message || "An error occurred during upload");
-    } else {
-      toast.error("Network error. Please check your connection and try again");
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      loading.value = false;
     }
-  } finally {
-    loading.value = false;
-    isUploading.value = false;
-    if (fileInput.value) fileInput.value.value = "";
   }
 };
 </script>
