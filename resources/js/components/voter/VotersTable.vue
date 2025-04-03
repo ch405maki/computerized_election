@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import EditUserDialog from "@/components/users/EditUserDialog.vue";
-import DeleteUserDialog from "@/components/users/DeleteUserDialog.vue";
+import DeleteVoterDialog from "@/components/voter/DeleteVoterDialog.vue";
 import CustomSwitch from '@/components/ui/customswitch/CustomSwitch.vue';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
@@ -20,6 +21,12 @@ const props = defineProps<{
 }>();
 
 const toast = useToast();
+
+// Local copy of voters for reactivity
+const localVoters = ref<Voter[]>([...props.voters]);
+
+
+
 </script>
 
 <template>
@@ -41,8 +48,9 @@ const toast = useToast();
         <TableCell>{{ voter.student_year }}</TableCell>
         <TableCell>{{ voter.class_type }}</TableCell>
         <TableCell>{{ voter.sex }}</TableCell>
-        <TableCell class="text-right">
-            action
+        <TableCell class="text-right flex justify-end items-center">
+          <!-- Delete User -->
+          <DeleteVoterDialog :voter="voter" />
         </TableCell>
       </TableRow>
       <TableRow v-if="voters.length === 0">
