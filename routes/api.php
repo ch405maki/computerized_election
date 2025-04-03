@@ -27,8 +27,10 @@ Route::put('/users/{id}', [UserController::class, 'update']);
 Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
 
 // Voter Routes
+Route::delete('/voters/{id}', [VoterController::class, 'destroy']);
 Route::patch('/activate-voter/{id}', [VoterStatusController::class, 'activate']);
 Route::post('/voters', [VoterController::class, 'store'])->name('voters.store');
+Route::post('/upload-voters', [VoterController::class, 'uploadVoters']);
 Route::post('/voters/status/activate/{id}', [VoterStatusController::class, 'activate']);
 Route::post('/voters/status/activate-all', [VoterStatusController::class, 'activateAll']);
 
