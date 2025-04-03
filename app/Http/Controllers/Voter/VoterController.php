@@ -4,8 +4,11 @@
 
     use App\Http\Controllers\Controller;
     use App\Models\Voter;
+    use App\Imports\VoterImport;
     use App\Models\VoterStatus;
     use Illuminate\Http\Request;
+    use Maatwebsite\Excel\Facades\Excel;
+    use Illuminate\Support\Facades\Log;
     use Illuminate\Support\Facades\Hash;
 
     use Inertia\Inertia;
@@ -90,6 +93,65 @@
      */
     public function destroy(string $id)
     {
-        //
+        $voter = Voter::find($id);
+
+        if (!$voter) {
+            return response()->json(['error' => 'Voter not found'], 404);
+        }
+
+        $voter->delete();
+
+        return response()->json(['message' => 'Voter deleted successfully'], 200);
     }
+
+    public function uploadVoters(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|mimes:xlsx,xls,csv',
+            ]);
+    
+            $import = new VoterImport();
+            Excel::import($import, $request->file('file'));
+    
+            $importedCount = $import->getRowCount();
+    
+            return response()->json([
+                'message' => 'Voters imported successfully!',
+                'imported_count' => $importedCount,
+            ], 200);
+    
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error during import: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Database error. Some records might already exist or data is invalid.',
+                'error' => $e->getMessage(),
+            ], 422);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $errors = collect($failures)->map(function($failure) {
+                return [
+                    'row' => $failure->row(),
+                    'attribute' => $failure->attribute(),
+                    'errors' => $failure->errors(),
+                    'values' => $failure->values(),
+                ];
+            });
+            
+            Log::error('Validation errors during import: ', ['errors' => $errors->toArray()]);
+            
+            return response()->json([
+                'message' => 'Validation failed for some rows.',
+                'errors' => $errors,
+                'error_count' => count($failures),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error during user import: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to import voters. Please check the file format and try again.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
