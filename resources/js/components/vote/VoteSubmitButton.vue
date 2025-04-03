@@ -9,11 +9,23 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps<{
   isVoting: boolean
   allPositionsSelected: boolean
+  selectedCandidates: { [positionId: number]: number }
+  elections: Array<{
+    id: number;
+    name: string;
+    candidates: Array<{
+      id: number;
+      candidate_name: string;
+      candidate_picture: string;
+      position: { id: number; name: string } | null;
+    }>;
+  }>
+  selectedElection: number | null
 }>()
 
 const emit = defineEmits(['vote'])
@@ -29,9 +41,26 @@ const confirmVote = () => {
   if (isConfirmed.value) {
     emit('vote')
     isDialogOpen.value = false
-    isConfirmed.value = false // Reset for next time
+    isConfirmed.value = false
   }
 }
+
+// Get selected candidates with their details
+const selectedCandidatesDetails = computed(() => {
+  if (!props.selectedElection) return []
+  
+  const election = props.elections.find(e => e.id === props.selectedElection)
+  if (!election) return []
+  
+  return Object.entries(props.selectedCandidates).map(([positionId, candidateId]) => {
+    const candidate = election.candidates.find(c => c.id === candidateId && c.position?.id === parseInt(positionId))
+    return {
+      positionName: candidate?.position?.name || 'Unknown Position',
+      candidateName: candidate?.candidate_name || 'Unknown Candidate',
+      candidatePicture: candidate?.candidate_picture || null
+    }
+  })
+})
 </script>
 
 <template>
@@ -61,6 +90,26 @@ const confirmVote = () => {
               Please review your selections carefully. Votes cannot be changed after submission.
             </DialogDescription>
           </DialogHeader>
+
+          <div class="space-y-4 py-4">
+            <div v-if="selectedElection">
+              <h3 class="font-semibold mb-2">
+                {{ elections.find(e => e.id === selectedElection)?.name }}
+              </h3>
+              
+              <div v-for="(candidate, index) in selectedCandidatesDetails" :key="index" class="mb-4">
+                <p class="font-medium">{{ candidate.positionName }}:</p>
+                <div class="flex items-center mt-2">
+                  <img 
+                    v-if="candidate.candidatePicture" 
+                    :src="`/storage/${candidate.candidatePicture}`" 
+                    class="w-12 h-12 rounded-full object-cover mr-3"
+                  >
+                  <span>{{ candidate.candidateName }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div class="flex items-center space-x-2 py-4">
             <Checkbox id="terms" v-model:checked="isConfirmed" />

@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+use App\Http\Controllers\Auth\VoterAuthController;
+
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\Voter\VoterController;
 use App\Http\Controllers\Candidate\CandidateController;
@@ -18,6 +20,16 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+
+// Voter Login & Logout Routes
+Route::get('/voter/login', [VoterAuthController::class, 'showLoginForm'])->name('voter.login');
+Route::post('/voter/login', [VoterAuthController::class, 'login']);
+Route::post('/voter/logout', [VoterAuthController::class, 'logout'])->name('voter.logout');
+
+// Voting page (restricted to logged-in voters)
+Route::middleware('auth:voter')->group(function () {
+    Route::get('/vote', [VoteController::class, 'index'])->name('vote.index');
+});
 // Dashboard Routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -56,6 +68,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Vote Routes
 Route::get('/vote', [VoteController::class, 'index'])->name('vote.index');
+Route::get('/voting', [VoteController::class, 'votingPage'])->name('vote.voting');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
