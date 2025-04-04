@@ -110,45 +110,30 @@
             $request->validate([
                 'file' => 'required|mimes:xlsx,xls,csv',
             ]);
-    
-            $import = new VoterImport();
-            Excel::import($import, $request->file('file'));
-    
-            $importedCount = $import->getRowCount();
-    
-            return response()->json([
-                'message' => 'Voters imported successfully!',
-                'imported_count' => $importedCount,
-            ], 200);
-    
+
+            Excel::import(new VoterImport, $request->file('file'));
+
+            return response()->json(['message' => 'Voters uploaded successfully!'], 200);
         } catch (\Illuminate\Database\QueryException $e) {
-            Log::error('Database error during import: ' . $e->getMessage());
+            // Handle database errors (e.g., duplicate entry)
+            \Log::error('Database error: ' . $e->getMessage());
+
             return response()->json([
-                'message' => 'Database error. Some records might already exist or data is invalid.',
+                'message' => 'Duplicate entry found! Some records already exist.',
                 'error' => $e->getMessage(),
             ], 422);
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            // Handle validation errors inside Excel import
             $failures = $e->failures();
-            $errors = collect($failures)->map(function($failure) {
-                return [
-                    'row' => $failure->row(),
-                    'attribute' => $failure->attribute(),
-                    'errors' => $failure->errors(),
-                    'values' => $failure->values(),
-                ];
-            });
-            
-            Log::error('Validation errors during import: ', ['errors' => $errors->toArray()]);
-            
             return response()->json([
-                'message' => 'Validation failed for some rows.',
-                'errors' => $errors,
-                'error_count' => count($failures),
+                'message' => 'Some rows failed validation.',
+                'errors' => $failures
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error during user import: ' . $e->getMessage());
+            \Log::error('Error uploading voters: ' . $e->getMessage());
+
             return response()->json([
-                'message' => 'Failed to import voters. Please check the file format and try again.',
+                'message' => 'Failed to upload file. Please check the format and data integrity.',
                 'error' => $e->getMessage()
             ], 500);
         }
