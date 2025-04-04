@@ -53,9 +53,7 @@ const navigateToActivationPage = () => {
 const fileInput = ref<HTMLInputElement | null>(null);
 const toast = useToast();
 const loading = ref(false);
-const isUploading = ref(false);
-const uploadProgress = ref(0);
-const uploadStatus = ref("Preparing upload...");
+
 
 const triggerFileInput = () => {
   fileInput.value?.click();
@@ -65,52 +63,40 @@ const handleFileUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
 
-  if (!file) return;
+  if (file) {
+    const formData = new FormData();
+    formData.append("file", file);
 
-  loading.value = true;
-  isUploading.value = true;
-  uploadProgress.value = 0;
-  uploadStatus.value = "Uploading file...";
+    try {
+      const response = await axios.post("/api/upload-voters", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-  const formData = new FormData();
-  formData.append("file", file);
+      toast.success(response.data.message);
+      setTimeout(() => location.reload(), 2000); // Reload to reflect changes
+    } catch (err: unknown) {
+      const error = err as AxiosError;
+      if (error.response && error.response.data) {
+        const status: number = error.response.status;
+        const errorMessage: string = (error.response.data as any).message || "An error occurred.";
 
-  try {
-    const response = await axios.post("/api/upload-voters", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          uploadProgress.value = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
+        if (status === 422) {
+          toast.error(`Validation Error: ${errorMessage}`);
+        } else if (status === 500) {
+          toast.error("Server Error: Please check your file data.");
+        } else {
+          toast.error(errorMessage);
         }
-      },
-    });
-
-    uploadStatus.value = "Processing data...";
-    uploadProgress.value = 100;
-
-    toast.success(response.data.message || "Voters imported successfully!");
-    
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-  } catch (err: unknown) {
-    const error = err as AxiosError;
-    
-    if (error.response?.data) {
-      const responseData = error.response.data as any;
-      toast.error(responseData.message || "An error occurred during upload");
-    } else {
-      toast.error("Network error. Please check your connection and try again");
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      loading.value = false;
     }
-  } finally {
-    loading.value = false;
-    isUploading.value = false;
-    if (fileInput.value) fileInput.value.value = "";
   }
+ 
 };
 
 </script>
@@ -122,24 +108,22 @@ const handleFileUpload = async (event: Event) => {
     <div class="flex flex-col gap-4 p-4">
     <div class="flex justify-end gap-2">
       <!-- Upload Excel Button -->
-      <div class="relative">
-            <input
-              type="file"
-              ref="fileInput"
-              accept=".xlsx, .xls, .csv"
-              class="hidden"
-              @change="handleFileUpload"
-            />
-            <Button
-              @click="triggerFileInput"
-              :disabled="loading"
-              variant="outline" 
-            >
-              <Upload class="w-4 h-4 mr-2" />
-              <span v-if="loading">Uploading...</span>
-              <span v-else>Upload Excel</span>
-            </Button>
-          </div>
+      <input
+            type="file"
+            ref="fileInput"
+            accept=".xlsx, .xls"
+            class="hidden"
+            @change="handleFileUpload"
+          />
+          <Button
+            @click="triggerFileInput"
+            :disabled="loading"
+            variant="outline" 
+          >
+            <Upload class="w-4 h-4 mr-2" />
+            <span v-if="loading">Uploading...</span>
+            <span v-else>Upload Excel</span>
+          </Button>
         <Button 
             variant="outline" 
             @click="navigateToActivationPage"
@@ -156,23 +140,5 @@ const handleFileUpload = async (event: Event) => {
             <VotersTable :voters="voters" />
         </div>
     </div>
-
-    <!-- Upload Progress Modal -->
-    <Dialog :open="isUploading">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Uploading Users</DialogTitle>
-          <DialogDescription>
-            Please wait while we process your Excel file...
-          </DialogDescription>
-        </DialogHeader>
-        <div class="py-4">
-          <Progress :value="uploadProgress" class="h-2" />
-          <div class="mt-2 text-sm text-muted-foreground text-center">
-            {{ uploadStatus }}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
 </AppLayout>
 </template>
