@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3'; // Import router from Inertia
@@ -11,14 +11,8 @@ import { Upload } from "lucide-vue-next";
 import axios from "axios";
 import type { AxiosError } from "axios";
 import { useToast } from "vue-toastification";
-import { Progress } from '@/components/ui/progress';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Search } from "lucide-vue-next";
+import { Input } from '@/components/ui/input'
 
 interface Voter {
   id: number;
@@ -53,6 +47,24 @@ const navigateToActivationPage = () => {
 const fileInput = ref<HTMLInputElement | null>(null);
 const toast = useToast();
 const loading = ref(false);
+const searchQuery = ref(""); // Search query
+
+// Filtered Voters
+const filteredVoters = computed(() => {
+  if (!searchQuery.value) {
+    return props.voters; // Return all voters if no search query
+  }
+
+  const query = searchQuery.value.toLowerCase();
+  return props.voters.filter(
+    (voter) =>
+      voter.student_number.toLowerCase().includes(query) ||
+      voter.full_name.toLowerCase().includes(query) ||
+      voter.student_year.toLowerCase().includes(query) ||
+      voter.class_type.toLowerCase().includes(query) ||
+      voter.sex.toLowerCase().includes(query)
+  );
+});
 
 
 const triggerFileInput = () => {
@@ -107,6 +119,16 @@ const handleFileUpload = async (event: Event) => {
 <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4">
     <div class="flex justify-end gap-2">
+       <!-- Search Input -->
+       <div class="relative w-full max-w-xs">
+          <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search voters..."
+            class="w-full pl-9 h-9"
+          />
+        </div>
       <!-- Upload Excel Button -->
       <input
             type="file"
@@ -137,7 +159,7 @@ const handleFileUpload = async (event: Event) => {
     </div>
     
         <div class="rounded-xl border">
-            <VotersTable :voters="voters" />
+            <VotersTable :voters="filteredVoters" />
         </div>
     </div>
 </AppLayout>
