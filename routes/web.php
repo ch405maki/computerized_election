@@ -61,10 +61,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Report Routes
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/reports/result', [ReportController::class, 'index'])->name('candidates.index');
+    Route::get('/reports/results', [ReportController::class, 'index'])->name('results.index');
 
     Route::get('/reports/log', [ReportController::class, 'index'])->name('positions.index');
 });
+
+// Results Route
+Route::get('/results/{election}', [ReportController::class, 'show'])
+    ->name('results.show');
 
 // Vote Routes
 Route::get('/vote', [VoteController::class, 'index'])->name('vote.index');
