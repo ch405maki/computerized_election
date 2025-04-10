@@ -118,6 +118,13 @@ class VoteController extends Controller
             // Update voter status
             $voterStatus->update(['voted' => true]);
 
+            // Log the voting action
+            Log::create([
+                'voter_id' => $voterId,
+                'action' => 'Voted in election: ' . $election->name,
+                'timestamp' => now(),
+            ]);
+
             DB::commit();
 
             return response()->json([
@@ -128,6 +135,15 @@ class VoteController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // Log the failed attempt
+            Log::create([
+                'voter_id' => $validated['voter_id'] ?? null,
+                'action' => 'Vote Failed',
+                'timestamp' => now(),
+                'notes' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

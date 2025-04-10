@@ -9,7 +9,7 @@ class Log extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'voter_id', 'action', 'timestamp'];
+    protected $fillable = ['user_id', 'voter_id', 'action'];
 
     // Relationship: Log may belong to a User
     public function user()
