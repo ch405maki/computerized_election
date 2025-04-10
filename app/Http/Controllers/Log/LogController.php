@@ -4,6 +4,11 @@ namespace App\Http\Controllers\Log;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+use App\Models\Log;
+use App\Models\User;
+use App\Models\Voter;
 
 class LogController extends Controller
 {
@@ -12,7 +17,19 @@ class LogController extends Controller
      */
     public function index()
     {
-        //
+        $logs = Log::with(['user:id,name', 'voter:id,full_name'])->latest()->get();
+        
+        return Inertia::render('Reports/Logs/Index', [
+            'logs' => $logs->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                    'user_name' => $log->user?->name,
+                    'voter_name' => $log->voter?->full_name,
+                ];
+            })
+        ]);
     }
 
     /**

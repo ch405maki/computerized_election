@@ -24,9 +24,6 @@ const toast = useToast();
 
 // Local copy of voters for reactivity
 const localVoters = ref<Voter[]>([...props.voters]);
-
-
-
 </script>
 
 <template>
