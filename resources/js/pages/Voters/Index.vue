@@ -120,37 +120,37 @@ const handleFileUpload = async (event: Event) => {
 
 <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4">
-    <div class="flex justify-end gap-2">
-      <!-- Upload Excel Button -->
-      <div class="relative">
-            <input
-              type="file"
-              ref="fileInput"
-              accept=".xlsx, .xls, .csv"
-              class="hidden"
-              @change="handleFileUpload"
-            />
-            <Button
-              @click="triggerFileInput"
-              :disabled="loading"
+      <div class="flex justify-end gap-2">
+        <!-- Upload Excel Button -->
+        <div class="relative">
+              <input
+                type="file"
+                ref="fileInput"
+                accept=".xlsx, .xls, .csv"
+                class="hidden"
+                @change="handleFileUpload"
+              />
+              <Button
+                @click="triggerFileInput"
+                :disabled="loading"
+                variant="outline" 
+              >
+                <Upload class="w-4 h-4 mr-2" />
+                <span v-if="loading">Uploading...</span>
+                <span v-else>Upload Excel</span>
+              </Button>
+            </div>
+          <Button 
               variant="outline" 
-            >
-              <Upload class="w-4 h-4 mr-2" />
-              <span v-if="loading">Uploading...</span>
-              <span v-else>Upload Excel</span>
-            </Button>
-          </div>
-        <Button 
-            variant="outline" 
-            @click="navigateToActivationPage"
-            :disabled="voters.length === 0"
-        >
-            <KeyRound />
-            Activation
-        </Button>
-        
-        <VoterRegistrationDialog />
-    </div>
+              @click="navigateToActivationPage"
+              :disabled="voters.length === 0"
+          >
+              <KeyRound />
+              Activation
+          </Button>
+          
+          <VoterRegistrationDialog />
+      </div>
     
         <div class="rounded-xl border">
             <VotersTable :voters="voters" />
