@@ -17,35 +17,55 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'History', href: '/results' },
+  { title: 'Results History', href: '/results' },
 ];
 </script>
 
 <template>
-  <Head title="Results" />
+  <Head title="Election Results" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4">
+      <h1 class="text-2xl font-bold">Election Results</h1>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Election Name</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Election Period</TableHead>
             <TableHead class="text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-for="election in elections" :key="election.id">
             <TableCell class="font-medium">{{ election.name }}</TableCell>
+            <TableCell>
+              <span :class="{
+                'text-green-600': election.status === 'completed',
+                'text-blue-600': election.status === 'active',
+                'text-gray-600': election.status === 'upcoming'
+              }">
+                {{ election.status.charAt(0).toUpperCase() + election.status.slice(1) }}
+              </span>
+            </TableCell>
+            <TableCell>
+              {{ new Date(election.start_date).toLocaleDateString() }} - 
+              {{ new Date(election.end_date).toLocaleDateString() }}
+            </TableCell>
             <TableCell class="text-right">
               <Link 
+                v-if="election.status === 'completed'"
                 :href="route('results.show', election.id)"
                 class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
               >
                 View Results
               </Link>
+              <span v-else class="text-gray-500">
+                Results unavailable
+              </span>
             </TableCell>
           </TableRow>
           <TableRow v-if="elections.length === 0">
-            <TableCell colspan="2" class="text-center py-4 text-muted-foreground">
+            <TableCell colspan="4" class="text-center py-4 text-muted-foreground">
               No elections found
             </TableCell>
           </TableRow>
