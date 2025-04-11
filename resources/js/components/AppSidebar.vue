@@ -85,7 +85,7 @@
         icon: FileBox,
         isOpen: false,
         children: [
-        { title: 'Result', href: '/reports/result', icon: Package2 },
+        { title: 'Results', href: '/reports/results', icon: Package2 },
         { title: 'Log', href: '/reports/log', icon: Logs },
         ],
     },
