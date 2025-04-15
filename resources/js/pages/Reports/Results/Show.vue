@@ -7,16 +7,10 @@ import { computed } from 'vue';
 
 interface CandidateResult {
   id: number;
-  name: string;
-  party: string | null;
-  photo: string | null;
-  votes_count: number;
-}
-
-interface PositionResult {
-  id: number;
-  name: string;
-  candidates: CandidateResult[];
+  candidate_name: string;
+  candidate_party: string | null;
+  candidate_picture: string | null;
+  votes: number;
 }
 
 const props = defineProps<{
@@ -26,7 +20,7 @@ const props = defineProps<{
     start_date: string;
     end_date: string;
   } | null;
-  positions?: PositionResult[];
+  positions?: Record<string, CandidateResult[]>; // Updated here
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
@@ -40,22 +34,10 @@ const getCandidateImage = (picturePath: string | null) => {
     : '/images/default-candidate.png';
 };
 
-const resultsByPosition = computed(() => {
-  if (!props.positions || !Array.isArray(props.positions)) {
-    return {};
-  }
-
-  const groups: Record<string, CandidateResult[]> = {};
-  
-  props.positions.forEach(position => {
-    if (position?.name && Array.isArray(position.candidates)) {
-      groups[position.name] = [...position.candidates]
-        .sort((a, b) => b.votes_count - a.votes_count);
-    }
-  });
-
-  return groups;
-});
+const exportToExcel = () => {
+  const exportUrl = route('results.export', props.election?.id);
+  window.open(exportUrl, '_blank');
+};
 </script>
 
 <template>
@@ -71,6 +53,12 @@ const resultsByPosition = computed(() => {
             {{ new Date(election.end_date).toLocaleDateString() }}
           </p>
         </div>
+        <button 
+          @click="exportToExcel"
+          class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded"
+        >
+          Export to Excel
+        </button>
       </div>
 
       <!-- Loading state -->
@@ -80,9 +68,9 @@ const resultsByPosition = computed(() => {
 
       <!-- Results display -->
       <div v-else class="space-y-8">
-        <template v-if="Object.keys(resultsByPosition).length > 0">
-          <div v-for="(candidates, position) in resultsByPosition" :key="position" class="rounded-lg shadow">
-            <h3 class="text-lg font-semibold px-6 pt-6 pb-2">{{ position }}</h3>
+        <template v-if="Object.keys(positions).length > 0">
+          <div v-for="(candidates, positionName) in positions" :key="positionName" class="rounded-lg shadow">
+            <h3 class="text-lg font-semibold px-6 pt-6 pb-2">{{ positionName }}</h3>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -93,23 +81,18 @@ const resultsByPosition = computed(() => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow v-for="(candidate, index) in candidates" :key="candidate.id">
+                <TableRow v-for="(candidate, index) in [...candidates].sort((a, b) => b.votes - a.votes)" :key="candidate.id">
                   <TableCell>{{ index + 1 }}</TableCell>
                   <TableCell>
                     <div class="flex items-center gap-3">
-                      <img 
-                        :src="getCandidateImage(candidate.photo)" 
-                        :alt="`${candidate.name}'s photo`"
-                        class="w-8 h-8 rounded-full object-cover"
-                      >
-                      {{ candidate.name }}
+                      {{ candidate.candidate_name }}
                     </div>
                   </TableCell>
                   <TableCell>
-                    {{ candidate.party || 'Independent' }}
+                    {{ candidate.candidate_party }}
                   </TableCell>
                   <TableCell class="text-right">
-                    {{ candidate.votes_count }}
+                    {{ candidate.votes }}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -117,7 +100,7 @@ const resultsByPosition = computed(() => {
           </div>
         </template>
         <div v-else class="text-center py-8 text-muted-foreground">
-          No results available for this election
+          No results available for this election.
         </div>
       </div>
     </div>

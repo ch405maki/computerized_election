@@ -67,8 +67,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Results Route
-Route::get('/results/{election}', [ReportController::class, 'show'])
-    ->name('results.show');
+Route::get('/results/{election}', [ReportController::class, 'show'])->name('results.show');
+Route::get('/results/{election}/export', [ReportController::class, 'export'])->name('results.export');
+
 
 // Vote Routes
 Route::get('/vote', [VoteController::class, 'index'])->name('vote.index');
