@@ -154,10 +154,22 @@ class VoteController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
-    {
-        //
-    }
+    public function show(Election $election)
+        {
+            // Load election with votes and their related candidate info
+            $election->load(['votes.candidate', 'votes.voter']);
+            
+            // Get candidates with their vote counts
+            $candidates = Candidate::where('election_id', $election->id)
+                ->withCount('votes')
+                ->get();
+            
+            return inertia('Reports/Results/Show', [
+                'election' => $election,
+                'votes' => $election->votes,
+                'candidates' => $candidates // Add candidates data
+            ]);
+        }
 
     /**
      * Show the form for editing the specified resource.

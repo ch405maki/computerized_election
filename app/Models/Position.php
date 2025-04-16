@@ -16,4 +16,10 @@ class Position extends Model
     {
         return $this->hasMany(Candidate::class, 'position_id');
     }
+
+    public function election()
+    {
+        return $this->belongsTo(Election::class);
+    }
+
 }
