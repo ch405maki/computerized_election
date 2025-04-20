@@ -17,17 +17,18 @@ class ElectionResultsExport implements FromCollection, WithHeadings
 
     public function collection()
     {
-        return Candidate::where('election_id', $this->election->id)
-            ->with('position')
-            ->get()
-            ->map(function ($candidate) {
-                return [
-                    'Position' => $candidate->position->name,
-                    'Candidate Name' => $candidate->candidate_name,
-                    'Party' => $candidate->candidate_party ?? 'Independent',
-                    'Votes' => $candidate->votes()->count(), // assuming a votes() relationship
-                ];
-            });
+        return Candidate::with('position')
+        ->withCount('votes')
+        ->where('election_id', $this->election->id)
+        ->get()
+        ->map(function ($candidate) {
+            return [
+                'Position' => $candidate->position->name,
+                'Candidate Name' => $candidate->candidate_name,
+                'Party' => $candidate->candidate_party ?? 'Independent',
+                'Votes' => $candidate->votes_count ?? 0,
+            ];
+        });
     }
 
     public function headings(): array
