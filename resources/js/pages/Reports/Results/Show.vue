@@ -3,6 +3,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
+import { Sheet } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface CandidateResult {
@@ -53,12 +55,14 @@ const exportToExcel = () => {
             {{ new Date(election.end_date).toLocaleDateString() }}
           </p>
         </div>
-        <button 
+        <Button 
           @click="exportToExcel"
-          class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded"
+          variant="outline" 
+          
         >
-          Export to Excel
-        </button>
+        <Sheet class ="w-4 h-4 mr-2"/>
+          <span>Export to Excel</span>
+      </Button>
       </div>
 
       <!-- Loading state -->

@@ -12,7 +12,7 @@ use Inertia\Inertia;
 class ReportController extends Controller
 {
     public function index()
-    {   
+    {
         $elections = Election::withCount('votes')
             ->latest()
             ->get()
@@ -34,13 +34,33 @@ class ReportController extends Controller
 
     public function show(Election $election)
     {
-        $positions = Candidate::where('election_id', $election->id)
-        ->with('position')
-        ->get()
-        ->groupBy(fn($candidate) => $candidate->position->name);
+        // Get candidates with their position and vote count
+        $candidates = Candidate::where('election_id', $election->id)
+            ->with('position')
+            ->withCount('votes')
+            ->get();
 
-        return inertia('Reports/Results/Show', [
-            'election' => $election,
+        // Group by position name and format the output
+        $positions = $candidates->groupBy(fn($candidate) => $candidate->position->name)
+            ->map(function ($group) {
+                return $group->map(function ($candidate) {
+                    return [
+                        'id' => $candidate->id,
+                        'candidate_name' => $candidate->candidate_name,
+                        'candidate_party' => $candidate->candidate_party,
+                        'candidate_picture' => $candidate->candidate_picture,
+                        'votes' => $candidate->votes_count,
+                    ];
+                });
+            });
+
+        return Inertia::render('Reports/Results/Show', [
+            'election' => [
+                'id' => $election->id,
+                'name' => $election->name,
+                'start_date' => $election->start_date->format('Y-m-d'),
+                'end_date' => $election->end_date->format('Y-m-d'),
+            ],
             'positions' => $positions,
         ]);
     }
