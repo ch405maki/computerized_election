@@ -78,7 +78,7 @@ const formattedDate = (dateString: string) => {
       <div v-else class="space-y-8 rounded-xl border">
         <template v-if="Object.keys(positions).length > 0">
           <div v-for="(candidates, positionName) in positions" :key="positionName" class="rounded-lg shadow">
-            <h3 class="text-lg font-semibold px-3.5 pt-6 pb-2">{{ positionName }}</h3>
+            <h3 class="text-lg font-semibold px-3.5  p-2">{{ positionName }}</h3>
             <Table>
               <TableHeader>
                 <TableRow>
