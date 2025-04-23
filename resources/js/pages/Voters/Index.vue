@@ -118,7 +118,7 @@ const handleFileUpload = async (event: Event) => {
 
 <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4">
-    <div class="flex justify-end gap-2">
+    <div class="flex justify-between gap-2">
        <!-- Search Input -->
        <div class="relative w-full max-w-xs">
           <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -129,33 +129,35 @@ const handleFileUpload = async (event: Event) => {
             class="w-full pl-9 h-9"
           />
         </div>
-      <!-- Upload Excel Button -->
-      <input
-            type="file"
-            ref="fileInput"
-            accept=".xlsx, .xls"
-            class="hidden"
-            @change="handleFileUpload"
-          />
-          <Button
-            @click="triggerFileInput"
-            :disabled="loading"
-            variant="outline" 
-          >
-            <Upload class="w-4 h-4 mr-2" />
-            <span v-if="loading">Uploading...</span>
-            <span v-else>Upload Excel</span>
-          </Button>
-        <Button 
-            variant="outline" 
-            @click="navigateToActivationPage"
-            :disabled="voters.length === 0"
-        >
-            <KeyRound />
-            Activation
-        </Button>
-        
-        <VoterRegistrationDialog />
+        <div class="space-x-2 flex items-center">
+          <!-- Upload Excel Button -->
+          <input
+                type="file"
+                ref="fileInput"
+                accept=".xlsx, .xls"
+                class="hidden"
+                @change="handleFileUpload"
+              />
+              <Button
+                @click="triggerFileInput"
+                :disabled="loading"
+                variant="outline" 
+              >
+                <Upload class="w-4 h-4 mr-2" />
+                <span v-if="loading">Uploading...</span>
+                <span v-else>Upload Excel</span>
+              </Button>
+            <Button 
+                variant="outline" 
+                @click="navigateToActivationPage"
+                :disabled="voters.length === 0"
+            >
+                <KeyRound />
+                Activation
+            </Button>
+            
+            <VoterRegistrationDialog />
+        </div>
     </div>
     
         <div class="rounded-xl border">

@@ -30,16 +30,20 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
   { title: props.election?.name || 'Election Results', href: route('results.show', props.election?.id) },
 ]);
 
-const getCandidateImage = (picturePath: string | null) => {
-  return picturePath 
-    ? `/storage/${picturePath}`
-    : '/images/default-candidate.png';
-};
-
 const exportToExcel = () => {
   const exportUrl = route('results.export', props.election?.id);
   window.open(exportUrl, '_blank');
 };
+
+const formattedDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 </script>
 
 <template>
@@ -51,8 +55,8 @@ const exportToExcel = () => {
           <h1 class="text-2xl font-bold">Election Results</h1>
           <h2 class="text-xl text-gray-600">{{ election?.name || 'Loading...' }}</h2>
           <p v-if="election" class="text-gray-500">
-            {{ new Date(election.start_date).toLocaleDateString() }} - 
-            {{ new Date(election.end_date).toLocaleDateString() }}
+            {{ formattedDate(election.start_date) }} - 
+            {{ formattedDate(election.end_date) }}
           </p>
         </div>
         <Button 
@@ -71,10 +75,10 @@ const exportToExcel = () => {
       </div>
 
       <!-- Results display -->
-      <div v-else class="space-y-8">
+      <div v-else class="space-y-8 rounded-xl border">
         <template v-if="Object.keys(positions).length > 0">
           <div v-for="(candidates, positionName) in positions" :key="positionName" class="rounded-lg shadow">
-            <h3 class="text-lg font-semibold px-6 pt-6 pb-2">{{ positionName }}</h3>
+            <h3 class="text-lg font-semibold px-3.5  p-2">{{ positionName }}</h3>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -86,7 +90,7 @@ const exportToExcel = () => {
               </TableHeader>
               <TableBody>
                 <TableRow v-for="(candidate, index) in [...candidates].sort((a, b) => b.votes - a.votes)" :key="candidate.id">
-                  <TableCell>{{ index + 1 }}</TableCell>
+                  <TableCell class="px-7">{{ index + 1 }}</TableCell>
                   <TableCell>
                     <div class="flex items-center gap-3">
                       {{ candidate.candidate_name }}
