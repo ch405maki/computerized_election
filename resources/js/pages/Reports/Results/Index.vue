@@ -19,6 +19,16 @@ const props = defineProps<{
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Results History', href: '/results' },
 ];
+
+const formattedDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 </script>
 
 <template>
@@ -48,8 +58,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               </span>
             </TableCell>
             <TableCell>
-              {{ new Date(election.start_date).toLocaleDateString() }} - 
-              {{ new Date(election.end_date).toLocaleDateString() }}
+              {{ formattedDate(election.start_date) }} - 
+              {{ formattedDate(election.end_date) }}
             </TableCell>
             <TableCell class="text-right">
               <Link 
