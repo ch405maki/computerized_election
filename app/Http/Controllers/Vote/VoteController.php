@@ -129,7 +129,7 @@ class VoteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Votes submitted successfully!',
+                'message' => 'Thank you! Your votes have been casted!',
                 'data' => $votes
             ]);
 
