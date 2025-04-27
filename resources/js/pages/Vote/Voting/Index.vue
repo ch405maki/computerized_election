@@ -118,9 +118,9 @@ const vote = async () => {
         position: "top-center",
       });
 
-
+      //Using the Logout Route to clear session
       setTimeout(() => {
-        router.visit('/');
+        router.post(route('voter.logout'));
       }, 2000);
       
     } else {
