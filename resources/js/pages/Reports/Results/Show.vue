@@ -26,7 +26,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Results History', href: '/results' },
+  { title: 'Results History', href: '/reports/results' },
   { title: props.election?.name || 'Election Results', href: route('results.show', props.election?.id) },
 ]);
 
