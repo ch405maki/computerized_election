@@ -5,8 +5,9 @@ namespace App\Exports;
 use App\Models\Candidate;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class ElectionResultsExport implements FromCollection, WithHeadings
+class ElectionResultsExport implements FromCollection, WithHeadings, WithStrictNullComparison
 {
     protected $election;
 
