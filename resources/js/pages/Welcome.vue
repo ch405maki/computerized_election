@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, Head, Link  } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,11 +19,11 @@ const submit = () => {
     onError: () => toast.error("Invalid credentials."),
   });
 };
-
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900 p-6">
+  <Head title="Election Login" />
+  <div class="flex min-h-screen items-center justify-center dark:bg-zinc-950 bg-white p-6">
     <Card class="w-full max-w-sm">
       <CardHeader>
         <CardTitle class="text-center">Voter Login</CardTitle>
@@ -41,9 +41,6 @@ const submit = () => {
           <Button type="submit" class="w-full" :disabled="form.processing">Login</Button>
         </form>
       </CardContent>
-      <CardFooter class="text-center">
-        <p class="text-sm">Don't have an account? <a :href="route('register')" class="text-blue-500">Register</a></p>
-      </CardFooter>
     </Card>
   </div>
 </template>

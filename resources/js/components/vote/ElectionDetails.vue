@@ -55,13 +55,11 @@ const prevPosition = () => {
     :key="election.id" 
     class="border rounded-lg p-4"
   >
-    <h2 class="text-lg font-semibold">{{ election.name }}</h2>
-
-    <div class="space-y-4 mt-4">
+    <div class="space-y-4">
       <template v-for="(group, positionId, index) in groupByPosition(election.candidates)" :key="positionId">
         <div 
-          v-if="index === activePositionIndex"
-          class="border-b pb-4"
+          v-if="index === activePositionIndex"  
+          class="pb-4"
         >
           <h3 class="font-semibold">{{ group.positionName }}</h3>
           <p v-if="!selectedCandidates[positionId]" class="text-sm text-red-500">
