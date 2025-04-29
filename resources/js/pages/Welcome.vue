@@ -26,8 +26,9 @@ const submit = () => {
 <template>
   <Head title="Election Login" />
   <WelcomeHeader/>
-  <div class="flex min-h-screen items-center justify-center dark:bg-zinc-950 bg-bg-img p-6">
-    <Card class="w-full max-w-sm bg-transparent border-2 border-purple-900">
+  <div class="px-8 bg-bg-img">
+  <div class="flex min-h-screen items-center justify-center dark:bg-zinc-950 p-6">
+    <Card class="w-full max-w-sm text-purple-900 bg-transparent border-2 border-purple-900">
       <CardHeader>
         <CardTitle class="text-center">Voter Login</CardTitle>
       </CardHeader>
@@ -45,6 +46,8 @@ const submit = () => {
         </form>
       </CardContent>
     </Card>
-    <WelcomeFooter/>
   </div>
+  <WelcomeFooter/>
+  </div>
+  
 </template>
