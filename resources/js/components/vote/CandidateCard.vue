@@ -4,6 +4,7 @@ defineProps<{
     id: number;
     candidate_name: string;
     candidate_picture: string;
+    candidate_party: string;
   };
   isSelected: boolean;
 }>();
@@ -24,5 +25,6 @@ defineProps<{
       class="w-20 h-20 rounded-full mx-auto object-cover border"
     />
     <p class="text-center mt-2">{{ candidate.candidate_name }}</p>
+    <p class="text-center mt-2">{{ candidate.candidate_party }}</p>
   </div>
 </template>

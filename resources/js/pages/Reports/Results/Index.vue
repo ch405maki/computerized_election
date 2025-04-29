@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import { ScrollText } from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3'
+
+function viewResults(id: number | string) {
+  router.visit(route('results.show', id))
+}
 
 interface Election {
   id: number;
@@ -64,14 +70,14 @@ const formattedDate = (dateString: string) => {
               {{ formattedDate(election.end_date) }}
             </TableCell>
             <TableCell class="text-right">
-              <Link 
+              <Button 
                 v-if="election.status === 'completed'"
-                :href="route('results.show', election.id)"
-                class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                @click="viewResults(election.id)"
+                class="inline-flex items-center px-4 py-2 bg-zinc-800 text-white rounded hover:bg-zinc-700 transition-colors"
               >
-                <ScrollText class="mr-2" />
+                <ScrollText />
                 View Results
-              </Link>
+              </Button>
               <span v-else class="text-gray-500">
                 Results unavailable
               </span>

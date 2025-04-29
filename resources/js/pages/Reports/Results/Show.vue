@@ -26,7 +26,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Results History', href: '/results' },
+  { title: 'Results History', href: '/reports/results' },
   { title: props.election?.name || 'Election Results', href: route('results.show', props.election?.id) },
 ]);
 
@@ -52,9 +52,9 @@ const formattedDate = (dateString: string) => {
     <div class="p-4 space-y-8">
       <div class="flex justify-between items-start">
         <div>
-          <h1 class="text-2xl font-bold">Election Results</h1>
-          <h2 class="text-xl text-gray-600">{{ election?.name || 'Loading...' }}</h2>
-          <p v-if="election" class="text-gray-500">
+          <h1 class="text-2xl font-bold mb-2">Election Results</h1>
+          <h2 class="text-xl">{{ election?.name || 'Loading...' }}</h2>
+          <p v-if="election">
             {{ formattedDate(election.start_date) }} - 
             {{ formattedDate(election.end_date) }}
           </p>
@@ -75,9 +75,9 @@ const formattedDate = (dateString: string) => {
       </div>
 
       <!-- Results display -->
-      <div v-else class="space-y-8 rounded-xl border">
+      <div v-else class="space-y-8 rounded-xl">
         <template v-if="Object.keys(positions).length > 0">
-          <div v-for="(candidates, positionName) in positions" :key="positionName" class="rounded-lg shadow">
+          <div v-for="(candidates, positionName) in positions" :key="positionName" class="rounded-lg border shadow">
             <h3 class="text-lg font-semibold px-3.5  p-2">{{ positionName }}</h3>
             <Table>
               <TableHeader>
