@@ -97,7 +97,7 @@ const formattedDate = (dateString: string) => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {{ candidate.candidate_party }}
+                    {{ candidate.candidate_party || 'Independent' }}
                   </TableCell>
                   <TableCell class="text-right">
                     {{ candidate.votes }}

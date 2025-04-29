@@ -58,7 +58,7 @@ defineProps<{
                     <span>{{ index + 1 }}. {{ candidate.name }}</span>
                     </div>
                 </TableCell>
-                <TableCell class="font-medium">{{ candidate.party }}</TableCell>
+                <TableCell class="font-medium">{{ candidate.party || 'Independent'}}</TableCell>
                 <TableCell class="text-right">{{ candidate.votes }}</TableCell>
                 </TableRow>
 
