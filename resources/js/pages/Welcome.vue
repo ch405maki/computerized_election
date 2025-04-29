@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from "vue-toastification";
+import WelcomeHeader from './WelcomeHeader.vue';
+import WelcomeFooter from './WelcomeFooter.vue';
 
 const toast = useToast();
 const form = useForm({
@@ -23,8 +25,9 @@ const submit = () => {
 
 <template>
   <Head title="Election Login" />
-  <div class="flex min-h-screen items-center justify-center dark:bg-zinc-950 bg-white p-6">
-    <Card class="w-full max-w-sm">
+  <WelcomeHeader/>
+  <div class="flex min-h-screen items-center justify-center dark:bg-zinc-950 bg-bg-img p-6">
+    <Card class="w-full max-w-sm bg-transparent border-2 border-purple-900">
       <CardHeader>
         <CardTitle class="text-center">Voter Login</CardTitle>
       </CardHeader>
@@ -38,9 +41,10 @@ const submit = () => {
             <Label for="password">Password</Label>
             <Input id="password" v-model="form.password" type="password" required />
           </div>
-          <Button type="submit" class="w-full" :disabled="form.processing">Login</Button>
+          <Button type="submit" class="w-full bg-purple-900 hover:bg-purple-700" :disabled="form.processing">Login</Button>
         </form>
       </CardContent>
     </Card>
+    <WelcomeFooter/>
   </div>
 </template>
