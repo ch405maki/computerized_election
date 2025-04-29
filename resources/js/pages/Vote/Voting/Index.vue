@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted } from 'vue';
 import { useToast } from "vue-toastification";
-import ElectionSelector from '@/components/vote/ElectionSelector.vue';
 import ElectionDetails from '@/components/vote/ElectionDetails.vue';
 import VoteSubmitButton from '@/components/vote/VoteSubmitButton.vue';
+import VotingHeader from '@/components/vote/VotingHeader.vue';
 import axios from 'axios';
 import { router } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
 
 const logout = () => {
     router.post(route('voter.logout'));
@@ -25,7 +23,7 @@ const props = defineProps<{
       position: { id: number; name: string } | null;
     }>;
   }>;
-  voter: { full_name: string; id: number } | null;
+  voter: { full_name: string; id: number; student_number: number } | null;
 }>();
 
 const toast = useToast();
@@ -151,18 +149,20 @@ const vote = async () => {
 </script>
 
 <template>
-    <Head title="Vote" />
-    <div class="p-6 text-center">
-        <h1 class="text-2xl font-bold">Welcome to Voting Page</h1>
-        <p v-if="voter" class="mt-2 text-lg">Hello, {{ voter.full_name }}!</p>
-        <p v-if="voter" class="mt-2 text-lg">ID, {{ voter.id }}!</p>
+  <Head title="Vote" />
+  <!-- Nav Header -->
+  <VotingHeader
+    v-if="voter"
+    :full-name="voter.full_name"
+    :student-number="voter.student_number"
+    @logout="logout"
+  />
 
-        <Button class="mt-4 bg-red-500 hover:bg-red-600" @click="logout">
-            Logout
-        </Button>
+  <div class="p-6 space-y-6">
+    <!-- Show election name instead of selector when there's only one election -->
+    <div v-if="elections.length === 1" class="mb-4">
+        <h2 class="text-2xl font-semibold">{{ elections[0].name }}</h2>
     </div>
-    <div class="p-6 space-y-6">
-      <h1 class="text-2xl font-bold">Vote for Your Candidates</h1>
 
       <div v-if="elections.length === 0" class="text-muted-foreground">
         No active elections available.
@@ -172,23 +172,24 @@ const vote = async () => {
       <div v-if="elections.length === 1" class="mb-4">
         <h2 class="text-xl font-semibold">{{ elections[0].name }}</h2>
       </div>
+      
 
       <ElectionDetails
-        v-if="selectedElection"
-        :elections="elections"
-        :selected-election="selectedElection"
-        :selected-candidates="selectedCandidates"
-        @select-candidate="selectCandidate"
+          v-if="selectedElection"
+          :elections="elections"
+          :selected-election="selectedElection"
+          :selected-candidates="selectedCandidates"
+          @select-candidate="selectCandidate"
       />
 
       <VoteSubmitButton
-        v-if="selectedElection"
-        :is-voting="isVoting"
-        :all-positions-selected="allPositionsSelected"
-        :selected-candidates="selectedCandidates"
-        :elections="elections"
-        :selected-election="selectedElection"
-        @vote="vote"
+          v-if="selectedElection"
+          :is-voting="isVoting"
+          :all-positions-selected="allPositionsSelected"
+          :selected-candidates="selectedCandidates"
+          :elections="elections"
+          :selected-election="selectedElection"
+          @vote="vote"
       />
-    </div>
+  </div>
 </template>
