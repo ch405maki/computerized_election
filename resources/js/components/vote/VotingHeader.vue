@@ -12,7 +12,12 @@ defineEmits(['logout']);
 <template>
   <div class="flex items-center justify-between px-6 py-4 bg-purple-900 shadow-sm border-b">
     <div class="flex items-center space-x-4">
-      <h1 class="text-xl text-white border-black font-bold">Voting System</h1>
+      <h1 class="flex items-center space-x-4">
+        <img src="/images/logo/au-logo.png" alt="au-Logo" class="h-[65px] w-auto">
+        <img src="/images/logo/ausl.png" alt="ausl-Logo" class="h-[60px] w-auto">
+        <img src="/images/logo/alsg-logo.jpg" alt="alsg-Logo" class="object-cover rounded-full h-[60px] w-auto">
+        <span class="text-white">AUSL Election System</span>
+      </h1>
     </div>
     
     <div v-if="fullName" class="flex items-center gap-2">

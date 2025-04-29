@@ -53,7 +53,7 @@ const prevPosition = () => {
   <div 
     v-for="election in elections.filter(e => e.id === selectedElection)" 
     :key="election.id" 
-    class="border rounded-lg p-4"
+    class="border-2 rounded-lg p-4 border-purple-800 text-purple-900"
   >
     <div class="space-y-4">
       <template v-for="(group, positionId, index) in groupByPosition(election.candidates)" :key="positionId">
@@ -61,7 +61,7 @@ const prevPosition = () => {
           v-if="index === activePositionIndex"  
           class="pb-4"
         >
-          <h3 class="font-semibold">{{ group.positionName }}</h3>
+          <h3 class="font-semibold">Choose a Candidate for {{ group.positionName }}</h3>
           <p v-if="!selectedCandidates[positionId]" class="text-sm text-red-500">
             Please select a candidate
           </p>
@@ -80,7 +80,7 @@ const prevPosition = () => {
             <button
               v-if="activePositionIndex > 0"
               @click="prevPosition"
-              class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              class="px-4 py-2 text-white bg-purple-900 rounded hover:bg-purple-700"
             >
               Previous
             </button>
@@ -90,7 +90,7 @@ const prevPosition = () => {
               v-if="activePositionIndex < Object.keys(groupByPosition(election.candidates)).length - 1"
               @click="nextPosition"
               :disabled="!selectedCandidates[positionId]"
-              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
+              class="px-4 py-2 bg-purple-900 text-white rounded hover:bg-purple-700 disabled:bg-blue-300 disabled:cursor-not-allowed"
             >
               Next
             </button>

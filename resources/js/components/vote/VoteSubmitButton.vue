@@ -70,7 +70,7 @@ const selectedCandidatesDetails = computed(() => {
         @click="handleVoteClick"
         :disabled="isVoting || !allPositionsSelected"
         size="lg"
-        class="min-w-[200px]"
+        class="bg-purple-900 min-w-[200px]"
       >
         <span v-if="!isVoting">Submit Your Vote</span>
         <span v-else class="flex items-center gap-2">
@@ -129,6 +129,7 @@ const selectedCandidatesDetails = computed(() => {
               type="submit"
               :disabled="!isConfirmed"
               @click="confirmVote"
+              class="bg-purple-900 hover:bg-purple-700"
             >
               Submit Vote
             </Button>
