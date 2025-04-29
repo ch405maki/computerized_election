@@ -37,6 +37,8 @@ onMounted(() => {
   if (props.elections.length > 0) {
     selectedElection.value = props.elections[0].id;
   }
+
+  
 });
 
 watch(selectedElection, (newElectionId) => {
@@ -108,9 +110,17 @@ const vote = async () => {
     });
 
     if (response.data.success) {
-      toast.success(response.data.message);
       selectedCandidates.value = {};
-      // Don't reset selectedElection here since we want to keep showing the same election
+      
+      toast.success(response.data.message, {
+        position: "top-center",
+      });
+
+      //Using the Logout Route to clear session
+      setTimeout(() => {
+        router.post(route('voter.logout'));
+      }, 2000);
+      
     } else {
       toast.error(response.data.message || "Vote submission failed.");
     }
@@ -132,9 +142,9 @@ const vote = async () => {
       toast.error("An unexpected error occurred. Please try again.");
     }
     console.error("Voting error:", error);
-  } finally {
-    isVoting.value = false;
-  }
+    } finally {
+      isVoting.value = false;
+    }
 };
 </script>
 
@@ -154,10 +164,15 @@ const vote = async () => {
         <h2 class="text-2xl font-semibold">{{ elections[0].name }}</h2>
     </div>
 
-    <div v-if="elections.length === 0" class="text-muted-foreground">
-      No active elections available.
-    </div>
-    <h1 class="text-xl font-bold">Vote for Your Candidates</h1>
+      <div v-if="elections.length === 0" class="text-muted-foreground">
+        No active elections available.
+      </div>
+
+      <!-- Show election name instead of selector when there's only one election -->
+      <div v-if="elections.length === 1" class="mb-4">
+        <h2 class="text-xl font-semibold">{{ elections[0].name }}</h2>
+      </div>
+      
 
       <ElectionDetails
           v-if="selectedElection"

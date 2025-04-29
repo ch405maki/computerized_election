@@ -103,7 +103,7 @@ const deleteCandidate = async () => {
             </TableCell>
             <TableCell>{{ candidate.candidate_code }}</TableCell>
             <TableCell>{{ candidate.candidate_name }}</TableCell>
-            <TableCell>{{ candidate.candidate_party || '-' }}</TableCell>
+            <TableCell>{{ candidate.candidate_party || 'Independent' }}</TableCell>
             <TableCell>{{ candidate.position.name }}</TableCell>
             <TableCell>{{ candidate.election.name }}</TableCell>
             <TableCell>
