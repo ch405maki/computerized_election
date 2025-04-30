@@ -24,7 +24,7 @@ Route::get('/', function () {
 // Voter Login & Logout Routes
 Route::get('/voter/login', [VoterAuthController::class, 'showLoginForm'])->name('voter.login');
 Route::post('/voter/login', [VoterAuthController::class, 'login']);
-Route::post('/voter/logout', [VoterAuthController::class, 'logout'])->name('voter.logout');
+Route::post('/', [VoterAuthController::class, 'logout'])->name('voter.logout');
 
 // Voting page (restricted to logged-in voters)
 Route::middleware('auth:voter')->group(function () {

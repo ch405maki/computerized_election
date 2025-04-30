@@ -112,9 +112,7 @@ const vote = async () => {
     if (response.data.success) {
       selectedCandidates.value = {};
       
-      toast.success(response.data.message, {
-        position: "top-center",
-      });
+      toast.success(response.data.message);
 
       //Using the Logout Route to clear session
       setTimeout(() => {

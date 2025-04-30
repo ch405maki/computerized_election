@@ -42,15 +42,6 @@
         icon: LayoutGrid,
     },
     {
-        title: 'User Management',
-        href: '#',
-        icon: UserRoundCog,
-        isOpen: false,
-        children: [
-        { title: 'Users', href: '/users', icon: UsersRound },
-        ],
-    },
-    {
         title: 'Voters',
         href: '#',
         icon: Vote,
@@ -96,6 +87,15 @@
             href: '/election',
             icon: Cog,
         },
+        {
+            title: 'User Management',
+            href: '#',
+            icon: UserRoundCog,
+            isOpen: false,
+            children: [
+            { title: 'Users', href: '/users', icon: UsersRound },
+        ],
+    },
     ]);
 
     const footerNavItems: NavItem[] = [];

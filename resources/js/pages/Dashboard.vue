@@ -13,6 +13,8 @@ import VoteRankingTable from '@/components/dashboard/VoteRankingTable.vue';
 import RecentElectionsTable from '@/components/dashboard/RecentElectionsTable.vue';
 import ParticipationChart from '@/components/dashboard/ParticipationChart.vue';
 import VoteRankingChart from '@/components/dashboard/VoteRankingChart.vue';
+import LogChart from '@/components/dashboard/LogChart.vue';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // Props
 const props = defineProps<{
@@ -34,6 +36,13 @@ const props = defineProps<{
     date: string;
     votes: number;
   }>;
+  logs: Array<{
+        id: number;
+        action: string;
+        created_at: string;
+        user_name: string | null;
+        voter_name: string | null;
+    }>;
 }>();
 
 const toast = useToast();
@@ -142,6 +151,12 @@ const toggleView = () => {
   isChartView.value = !isChartView.value;
 };
 
+const showCharts = ref(false); 
+
+const toggleCharts = () => {
+  showCharts.value = !showCharts.value;
+};
+
 onMounted(fetchVoteRanking);
 </script>
 
@@ -155,15 +170,29 @@ onMounted(fetchVoteRanking);
         <DashboardHeader
           :isLoading="isLoading"
           :isChartView="isChartView"
+          :showCharts="showCharts"
           @refresh="refreshData"
           @toggleView="toggleView"
+          @toggleCharts="toggleCharts"
         />
 
         <StatsGrid :stats="stats" />
 
+        <!-- Add Togle Button to show unshow charts -->
         <!-- Conditional Rendering: Table (Default) or Chart -->
-        <VoteRankingTable v-if="!isChartView" :voteRanking="voteRanking" :isLoading="isLoading" />
-        <VoteRankingChart v-else :isChartView="isChartView" :voteRanking="voteRanking" :isLoading="isLoading" />
+        <template v-if="showCharts">
+          <!-- Conditional Rendering: Table (Default) or Chart -->
+          <VoteRankingTable
+            v-if="!isChartView"
+            :voteRanking="voteRanking"
+            :isLoading="isLoading"
+          />
+          <VoteRankingChart
+            v-else
+            :voteRanking="voteRanking"
+            :isLoading="isLoading"
+          />
+        </template>
 
         <RecentElectionsTable
           :elections="recent_elections"
@@ -171,11 +200,8 @@ onMounted(fetchVoteRanking);
           :formatDate="formatDate"
         />
 
-        <ParticipationChart
-          :participationData="participation_data"
-          :maxVotes="maxVotes"
-          :formatDate="formatDate"
-        />
+        <LogChart :logs="logs" />
+
       </div>
     </div>
   </AppLayout>
