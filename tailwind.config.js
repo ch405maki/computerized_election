@@ -73,7 +73,11 @@ export default {
     				border: 'hsl(var(--sidebar-border))',
     				ring: 'hsl(var(--sidebar-ring))'
     			}
-    		}
+    		},
+
+			backgroundImage: {
+				'bg-img':"url('/images/bg.jpg')",
+			}
     	}
     },
     plugins: [require('tailwindcss-animate')],
