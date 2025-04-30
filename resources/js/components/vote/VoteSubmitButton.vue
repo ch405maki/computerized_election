@@ -83,7 +83,7 @@ const selectedCandidatesDetails = computed(() => {
       </Button>
 
       <Dialog v-model:open="isDialogOpen">
-        <DialogContent>
+        <DialogContent class="max-h-screen h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Confirm Your Vote</DialogTitle>
             <DialogDescription>

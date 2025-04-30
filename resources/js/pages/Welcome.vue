@@ -32,7 +32,7 @@ const submit = () => {
     <!-- Card is centered inside the flex container -->
     <Card class="w-full max-w-sm text-purple-900 bg-transparent border-2 border-purple-900">
       <CardHeader>
-        <CardTitle class="text-center">Voter Login</CardTitle>
+        <CardTitle class="text-center tracking-widest">Voter Login</CardTitle>
       </CardHeader>
       <CardContent>
         <form @submit.prevent="submit">

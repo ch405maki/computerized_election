@@ -54,7 +54,7 @@
         // Create an INACTIVE voter status
         VoterStatus::create([
             'voter_id' => $voter->id,
-            'activated' => false,
+            'activated' => true,
             'voted' => false
         ]);
 
