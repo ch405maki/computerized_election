@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Election;
 use Carbon\Carbon;
-use App\Models\Vote;
+use App\Models\Log;
+use App\Models\User;
 use App\Models\Voter;
+use App\Models\Vote;
 use Illuminate\Http\Request;
 
 use Inertia\Inertia;
@@ -16,8 +18,13 @@ class DashboardController extends Controller
     public function index()
     {
         $totalVoters = Voter::count();
-        $votesToday = Vote::whereDate('created_at', today())->count();
-        $totalVotes = Vote::count();
+        $votesToday = Vote::whereDate('created_at', today())->distinct('voter_id')->count('voter_id');
+
+        $votes = Vote::all();
+        $uniqueVoters = $votes->unique('voter_id');
+        $totalVotes = $uniqueVoters->count();
+
+        $logs = Log::with(['user:id,name', 'voter:id,full_name'])->latest()->get();
         
         return Inertia::render('Dashboard', [
             'stats' => [
@@ -42,6 +49,15 @@ class DashboardController extends Controller
                         'votes_count' => $election->votes_count,
                     ];
                 }),
+            'logs' => $logs->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                    'user_name' => $log->user?->name,
+                    'voter_name' => $log->voter?->full_name,
+                ];
+            }),
             'participation_data' => Vote::selectRaw('DATE(created_at) as date, COUNT(*) as votes')
                 ->where('created_at', '>=', now()->subDays(7))
                 ->groupBy('date')
