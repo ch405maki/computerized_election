@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useForm, Head, Link } from '@inertiajs/vue3';
+import { useForm, Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useToast } from 'vue-toastification';
 import WelcomeHeader from '@/components/welcome/WelcomeHeader.vue';
 import WelcomeFooter from '@/components/welcome/WelcomeFooter.vue';
+import { Eye, EyeOff } from 'lucide-vue-next';
 
 const toast = useToast();
 const form = useForm({
@@ -15,10 +17,22 @@ const form = useForm({
   password: '',
 });
 
+const showPassword = ref(false);
+
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value;
+};
+
 const submit = () => {
   form.post(route('voter.login'), {
     onSuccess: () => toast.success('Login successful!'),
-    onError: () => toast.error('Invalid credentials.'),
+    onError: () => {
+      if (form.errors.student_number) {
+        toast.error(form.errors.student_number);
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
+    },
   });
 };
 </script>
@@ -27,9 +41,7 @@ const submit = () => {
   <Head title="Election Login" />
   <WelcomeHeader />
 
-  <!-- Use min-h-vhs for height, flex to center content vertically and horizontally -->
   <div class="min-h-vhs flex items-center justify-center bg-bg-img mt-20">
-    <!-- Card is centered inside the flex container -->
     <Card class="w-full max-w-sm text-purple-900 bg-transparent border-2 border-purple-900">
       <CardHeader>
         <CardTitle class="text-center tracking-widest">Voter Login</CardTitle>
@@ -47,7 +59,30 @@ const submit = () => {
           </div>
           <div class="mb-4">
             <Label for="password">Password</Label>
-            <Input id="password" v-model="form.password" type="password" required />
+            <div class="relative">
+              <Input
+                id="password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                required
+                class="pr-10"
+              />
+              <HoverCard>
+                <HoverCardTrigger as-child>
+                  <button
+                    type="button"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    @click="togglePasswordVisibility"
+                  >
+                    <Eye v-if="!showPassword" class="h-5 w-5" />
+                    <EyeOff v-else class="h-5 w-5" />
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent class="w-auto p-2 text-sm">
+                  {{ showPassword ? 'Hide password' : 'Show password' }}
+                </HoverCardContent>
+              </HoverCard>
+            </div>
           </div>
           <Button
             type="submit"
