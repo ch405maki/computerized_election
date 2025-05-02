@@ -36,6 +36,11 @@ class Voter extends Authenticatable
         return $this->hasMany(Vote::class, 'voter_id');
     }
 
+    public function hasVoted(): bool
+    {
+        return $this->votes()->exists();
+    }
+
     // Relationship with VoterStatus
     public function status()
     {

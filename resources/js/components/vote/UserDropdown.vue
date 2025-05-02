@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button';
 const props = defineProps<{
   fullName: string;
   studentNumber: number;
+  studentYear: number;
+  classType: string; 
+  sex: string;
 }>();
 
 const emit = defineEmits(['logout']);
@@ -44,6 +47,15 @@ const initials = computed(() => {
           <p class="text-sm font-medium">{{ fullName }}</p>
           <p class="text-xs text-muted-foreground">
             Student Number: {{ studentNumber }}
+          </p>
+          <p class="text-xs text-muted-foreground">
+            Student Year: {{ studentYear }}
+          </p>
+          <p class="text-xs text-muted-foreground">
+            Class Type: {{ classType }}
+          </p>
+          <p class="text-xs text-muted-foreground">
+            Sex: {{ sex }}
           </p>
         </div>
       </DropdownMenuLabel>

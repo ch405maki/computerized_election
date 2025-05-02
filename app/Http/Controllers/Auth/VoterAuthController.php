@@ -22,15 +22,30 @@ class VoterAuthController extends Controller
         ]);
 
         if (Auth::guard('voter')->attempt($credentials)) {
+            $voter = Auth::guard('voter')->user();
+
+            if ($voter->hasVoted()) {
+                Auth::guard('voter')->logout();
+                $request->session()->invalidate();       // Destroys the session
+                $request->session()->regenerateToken();  // Prevent CSRF reuse
+    
+                return back()->withErrors(['student_number' => 'You have already voted.']);
+            }
+
             return redirect()->route('vote.voting');
         }
-
-        return back()->withErrors(['student_number' => 'Invalid credentials']);
+        return back()->withErrors([
+            'invalid_credentials' => 'Please check if your Student Number or Password is correct 
+            or email at auslitcweb@gmail.com for verification.'
+            ]);
     }
 
-    public function logout()
+
+    public function logout(Request $request)
     {
-        Auth::guard('voter')->logout();
+        $request->session()->invalidate();       // Destroys the session
+        $request->session()->regenerateToken();  // Prevent CSRF reuse
+
         return Inertia::render('Welcome');
     }
 }

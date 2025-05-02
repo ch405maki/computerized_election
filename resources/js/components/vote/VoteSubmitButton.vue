@@ -112,7 +112,7 @@ const selectedCandidatesDetails = computed(() => {
           </div>
 
           <div class="flex items-center space-x-2 py-4">
-            <Checkbox id="terms" v-model:checked="isConfirmed" />
+            <Checkbox id="terms" v-model:checked="isConfirmed" class="border-black border-2 data-[state=checked]:bg-purple-900"/>
             <label
               for="terms"
               class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
