@@ -23,7 +23,7 @@ const props = defineProps<{
       position: { id: number; name: string } | null;
     }>;
   }>;
-  voter: { full_name: string; id: number; student_number: number } | null;
+  voter: { full_name: string; id: number; student_number: number; student_year: number; class_type: string; sex: string;} | null;
 }>();
 
 const toast = useToast();
@@ -153,10 +153,13 @@ const vote = async () => {
     v-if="voter"
     :full-name="voter.full_name"
     :student-number="voter.student_number"
+    :student-year="voter.student_year"
+    :class-type="voter.class_type"
+    :sex="voter.sex"
     @logout="logout"
   />
 
-  <div class="text-purple-900 p-6 space-y-6">
+  <div class="text-purple-900 bg-bg-img mt-1 p-6 space-y-6">
     <!-- Show election name instead of selector when there's only one election -->
     <div v-if="elections.length === 1" class="mb-4">
         <h2 class="text-2xl font-semibold">{{ elections[0].name }}</h2>
