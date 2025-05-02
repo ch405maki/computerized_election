@@ -29,9 +29,7 @@ const submit = () => {
     onError: () => {
       if (form.errors.student_number) {
         toast.error(form.errors.student_number);
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
+      } 
     },
   });
 };
@@ -83,6 +81,12 @@ const submit = () => {
                 </HoverCardContent>
               </HoverCard>
             </div>
+          </div>
+          <div v-if="form.errors.invalid_credentials" class="mb-4">
+              <p class="text-center">* Please check if your Student Number or Password is correct 
+                or email at 
+                <span class="font-bold text-purple-900 underline">auslitcweb@gmail.com</span> 
+                for verification.</p>
           </div>
           <Button
             type="submit"

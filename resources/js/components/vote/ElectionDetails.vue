@@ -102,7 +102,7 @@ const prevPosition = () => {
               v-if="activePositionIndex < Object.keys(groupByPosition(election.candidates)).length - 1"
               @click="nextPosition"
               :disabled="!selectedCandidates[positionId]"
-              class="px-4 py-2 bg-purple-900 text-white rounded hover:bg-purple-700 disabled:bg-blue-300 disabled:cursor-not-allowed"
+              class="px-4 py-2 bg-purple-900 text-white rounded hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed"
             >
               Next
             </button>

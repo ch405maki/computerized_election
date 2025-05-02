@@ -6,7 +6,11 @@
         <div class="flex items-center space-x-4 tracking-widest">
             <span class="text-sm text-white">Powered by:</span>
             <img src="/images/logo/itc-logo.jpg" alt="itc-Logo" class="h-10 w-auto">
-            <span class="text-sm text-white border-black">Information Technology Center</span>
+            <span class="text-sm text-white border-black">Information Technology Center<br/>
+              <p>
+                Email: <span class="underline">auslitcweb@gmail.com</span>
+              </p>
+            </span>
         </div>
       </footer>
   </div>

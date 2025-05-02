@@ -159,7 +159,7 @@ const vote = async () => {
     @logout="logout"
   />
 
-  <div class="text-purple-900 p-6 space-y-6">
+  <div class="text-purple-900 bg-bg-img mt-1 p-6 space-y-6">
     <!-- Show election name instead of selector when there's only one election -->
     <div v-if="elections.length === 1" class="mb-4">
         <h2 class="text-2xl font-semibold">{{ elections[0].name }}</h2>

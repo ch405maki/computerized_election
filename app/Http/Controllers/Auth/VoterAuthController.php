@@ -34,8 +34,10 @@ class VoterAuthController extends Controller
 
             return redirect()->route('vote.voting');
         }
-
-        return back()->withErrors(['student_number' => 'Please check if your Student Number or Password is correct.']);
+        return back()->withErrors([
+            'invalid_credentials' => 'Please check if your Student Number or Password is correct 
+            or email at auslitcweb@gmail.com for verification.'
+            ]);
     }
 
 
