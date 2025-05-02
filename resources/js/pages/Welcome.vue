@@ -30,7 +30,7 @@ const submit = () => {
   <!-- Use min-h-vhs for height, flex to center content vertically and horizontally -->
   <div class="min-h-vhs flex items-center justify-center bg-bg-img mt-20">
     <!-- Card is centered inside the flex container -->
-    <Card class="w-full max-w-sm text-purple-900 bg-transparent border-2 border-purple-900">
+    <Card class="w-full max-w-sm text-purple-900 bg-white border-2 border-purple-900">
       <CardHeader>
         <CardTitle class="text-center tracking-widest">Voter Login</CardTitle>
       </CardHeader>
