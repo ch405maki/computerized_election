@@ -17,7 +17,7 @@ defineEmits(['logout']);
         <img src="/images/logo/ausl.png" alt="ausl-Logo" class="h-[42px] w-auto">
         <img src="/images/logo/alsg-logo.jpg" alt="alsg-Logo" class="object-cover rounded-full h-[40px] w-auto">
         <img src="/images/logo/comelec-logo.jpg" alt="comelec-Logo" class="object-cover rounded-full h-[41px] w-auto">
-        <span class="text-white text-lg font-semibold tracking-widest uppercase">AUSL Election System</span>
+        <span class="text-white text-lg font-black tracking-widest uppercase">AUSL Election System</span>
       </h1>
     </div>
     
