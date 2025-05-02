@@ -74,9 +74,10 @@ const prevPosition = () => {
               :is-selected="selectedCandidates[positionId] === candidate.id"
               @click="$emit('select-candidate', positionId, candidate.id)"
             />
+            
           </div>
 
-          <div class="flex justify-between mt-4">
+          <div class="flex justify-between items-center mt-4">
             <button
               v-if="activePositionIndex > 0"
               @click="prevPosition"
@@ -86,6 +87,17 @@ const prevPosition = () => {
             </button>
             <div v-else></div> <!-- Empty div for spacing when no Previous button -->
             
+            <div>
+              <!-- Display selected candidate -->
+              You selected: 
+              <span class="font-bold" v-if="selectedCandidates[positionId]">
+                {{
+                  group.candidates.find(c => c.id === selectedCandidates[positionId])?.candidate_name || 'Unknown'
+                }}
+              </span>
+              <span v-else class="italic text-gray-500">None</span>
+            </div>
+
             <button
               v-if="activePositionIndex < Object.keys(groupByPosition(election.candidates)).length - 1"
               @click="nextPosition"

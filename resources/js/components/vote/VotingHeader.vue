@@ -4,6 +4,9 @@ import UserDropdown from './UserDropdown.vue';
 defineProps<{
   fullName: string;
   studentNumber: number;
+  studentYear: number;
+  classType: string; 
+  sex: string;
 }>();
 
 defineEmits(['logout']);
@@ -25,6 +28,9 @@ defineEmits(['logout']);
       <UserDropdown
         :full-name="fullName"
         :student-number="studentNumber"
+        :student-year="studentYear"
+        :class-type="classType"
+        :sex="sex"
         @logout="$emit('logout')"
       />
       <div class="hidden md:flex items-center gap-2">

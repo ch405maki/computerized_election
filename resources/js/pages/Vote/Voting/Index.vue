@@ -23,7 +23,7 @@ const props = defineProps<{
       position: { id: number; name: string } | null;
     }>;
   }>;
-  voter: { full_name: string; id: number; student_number: number } | null;
+  voter: { full_name: string; id: number; student_number: number; student_year: number; class_type: string; sex: string;} | null;
 }>();
 
 const toast = useToast();
@@ -153,6 +153,9 @@ const vote = async () => {
     v-if="voter"
     :full-name="voter.full_name"
     :student-number="voter.student_number"
+    :student-year="voter.student_year"
+    :class-type="voter.class_type"
+    :sex="voter.sex"
     @logout="logout"
   />
 
