@@ -20,6 +20,7 @@ const props = defineProps<{
       id: number;
       candidate_name: string;
       candidate_picture: string;
+      candidate_party: string;
       position: { id: number; name: string } | null;
     }>;
   }>;
