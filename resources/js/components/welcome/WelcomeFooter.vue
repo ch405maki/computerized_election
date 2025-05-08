@@ -8,7 +8,7 @@
             <img src="/images/logo/itc-logo.jpg" alt="itc-Logo" class="h-10 w-auto">
             <span class="text-sm text-white border-black">Information Technology Center<br/>
               <p>
-                Email: <span class="underline">auslitcweb@gmail.com</span>
+                Email: <span class="underline">onlinesupport@arellanolaw.edu</span>
               </p>
             </span>
         </div>

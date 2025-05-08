@@ -12,9 +12,9 @@ defineProps<{
 
 <template>
   <div
-    class="border rounded-lg p-4 cursor-pointer transition hover:bg-gray-100 dark:hover:bg-gray-800"
+    class="border rounded-lg p-4 cursor-pointer transition hover:bg-gray-100"
     :class="{
-      'border-2 border-purple-500 bg-blue-50 dark:bg-blue-900/20': isSelected,
+      'border-2 border-purple-500 bg-blue-50': isSelected,
       'border-gray-200': !isSelected
     }"
   >
