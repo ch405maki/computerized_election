@@ -5,12 +5,12 @@
 
         <div class="flex items-center space-x-4 tracking-widest">
             <span class="text-sm text-white">Powered by:</span>
-            <img src="/images/logo/itc-logo.jpg" alt="itc-Logo" class="h-10 w-auto">
+            <img src="/images/logo/itc-logo.png" alt="itc-Logo" class="h-10 w-auto">
             <span class="text-sm text-white border-black">Information Technology Center<br/>
-              <p>
+              <p class="text-xs">
                 Email: <span class="underline">auslitcweb@gmail.com</span>
               </p>
-            </span>
+            </span> 
         </div>
       </footer>
   </div>
