@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted } from 'vue';
 import { useToast } from "vue-toastification";
+import VotingLayout from '@/layouts/VotingLayout.vue';
 import ElectionDetails from '@/components/vote/ElectionDetails.vue';
 import VoteSubmitButton from '@/components/vote/VoteSubmitButton.vue';
 import VotingHeader from '@/components/vote/VotingHeader.vue';
@@ -147,6 +148,7 @@ const vote = async () => {
 </script>
 
 <template>
+  <VotingLayout>
   <Head title="Vote" />
   <!-- Nav Header -->
   <VotingHeader
@@ -159,7 +161,7 @@ const vote = async () => {
     @logout="logout"
   />
 
-  <div class="text-purple-900 bg-bg-img mt-1 p-6 space-y-6">
+  <div class="mt-1 p-6 space-y-6 min-h-screen bg-cover bg-center bg-no-repeat" style="background-image: url('/images/bg.jpg');">
     <!-- Show election name instead of selector when there's only one election -->
     <div v-if="elections.length === 1" class="mb-4">
         <h2 class="text-2xl font-semibold">{{ elections[0].name }}</h2>
@@ -193,4 +195,5 @@ const vote = async () => {
           @vote="vote"
       />
   </div>
+  </VotingLayout>
 </template>

@@ -26,8 +26,8 @@ class VoterAuthController extends Controller
 
             if ($voter->hasVoted()) {
                 Auth::guard('voter')->logout();
-                $request->session()->invalidate();       // Destroys the session
-                $request->session()->regenerateToken();  // Prevent CSRF reuse
+                $request->session()->invalidate();      
+                $request->session()->regenerateToken(); 
     
                 return back()->withErrors(['student_number' => 'You have already voted.']);
             }
@@ -43,8 +43,8 @@ class VoterAuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->session()->invalidate();       // Destroys the session
-        $request->session()->regenerateToken();  // Prevent CSRF reuse
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return Inertia::render('Welcome');
     }
