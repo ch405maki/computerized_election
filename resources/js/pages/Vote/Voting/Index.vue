@@ -150,17 +150,6 @@ const vote = async () => {
 <template>
   <VotingLayout>
   <Head title="Vote" />
-  <!-- Nav Header -->
-  <VotingHeader
-    v-if="voter"
-    :full-name="voter.full_name"
-    :student-number="voter.student_number"
-    :student-year="voter.student_year"
-    :class-type="voter.class_type"
-    :sex="voter.sex"
-    @logout="logout"
-  />
-
   <div class="mt-1 p-6 space-y-6 min-h-screen bg-cover bg-center bg-no-repeat" style="background-image: url('/images/bg.jpg');">
     <!-- Show election name instead of selector when there's only one election -->
     <div v-if="elections.length === 1" class="mb-4">

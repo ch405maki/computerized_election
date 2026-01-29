@@ -17,8 +17,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { Link, usePage, router } from '@inertiajs/vue3';
+import { Menu } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -32,14 +32,27 @@ const props = withDefaults(defineProps<Props>(), {
 const page = usePage();
 const auth = computed(() => page.props.auth);
 
+// Use voter data instead of user
+const voter = computed(() => auth.value.voter);
+const user = computed(() => auth.value.user);
+
 const isCurrentRoute = computed(() => (url: string) => page.url === url);
+
+const logout = () => {
+    router.post(route('voter.logout'));
+};
 
 const activeItemStyles = computed(
     () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100' : ''),
 );
 
-const rightNavItems: NavItem[] = [
+// Update navigation items for voter
+const mainNavItems: NavItem[] = [
 
+];
+
+const rightNavItems: NavItem[] = [
+    // Add voter-specific items if needed
 ];
 </script>
 
@@ -140,7 +153,8 @@ const rightNavItems: NavItem[] = [
                         </div>
                     </div>
 
-                    <DropdownMenu>
+                    <!-- Voter Dropdown Menu -->
+                    <DropdownMenu v-if="voter">
                         <DropdownMenuTrigger :as-child="true">
                             <Button
                                 variant="ghost"
@@ -148,15 +162,52 @@ const rightNavItems: NavItem[] = [
                                 class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
                             >
                                 <Avatar class="size-8 overflow-hidden rounded-full">
-                                    <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
+                                    <!-- You can add avatar functionality for voters if needed -->
                                     <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
-                                        {{ getInitials(auth.user?.name) }}
+                                        {{ getInitials(voter.full_name) }}
                                     </AvatarFallback>
                                 </Avatar>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56">
-                            <UserMenuContent :user="auth.user" />
+                            <!-- Update UserMenuContent to accept voter -->
+                            <div class="flex items-center justify-start gap-2 p-2">
+                                <div class="flex flex-col space-y-1">
+                                    <p class="text-sm font-medium leading-none">{{ voter.full_name }}</p>
+                                    <p class="text-xs leading-none text-muted-foreground">{{ voter.student_number }}</p>
+                                    <p class="text-xs leading-none text-muted-foreground">Year: {{ voter.student_year }}</p>
+                                    <p v-if="voter.has_voted" class="text-xs text-green-600 font-medium">✓ Voted</p>
+                                    <p v-else class="text-xs text-amber-600 font-medium">Not Voted</p>
+                                </div>
+                            </div>
+                            <div class="p-1">
+                                <button 
+                                    @click="logout"
+                                    class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                >
+                                    Log out
+                                </button>
+                            </div>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <!-- Admin Dropdown Menu (if you want to support both) -->
+                    <DropdownMenu v-else-if="user">
+                        <DropdownMenuTrigger :as-child="true">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
+                            >
+                                <Avatar class="size-8 overflow-hidden rounded-full">
+                                    <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
+                                        {{ getInitials(user?.name) }}
+                                    </AvatarFallback>
+                                </Avatar>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-56">
+                            <UserMenuContent :user="user" />
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

@@ -11,7 +11,7 @@ class Voter extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $table = 'voters'; // Explicitly define table name
+    protected $table = 'voters';
 
     protected $fillable = [
         'student_number',

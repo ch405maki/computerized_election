@@ -17,11 +17,13 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            'session_name' => 'laravel_session_admin', // Separate session name for admin
         ],
 
-        'voter' => [ // Separate guard for Voters
+        'voter' => [ 
             'driver' => 'session',
             'provider' => 'voters',
+            'session_name' => 'laravel_session_voter', // Separate session name for voters
         ],
     ],
 
@@ -37,7 +39,7 @@ return [
             'model' => App\Models\User::class,
         ],
 
-        'voters' => [ // Voter authentication provider
+        'voters' => [
             'driver' => 'eloquent',
             'model' => App\Models\Voter::class,
         ],
@@ -68,4 +70,3 @@ return [
     'password_timeout' => 10800,
 
 ];
-

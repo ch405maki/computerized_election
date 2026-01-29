@@ -48,6 +48,7 @@ const refreshCandidates = () => {
     <AppLayout :breadcrumbs="breadcrumbs">
       <div class="flex flex-col gap-4 p-4">
         <div class="flex justify-end gap-2">
+          <h1>Candidates List</h1>
           <CandidateForm 
             :positions="positions" 
             :elections="elections"
