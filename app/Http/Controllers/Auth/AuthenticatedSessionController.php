@@ -13,37 +13,43 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Show the login page.
-     */
     public function create(Request $request): Response
     {
+        // Check if already logged in as voter
+        if (Auth::guard('voter')->check()) {
+            return redirect()->route('vote.voting')->with('error', 'Please logout as voter first.');
+        }
+        
         return Inertia::render('auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => $request->session()->get('status'),
         ]);
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        // Check if already logged in as voter
+        if (Auth::guard('voter')->check()) {
+            return back()->withErrors([
+                'email' => 'You are already logged in as a voter. Please logout first.'
+            ]);
+        }
 
+        $request->authenticate();
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): RedirectResponse
     {
+        // Only logout web guard
         Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
+        
+        // Clear admin session data
+        $request->session()->forget('password_hash_web');
+        
+        // Regenerate CSRF token
         $request->session()->regenerateToken();
 
         return redirect('/');

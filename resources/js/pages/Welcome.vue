@@ -37,11 +37,11 @@ const submit = () => {
 
 <template>
   <Head title="Election Login" />
-  <div class="bg-bg-img">
+  <div class="min-h-screen bg-cover bg-center bg-no-repeat" style="background-image: url('/images/bg.jpg');">
     <WelcomeHeader />
 
-    <div class="min-h-vhs flex items-center justify-center mt-20">
-      <Card class="w-full max-w-sm text-purple-900 bg-transparent border-2 border-purple-900">
+    <div class="min-h-[calc(100vh-130px)] grid place-items-center">
+      <Card class="w-full max-w-sm text-purple-900 bg-white/95 backdrop-blur-sm border-2 border-purple-900">
         <CardHeader>
           <CardTitle class="text-center tracking-widest">Voter's Login</CardTitle>
         </CardHeader>
