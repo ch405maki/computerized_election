@@ -1,6 +1,6 @@
 
 <template>
-    <div class="bg-white sticky top-0 shadow-lg  py-2">
+    <div class="sticky top-0 shadow-lg  py-2">
             <div class="flex items-center justify-between">
                 <h1 class="flex items-center justify-center space-x-4 px-8">
                     <img src="/images/logo/au-logo.png" alt="au-Logo" class="h-[69px] w-auto">

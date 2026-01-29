@@ -51,14 +51,14 @@ defineProps<{
                     <div class="flex items-center gap-3">
                     <img 
                         v-if="candidate.image" 
-                        :src="`/storage/${candidate.image}`"  
+                        src="/images/anonymous.jpg"  
                         class="h-8 w-8 rounded-full object-cover"
                         :alt="candidate.name"
                     >
-                    <span>{{ index + 1 }}. {{ candidate.name }}</span>
+                    <span>{{ index + 1 }}. Anonymous</span>
                     </div>
                 </TableCell>
-                <TableCell class="font-medium">{{ candidate.party || 'Independent'}}</TableCell>
+                <TableCell class="font-medium">Anonymous</TableCell>
                 <TableCell class="text-right">{{ candidate.votes }}</TableCell>
                 </TableRow>
 

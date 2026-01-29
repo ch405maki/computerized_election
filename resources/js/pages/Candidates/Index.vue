@@ -4,6 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import CandidateForm from '@/components/candidate/CandidateForm.vue';
 import CandidatesList from '@/components/candidate/CandidatesList.vue';
+import TitleHeader from '@/components/ui/title-header/header.vue';
 
 const props = defineProps<{
   candidates: Array<{
@@ -47,7 +48,8 @@ const refreshCandidates = () => {
   <Head title="Candidates" />
     <AppLayout :breadcrumbs="breadcrumbs">
       <div class="flex flex-col gap-4 p-4">
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-between gap-2">
+          <TitleHeader />
           <CandidateForm 
             :positions="positions" 
             :elections="elections"
