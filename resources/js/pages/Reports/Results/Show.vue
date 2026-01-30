@@ -78,7 +78,7 @@ const formattedDate = (dateString: string) => {
       <div v-else class="space-y-8 rounded-xl">
         <template v-if="Object.keys(positions).length > 0">
           <div v-for="(candidates, positionName) in positions" :key="positionName" class="rounded-lg border shadow">
-            <h3 class="text-lg font-semibold px-3.5  p-2">{{ positionName }}</h3>
+            <h3 class="text-lg text-white font-semibold px-3.5  p-2 rounded-t bg-purple-900">{{ positionName }}</h3>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -101,6 +101,17 @@ const formattedDate = (dateString: string) => {
                   </TableCell>
                   <TableCell class="text-right">
                     {{ candidate.votes }}
+                  </TableCell>
+                </TableRow>
+                <!-- Total Votes Row -->
+                <TableRow class="rounded-b-xl">
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell class="font-black">TOTAL VOTES</TableCell>
+                  <TableCell class="text-right font-black">
+                    {{
+                      [...candidates].reduce((total, c) => total + c.votes, 0)
+                    }}
                   </TableCell>
                 </TableRow>
               </TableBody>

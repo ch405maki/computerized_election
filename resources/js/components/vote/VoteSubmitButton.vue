@@ -21,6 +21,7 @@ const props = defineProps<{
     candidates: Array<{
       id: number;
       candidate_name: string;
+      candidate_party: string;
       candidate_picture: string;
       position: { id: number; name: string } | null;
     }>;
@@ -57,6 +58,7 @@ const selectedCandidatesDetails = computed(() => {
     return {
       positionName: candidate?.position?.name || 'Unknown Position',
       candidateName: candidate?.candidate_name || 'Unknown Candidate',
+      candidateParty: candidate?.candidate_party || 'Unknown Party',
       candidatePicture: candidate?.candidate_picture || null
     }
   })
@@ -105,7 +107,10 @@ const selectedCandidatesDetails = computed(() => {
                     :src="`/storage/${candidate.candidatePicture}`" 
                     class="w-12 h-12 rounded-full object-cover mr-3"
                   >
-                  <span>{{ candidate.candidateName }}</span>
+                  <span class="text-purple-900"><b class="font-bold">{{ candidate.candidateName }}</b><br/>
+                    <i>{{ candidate.candidateParty }}</i>
+                  </span>
+                  
                 </div>
               </div>
             </div>
