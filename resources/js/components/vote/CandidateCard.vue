@@ -24,6 +24,14 @@ defineProps<{
       alt="Candidate Picture" 
       class="w-20 h-20 rounded-full mx-auto object-cover border"
     />
+
+    <img 
+      v-else 
+      src="/images/anonymous.jpg" 
+      alt="No Uploaded Image" 
+      class="w-20 h-20 rounded-full mx-auto object-cover border"
+    />
+
     <p class="text-center mt-2 font-bold">{{ candidate.candidate_name }}</p>
     <p class="text-center mt-2">{{ candidate.candidate_party }}</p>
   </div>

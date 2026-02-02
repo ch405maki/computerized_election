@@ -99,7 +99,12 @@ const deleteCandidate = async () => {
                 alt="Candidate Picture" 
                 class="w-10 h-10 rounded-full object-cover border"
               />
-              <span v-else class="text-gray-400 text-xs">No Image</span>
+              <img
+                v-else 
+                src="/images/anonymous.jpg" 
+                alt="No Uploaded Image" 
+                class="w-10 h-10 rounded-full mx-auto object-cover border"
+              />
             </TableCell>
             <TableCell>{{ candidate.candidate_code }}</TableCell>
             <TableCell>{{ candidate.candidate_name }}</TableCell>

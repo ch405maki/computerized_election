@@ -107,6 +107,12 @@ const selectedCandidatesDetails = computed(() => {
                     :src="`/storage/${candidate.candidatePicture}`" 
                     class="w-12 h-12 rounded-full object-cover mr-3"
                   >
+                  <img
+                    v-else 
+                    src="/images/anonymous.jpg" 
+                    alt="No Uploaded Image" 
+                    class="w-12 h-12 rounded-full object-cover mr-3"
+                  />
                   <span class="text-purple-900"><b class="font-bold">{{ candidate.candidateName }}</b><br/>
                     <i>{{ candidate.candidateParty }}</i>
                   </span>
