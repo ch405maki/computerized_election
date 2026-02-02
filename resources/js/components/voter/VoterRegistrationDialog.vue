@@ -22,6 +22,11 @@ const handleSubmit = async (formData: any) => {
         
         toast.success('Voter registered successfully! Waiting for activation.');
         isDialogOpen.value = false;
+        // Reload the page after a short delay
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+
     } catch (error) {
         if (axios.isAxiosError(error) && error.response) {
             if (error.response.status === 422) {
@@ -42,9 +47,11 @@ const handleSubmit = async (formData: any) => {
 <template>
     <Dialog v-model:open="isDialogOpen">
         <DialogTrigger as-child>
-            <Button variant="default">
+            <Button
+                size="sm"
+                variant="default">
                 <slot name="trigger">
-                    Register New Voter
+                    New Voter
                 </slot>
             </Button>
         </DialogTrigger>

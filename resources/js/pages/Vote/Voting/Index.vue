@@ -151,7 +151,7 @@ const vote = async () => {
 <template>
   <VotingLayout>
   <Head title="Vote" />
-  <div class="mt-1 p-6 space-y-6 min-h-screen bg-cover bg-center bg-no-repeat" style="background-image: url('/images/bg.jpg');">
+  <div class="mt-1 p-6 space-y-6 min-h-screen bg-cover bg-center bg-no-repeat">
     <!-- Show election name instead of selector when there's only one election -->
     <div v-if="elections.length === 1" class="mb-4">
         <h2 class="text-2xl font-semibold">{{ elections[0].name }}</h2>
