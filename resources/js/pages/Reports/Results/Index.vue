@@ -6,6 +6,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import { ScrollText } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3'
+import TitleHeader from '@/components/ui/title-header/header.vue';
 
 function viewResults(id: number | string) {
   router.visit(route('results.show', id))
@@ -42,7 +43,10 @@ const formattedDate = (dateString: string) => {
   <Head title="Election Results" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4 ">
-      <h1 class="text-2xl font-bold">Election Results</h1>
+      <TitleHeader
+        title="Election Results" 
+        description="Breakdown of vote counts and winning statistics." 
+      />
       <div class="border rounded-lg overflow-hidden">
       <Table>
         <TableHeader>

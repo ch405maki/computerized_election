@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import TitleHeader from '@/components/ui/title-header/header.vue'
 
 const toast = useToast();
 const isLoading = ref(false);
@@ -100,7 +101,9 @@ const submitPosition = async () => {
     <AppLayout :breadcrumbs="breadcrumbs">
       <div class="flex flex-col gap-4 p-4">
         <div class="flex justify-between gap-2">
-            <h1 class="text-2xl font-bold">Current Available Positions</h1>
+            <TitleHeader 
+            title="Current Available Positions" 
+            />
             <Dialog v-model:open="isDialogOpen">
                 <DialogTrigger as-child>
                     <Button variant="default">
