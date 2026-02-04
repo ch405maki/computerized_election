@@ -32,7 +32,7 @@ const isOpen = ref(false);
 // Form fields
 const election_id = ref<string>('');
 const position_id = ref<string>('');
-const candidate_code = ref<string>('');
+const candidate_code = ref<string>('AUTO-GENERATED');
 const candidate_name = ref<string>('');
 const candidate_party = ref<string>('');
 const candidate_picture = ref<File | null>(null);
@@ -49,7 +49,7 @@ const validateForm = () => {
   errors.value = {
     election_id: election_id.value ? '' : 'Election is required',
     position_id: position_id.value ? '' : 'Position is required',
-    candidate_code: candidate_code.value.length >= 2 ? '' : 'Code must be at least 2 characters',
+    candidate_code: '', // Auto-generated
     candidate_name: candidate_name.value.length >= 2 ? '' : 'Name must be at least 2 characters',
   };
 
@@ -101,7 +101,6 @@ const onSubmit = () => {
   const formData = new FormData();
   formData.append('election_id', election_id.value);
   formData.append('position_id', position_id.value);
-  formData.append('candidate_code', candidate_code.value);
   formData.append('candidate_name', candidate_name.value);
   if (candidate_party.value) formData.append('candidate_party', candidate_party.value);
   if (candidate_picture.value) formData.append('candidate_picture', candidate_picture.value);
@@ -178,17 +177,6 @@ const onSubmit = () => {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-
-            <!-- Candidate Code -->
-            <FormField v-slot="{ componentField }" name="candidate_code">
-              <FormItem>
-                <FormLabel>Candidate Code</FormLabel>
-                <FormControl>
-                  <Input type="text" v-model="candidate_code" placeholder="e.g. CAN-001" v-bind="componentField" />
-                </FormControl>
                 <FormMessage />
               </FormItem>
             </FormField>

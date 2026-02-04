@@ -35,7 +35,6 @@ class CandidateController extends Controller
         $validator = Validator::make($request->all(), [
             'election_id' => 'required|exists:elections,id',
             'position_id' => 'required|exists:positions,id',
-            'candidate_code' => 'required|string|unique:candidates|max:10',
             'candidate_name' => 'required|string|max:255',
             'candidate_party' => 'nullable|string|max:255',
             'candidate_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -49,6 +48,21 @@ class CandidateController extends Controller
         }
 
         $data = $validator->validated();
+
+        // Generate Candidate Code: 4 letters from Position + 4 random digits)
+        $position = Position::findOrFail($request->position_id);
+        $prefix = str_replace(' ', '', $position->name);
+        $prefix = strtoupper(substr($prefix, 0, 4));
+        $prefix = str_pad($prefix, 4, 'X');
+        $prefix = $prefix . '-';
+
+        // Generate unique code (loop ensures no collisions in the database)
+        do {
+            $randomNumber = rand(1000, 9999);
+            $candidateCode = $prefix . $randomNumber;
+        } while (Candidate::where('candidate_code', $candidateCode)->exists());
+
+        $data['candidate_code'] = $candidateCode;
 
         // Handle file upload
         if ($request->hasFile('candidate_picture')) {
