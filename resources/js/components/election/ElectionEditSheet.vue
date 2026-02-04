@@ -69,12 +69,18 @@ const formSchema = toTypedSchema(z.object({
   end_date: dateSchema.optional()
 }));
 
+const fetchedDate = (dateString: string) => {
+  if (!dateString) return '';
+  return new Date(dateString).toISOString().split('T')[0];
+};
+
+
 // Form data with explicit type and safe initialization
 const formData = ref<ElectionUpdatePayload>({
   name: props.election.name,
   status: props.election.status,
-  start_date: props.election.start_date,
-  end_date: props.election.end_date
+  start_date: fetchedDate(props.election.start_date),
+  end_date: fetchedDate(props.election.end_date)
 });
 
 // Improved update function with proper typing
