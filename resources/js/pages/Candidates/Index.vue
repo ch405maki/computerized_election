@@ -48,8 +48,11 @@ const refreshCandidates = () => {
   <Head title="Candidates" />
     <AppLayout :breadcrumbs="breadcrumbs">
       <div class="flex flex-col gap-4 p-4">
-        <div class="flex justify-between gap-2">
-          <TitleHeader />
+        <div class="flex justify-between gap-2 items-center">
+          <TitleHeader
+            title="Candidates List" 
+            description="Manage election candidates, their affiliations, and profiles." 
+          />
           <CandidateForm 
             :positions="positions" 
             :elections="elections"

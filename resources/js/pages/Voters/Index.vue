@@ -13,6 +13,7 @@ import type { AxiosError } from "axios";
 import { useToast } from "vue-toastification";
 import { Search } from "lucide-vue-next";
 import { Input } from '@/components/ui/input'
+import TitleHeader from '@/components/ui/title-header/header.vue';
 
 interface Voter {
   id: number;
@@ -118,51 +119,59 @@ const handleFileUpload = async (event: Event) => {
 
 <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4">
-    <div class="flex justify-between gap-2">
-       <!-- Search Input -->
-       <div class="relative w-full max-w-xs">
-          <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search voters..."
-            class="w-full pl-9 h-9"
+      <div class="flex flex-col gap-4">
+        <div class="flex justify-between items-center gap-2">
+          <TitleHeader 
+            title="Voter List" 
+            description="View and manage registered voters and their credentials." 
           />
-        </div>
-        <div class="space-x-2 flex items-center">
-          <!-- Upload Excel Button -->
-          <input
-                type="file"
-                ref="fileInput"
-                accept=".xlsx, .xls"
-                class="hidden"
-                @change="handleFileUpload"
-              />
-              <Button
-                @click="triggerFileInput"
-                :disabled="loading"
-                variant="outline" 
-              >
-                <Upload class="w-4 h-4 mr-2" />
-                <span v-if="loading">Uploading...</span>
-                <span v-else>Upload Excel</span>
-              </Button>
-            <Button 
-                variant="outline" 
-                @click="navigateToActivationPage"
-                :disabled="voters.length === 0"
+
+          <div class="space-x-2 flex items-center">
+            <div class="relative w-full max-w-xs">
+            <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search voters..."
+              class="w-full pl-9 h-9"
+            />
+          </div>
+            <input
+              type="file"
+              ref="fileInput"
+              accept=".xlsx, .xls"
+              class="hidden"
+              @change="handleFileUpload"
+            />
+            <Button
+              size="sm"
+              @click="triggerFileInput"
+              :disabled="loading"
+              variant="outline" 
             >
-                <KeyRound />
-                Activation
+              <Upload class="w-4 h-4" />
+              <span v-if="loading">Uploading...</span>
+              <span v-else>Upload Excel</span>
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline" 
+              @click="navigateToActivationPage"
+              :disabled="voters.length === 0"
+            >
+              <KeyRound class="w-4 h-4" />
+              Activation
             </Button>
             
             <VoterRegistrationDialog />
+          </div>
         </div>
-    </div>
-    
-        <div class="rounded-xl border">
-            <VotersTable :voters="filteredVoters" />
-        </div>
+      </div>
+      
+      <div class="rounded-xl border">
+        <VotersTable :voters="filteredVoters" />
+      </div>
     </div>
 </AppLayout>
 </template>

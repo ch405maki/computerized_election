@@ -3,6 +3,10 @@
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+      <TitleHeader
+        title="Election Results" 
+        description="Breakdown of vote counts and winning statistics." 
+      />
       <!-- Search and Buttons -->
       <div class="flex items-center justify-between gap-4">
         <!-- Search Input -->
