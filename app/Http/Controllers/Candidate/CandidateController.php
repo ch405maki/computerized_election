@@ -49,20 +49,8 @@ class CandidateController extends Controller
 
         $data = $validator->validated();
 
-        // Generate Candidate Code: 4 letters from Position + 4 random digits)
-        $position = Position::findOrFail($request->position_id);
-        $prefix = str_replace(' ', '', $position->name);
-        $prefix = strtoupper(substr($prefix, 0, 4));
-        $prefix = str_pad($prefix, 4, 'X');
-        $prefix = $prefix . '-';
-
-        // Generate unique code (loop ensures no collisions in the database)
-        do {
-            $randomNumber = rand(1000, 9999);
-            $candidateCode = $prefix . $randomNumber;
-        } while (Candidate::where('candidate_code', $candidateCode)->exists());
-
-        $data['candidate_code'] = $candidateCode;
+        // call of private function to generate the unique code
+        $data['candidate_code'] = $this->generateCandidateCode($request->position_id);
 
         // Handle file upload
         if ($request->hasFile('candidate_picture')) {
@@ -77,6 +65,27 @@ class CandidateController extends Controller
             'message' => 'Candidate created successfully',
             'data' => $candidate->load(['election', 'position'])
         ], 201);
+    }
+
+    /**
+     * Generate a unique candidate code: 4 letters from Position + '-' + 4 random digits.
+     */
+    private function generateCandidateCode($positionId)
+    {
+        $position = Position::findOrFail($positionId);
+        
+        $prefix = str_replace(' ', '', $position->name);
+        $prefix = strtoupper(substr($prefix, 0, 4));
+        $prefix = str_pad($prefix, 4, 'X');
+        $formattedPrefix = $prefix . '-';
+
+        // Keep generating until a unique code is found
+        do {
+            $randomNumber = rand(1000, 9999);
+            $candidateCode = $formattedPrefix . $randomNumber;
+        } while (Candidate::where('candidate_code', $candidateCode)->exists());
+
+        return $candidateCode;
     }
 
     /**
