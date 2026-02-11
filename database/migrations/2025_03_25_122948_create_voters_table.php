@@ -13,9 +13,9 @@ return new class extends Migration {
             $table->string('last_name');
             $table->string('first_name');
             $table->string('middle_name')->nullable();
-            $table->enum('sex', ['Male', 'Female', 'Other']);
+            $table->enum('sex', ['Male', 'Female', 'Other'])->nullable();
             $table->string('dob')->nullable();
-            $table->string('student_year');
+            $table->string('student_year')->nullable();
             $table->string('password');
             $table->timestamps(); 
         });
