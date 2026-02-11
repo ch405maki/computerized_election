@@ -8,14 +8,16 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('voters', function (Blueprint $table) {
-            $table->id(); // Primary key
+            $table->id(); 
             $table->string('student_number')->unique();
-            $table->string('full_name');
-            $table->string('student_year'); // Example: '1st Year', '2nd Year'
-            $table->string('class_type'); // Example: 'Regular', 'Irregular'
-            $table->enum('sex', ['Male', 'Female', 'Other']);
-            $table->string('password'); // Hashed password
-            $table->timestamps(); // Created_at & Updated_at
+            $table->string('last_name');
+            $table->string('first_name');
+            $table->string('middle_name')->nullable();
+            $table->enum('sex', ['Male', 'Female', 'Other'])->nullable();
+            $table->string('dob')->nullable();
+            $table->string('student_year')->nullable();
+            $table->string('password');
+            $table->timestamps(); 
         });
     }
 
@@ -24,4 +26,3 @@ return new class extends Migration {
         Schema::dropIfExists('voters');
     }
 };
-
