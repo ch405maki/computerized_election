@@ -1,20 +1,21 @@
 <?php
 
-    namespace App\Http\Controllers\Voter;
+namespace App\Http\Controllers\Voter;
 
-    use App\Http\Controllers\Controller;
-    use App\Models\Voter;
-    use App\Imports\VoterImport;
-    use App\Models\VoterStatus;
-    use Illuminate\Http\Request;
-    use Maatwebsite\Excel\Facades\Excel;
-    use Illuminate\Support\Facades\Log;
-    use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\Controller;
+use App\Models\Voter;
+use App\Imports\VoterImport;
+use App\Models\VoterStatus;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
-    use Inertia\Inertia;
+use Inertia\Inertia;
 
-    class VoterController extends Controller
-    {
+class VoterController extends Controller
+{
     /**
      * Display a listing of the resource.
      */
@@ -22,7 +23,7 @@
     {
         $voters = Voter::latest()->get();
 
-        return Inertia::render('Voters/Index', [ 'voters' => $voters ]);
+        return Inertia::render('Voters/Index', ['voters' => $voters]);
     }
 
     /**
@@ -48,7 +49,7 @@
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
-        
+
         $voter = Voter::create($validated);
 
         // Create an INACTIVE voter status
@@ -83,10 +84,40 @@
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
-    {
-        //
+    public function update(Request $request, $id) 
+{
+    $voter = Voter::findOrFail($id); 
+
+    $validated = $request->validate([
+        'student_number' => [
+            'required',
+            'string',
+            // Ignore the current voter's ID to prevent "already taken" error
+            Rule::unique('voters')->ignore($voter->id)
+        ],
+        'full_name' => 'required|string|max:255',
+        'student_year' => 'required|string',
+        'class_type' => 'required|string',
+        'sex' => 'required|string',
+        'password' => 'nullable|string|min:6',
+    ]);
+
+    // Check if the password was actually filled in request
+    if (!empty($validated['password'])) {
+        // Hash the new password
+        $validated['password'] = Hash::make($validated['password']);
+    } else {
+        // Remove password from the array so it's not overwritten with null/empty
+        unset($validated['password']);
     }
+
+    $voter->update($validated);
+
+    return response()->json([
+        'message' => 'Voter updated successfully!',
+        'data' => $voter->fresh()
+    ]);
+}
 
     /**
      * Remove the specified resource from storage.

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from '@/components/ui/button';
 import EditUserDialog from "@/components/users/EditUserDialog.vue";
+import VoterEditSheet from "@/components/voter/VoterEditSheet.vue";
 import DeleteVoterDialog from "@/components/voter/DeleteVoterDialog.vue";
 import CustomSwitch from '@/components/ui/customswitch/CustomSwitch.vue';
 import { useToast } from 'vue-toastification';
+import { FilePenLine } from "lucide-vue-next";
 import axios from 'axios';
 
 interface Voter {
@@ -14,6 +17,7 @@ interface Voter {
   student_year: string;
   class_type: string;
   sex: string;
+  password: string;
 }
 
 const props = defineProps<{
@@ -24,6 +28,18 @@ const toast = useToast();
 
 // Local copy of voters for reactivity
 const localVoters = ref<Voter[]>([...props.voters]);
+
+// State for the Sheet
+const editingVoter = ref<Voter | null>(null);
+
+const handleEdit = (voter: Voter) => {
+  editingVoter.value = voter;
+};
+
+const updateLocalList = (updatedVoter: Voter) => {
+  const index = localVoters.value.findIndex(v => v.id === updatedVoter.id);
+  if (index !== -1) localVoters.value[index] = updatedVoter;
+};
 </script>
 
 <template>
@@ -35,7 +51,7 @@ const localVoters = ref<Voter[]>([...props.voters]);
         <TableHead>Year</TableHead>
         <TableHead>Class Type</TableHead>
         <TableHead>Sex</TableHead>
-        <TableHead class="text-right">Action</TableHead>
+        <TableHead class="text-right">Actions</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -46,6 +62,15 @@ const localVoters = ref<Voter[]>([...props.voters]);
         <TableCell>{{ voter.class_type }}</TableCell>
         <TableCell>{{ voter.sex }}</TableCell>
         <TableCell class="text-right flex justify-end items-center">
+          <Button 
+                variant="outline" 
+                size="sm" 
+                class="mr-2"
+                @click="handleEdit(voter)"
+              >
+                <FilePenLine class="w-4 h-4"/>
+            </Button>
+
           <!-- Delete User -->
           <DeleteVoterDialog :voter="voter" />
         </TableCell>
@@ -57,4 +82,10 @@ const localVoters = ref<Voter[]>([...props.voters]);
       </TableRow>
     </TableBody>
   </Table>
+  <VoterEditSheet 
+    v-if="editingVoter" 
+    :voter="editingVoter" 
+    @close="editingVoter = null" 
+    @updated="updateLocalList"
+  />
 </template>

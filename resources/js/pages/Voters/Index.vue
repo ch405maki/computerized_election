@@ -7,7 +7,7 @@ import VoterRegistrationDialog from '@/components/voter/VoterRegistrationDialog.
 import VotersTable from '@/components/voter/VotersTable.vue';
 import { Button } from '@/components/ui/button';
 import { KeyRound } from "lucide-vue-next";
-import { Upload } from "lucide-vue-next";
+import { Upload, Loader2 } from "lucide-vue-next";
 import axios from "axios";
 import type { AxiosError } from "axios";
 import { useToast } from "vue-toastification";
@@ -77,18 +77,19 @@ const handleFileUpload = async (event: Event) => {
   const file = target.files?.[0];
 
   if (file) {
+    loading.value = true; // Start loading immediately
     const formData = new FormData();
     formData.append("file", file);
 
     try {
       const response = await axios.post("/api/upload-voters", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.success(response.data.message);
-      setTimeout(() => location.reload(), 2000); // Reload to reflect changes
+      
+      // Uses Inertia reload
+      router.reload({ only: ['voters'] }); 
     } catch (err: unknown) {
       const error = err as AxiosError;
       if (error.response && error.response.data) {
@@ -106,10 +107,10 @@ const handleFileUpload = async (event: Event) => {
         toast.error("Network error. Please try again.");
       }
     } finally {
-      loading.value = false;
+      loading.value = false; // Stop loading
+      if (fileInput.value) fileInput.value.value = '';
     }
   }
- 
 };
 
 </script>
@@ -147,11 +148,13 @@ const handleFileUpload = async (event: Event) => {
               size="sm"
               @click="triggerFileInput"
               :disabled="loading"
-              variant="outline" 
+              variant="outline"
+              class="flex items-center gap-2"
             >
-              <Upload class="w-4 h-4" />
-              <span v-if="loading">Uploading...</span>
-              <span v-else>Upload Excel</span>
+              <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
+              <Upload v-else class="w-4 h-4" />
+
+              <span>{{ loading ? 'Uploading...' : 'Upload Excel' }}</span>
             </Button>
 
             <Button

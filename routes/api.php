@@ -33,6 +33,7 @@ Route::post('/voters', [VoterController::class, 'store'])->name('voters.store');
 Route::post('/upload-voters', [VoterController::class, 'uploadVoters']);
 Route::post('/voters/status/activate/{id}', [VoterStatusController::class, 'activate']);
 Route::post('/voters/status/activate-all', [VoterStatusController::class, 'activateAll']);
+Route::patch('/voters/{voter}', [VoterController::class, 'update']);
 
 // Candidate Routes
 Route::post('/positions', [PositionController::class, 'store']);
