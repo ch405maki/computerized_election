@@ -15,10 +15,12 @@ class Voter extends Authenticatable
 
     protected $fillable = [
         'student_number',
-        'full_name',
-        'student_year',
-        'class_type',
+        'last_name',
+        'first_name',
+        'middle_name',
         'sex',
+        'dob',
+        'student_year',
         'password',
     ];
 
@@ -29,6 +31,16 @@ class Voter extends Authenticatable
     protected $casts = [
         'password' => 'hashed',
     ];
+
+    protected $appends = ['full_name'];
+
+    // Computed full_name
+    public function getFullNameAttribute()
+    {
+        return trim($this->first_name . ' ' . 
+               ($this->middle_name ? $this->middle_name . ' ' : '') . 
+               $this->last_name);
+    }
 
     // Relationship with Votes
     public function votes()

@@ -12,28 +12,45 @@ class VoterImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
-        // 1. Create the Voter
+        // Get values from Excel row (use the column names in your Excel file)
+        $studentNumber = $row['student_number'] ?? '';
+        $firstName = $row['first_name'] ?? '';
+        $lastName = $row['last_name'] ?? '';
+        $middleName = $row['middle_name'] ?? null;
+        $sex = $row['sex'] ?? 'Other';
+        $dob = $row['dob'] ?? null;
+        $studentYear = $row['student_year'] ?? '';
+        $password = $row['password'] ?? $studentNumber; // Default to student_number if no password
+        
+        // Basic trim/clean
+        $studentNumber = trim($studentNumber);
+        $firstName = trim($firstName);
+        $lastName = trim($lastName);
+        
+        // Skip if no student number or names
+        if (empty($studentNumber) || empty($firstName) || empty($lastName)) {
+            return null; // Skip this row
+        }
+        
+        // Create the Voter
         $voter = Voter::create([
-            'student_number' => $row['student_number'],
-            'full_name'      => $row['full_name'],
-            'student_year'   => $row['student_year'],
-            'class_type'     => $row['class_type'],
-            'sex'            => $row['sex'],
-            'password'       => Hash::make($row['password']),
+            'student_number' => $studentNumber,
+            'first_name'     => $firstName,
+            'last_name'      => $lastName,
+            'middle_name'    => !empty($middleName) ? trim($middleName) : null,
+            'student_year'   => trim($studentYear),
+            'sex'            => trim($sex),
+            'dob'            => !empty($dob) ? trim($dob) : null,
+            'password'       => Hash::make($password),
         ]);
 
-        // 2. Call the separate function to handle the status
-        $this->createVoterStatus($voter);
-
-        return $voter;
-    }
-
-    private function createVoterStatus(Voter $voter)
-    {
+        // Create voter status
         VoterStatus::create([
             'voter_id'  => $voter->id,
             'activated' => true,
             'voted'     => false
         ]);
+
+        return $voter;
     }
 }

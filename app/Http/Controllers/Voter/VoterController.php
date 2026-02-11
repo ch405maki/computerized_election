@@ -85,39 +85,39 @@ class VoterController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, $id) 
-{
-    $voter = Voter::findOrFail($id); 
+    {
+        $voter = Voter::findOrFail($id); 
 
-    $validated = $request->validate([
-        'student_number' => [
-            'required',
-            'string',
-            // Ignore the current voter's ID to prevent "already taken" error
-            Rule::unique('voters')->ignore($voter->id)
-        ],
-        'full_name' => 'required|string|max:255',
-        'student_year' => 'required|string',
-        'class_type' => 'required|string',
-        'sex' => 'required|string',
-        'password' => 'nullable|string|min:6',
-    ]);
+        $validated = $request->validate([
+            'student_number' => [
+                'required',
+                'string',
+                // Ignore the current voter's ID to prevent "already taken" error
+                Rule::unique('voters')->ignore($voter->id)
+            ],
+            'full_name' => 'required|string|max:255',
+            'student_year' => 'required|string',
+            'class_type' => 'required|string',
+            'sex' => 'required|string',
+            'password' => 'nullable|string|min:6',
+        ]);
 
-    // Check if the password was actually filled in request
-    if (!empty($validated['password'])) {
-        // Hash the new password
-        $validated['password'] = Hash::make($validated['password']);
-    } else {
-        // Remove password from the array so it's not overwritten with null/empty
-        unset($validated['password']);
+        // Check if the password was actually filled in request
+        if (!empty($validated['password'])) {
+            // Hash the new password
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            // Remove password from the array so it's not overwritten with null/empty
+            unset($validated['password']);
+        }
+
+        $voter->update($validated);
+
+        return response()->json([
+            'message' => 'Voter updated successfully!',
+            'data' => $voter->fresh()
+        ]);
     }
-
-    $voter->update($validated);
-
-    return response()->json([
-        'message' => 'Voter updated successfully!',
-        'data' => $voter->fresh()
-    ]);
-}
 
     /**
      * Remove the specified resource from storage.
