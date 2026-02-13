@@ -49,7 +49,6 @@ const updateLocalList = (updatedVoter: Voter) => {
         <TableHead>Student Number</TableHead>
         <TableHead>Full Name</TableHead>
         <TableHead>Year</TableHead>
-        <TableHead>Class Type</TableHead>
         <TableHead>Sex</TableHead>
         <TableHead class="text-right">Actions</TableHead>
       </TableRow>
@@ -59,7 +58,6 @@ const updateLocalList = (updatedVoter: Voter) => {
         <TableCell class="font-medium">{{ voter.student_number }}</TableCell>
         <TableCell>{{ voter.full_name }}</TableCell>
         <TableCell>{{ voter.student_year }}</TableCell>
-        <TableCell>{{ voter.class_type }}</TableCell>
         <TableCell>{{ voter.sex }}</TableCell>
         <TableCell class="text-right flex justify-end items-center">
           <Button 

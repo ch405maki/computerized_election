@@ -20,31 +20,31 @@ class VoterController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-{
-    // Start the query
-    $query = Voter::latest();
+    {
+        // Start the query
+        $query = Voter::latest();
 
-    // 1. Handle Search
-    if ($request->filled('search')) {
-        $search = $request->input('search');
-        
-        $query->where(function($q) use ($search) {
-            $q->where('student_number', 'like', "%{$search}%")
-              ->orWhere('first_name', 'like', "%{$search}%")
-              ->orWhere('last_name', 'like', "%{$search}%");
-        });
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            
+            $query->where(function($q) use ($search) {
+                $q->where('student_number', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('middle_name', 'like', "%{$search}%"); // Added middle_name
+            });
+        }
+
+        // Pagination with Query String
+        $voters = $query->paginate(15)->withQueryString();
+
+        return Inertia::render('Voters/Index', [
+            'voters' => $voters, 
+            
+            // Pass the search term back to Vue as a prop
+            'filters' => $request->only(['search']),
+        ]);
     }
-
-    // Pagination with Query String
-    $voters = $query->paginate(15)->withQueryString();
-
-    return Inertia::render('Voters/Index', [
-        'voters' => $voters, 
-        
-        // Pass the search term back to Vue as a prop
-        'filters' => $request->only(['search']),
-    ]);
-}
 
     /**
      * Show the form for creating a new resource.
@@ -61,9 +61,10 @@ class VoterController extends Controller
     {
         $validated = $request->validate([
             'student_number' => 'required|string|unique:voters',
-            'full_name'      => 'required|string|max:255',
+            'first_name'     => 'required|string|max:255',
+            'last_name'      => 'required|string|max:255',
+            'middle_name'    => 'nullable|string|max:255', // Made nullable just in case
             'student_year'   => 'required|string',
-            'class_type'     => 'required|string',
             'sex'            => 'required|string',
             'password'       => 'required|string|min:6',
         ]);
@@ -110,15 +111,15 @@ class VoterController extends Controller
 
         $validated = $request->validate([
             'student_number' => [
-                // Ignore the current voter's ID to prevent "already taken" error
                 'required', 'string',
                 Rule::unique('voters')->ignore($voter->id)
             ],
-            'full_name'    => 'required|string|max:255',
-            'student_year' => 'required|string',
-            'class_type'   => 'required|string',
-            'sex'          => 'required|string',
-            'password'     => 'nullable|string|min:6',
+            'first_name'     => 'required|string|max:255',
+            'last_name'      => 'required|string|max:255',
+            'middle_name'    => 'nullable|string|max:255',
+            'student_year'   => 'required|string',
+            'sex'            => 'required|string',
+            'password'       => 'nullable|string|min:6',
         ]);
 
         // Check if the password was actually filled in request
@@ -160,7 +161,6 @@ class VoterController extends Controller
         set_time_limit(0); 
 
         // Memory Limit
-        // Just in case the file is very large
         ini_set('memory_limit', '512M');
 
         try {
@@ -168,12 +168,9 @@ class VoterController extends Controller
                 'file' => 'required|mimes:xlsx,xls,csv',
             ]);
 
-            // If you implemented 'ShouldQueue' in VoterImport, use queueImport() instead.
-            // If not, import() is fine as long as set_time_limit is increased.
             Excel::import(new VoterImport, $request->file('file'));
 
             return response()->json(['message' => 'Voters uploaded successfully!'], 200);
-            // Handle database errors (e.g., duplicate entry)
 
         } catch (\Illuminate\Database\QueryException $e) {
             Log::error('Database error: ' . $e->getMessage());
@@ -196,5 +193,4 @@ class VoterController extends Controller
             ], 500);
         }
     }
-
 }
