@@ -4,53 +4,76 @@ namespace App\Imports;
 
 use App\Models\Voter;
 use App\Models\VoterStatus;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class VoterImport implements ToModel, WithHeadingRow
+class VoterImport implements ToCollection, WithHeadingRow, WithChunkReading
 {
-    public function model(array $row)
+    // Process the file in chunks of 1000 to manage memory
+    public function chunkSize(): int
     {
-        // Get values from Excel row (use the column names in your Excel file)
-        $studentNumber = $row['student_number'] ?? '';
-        $firstName = $row['first_name'] ?? '';
-        $lastName = $row['last_name'] ?? '';
-        $middleName = $row['middle_name'] ?? null;
-        $sex = $row['sex'] ?? 'Other';
-        $dob = $row['dob'] ?? null;
-        $studentYear = $row['student_year'] ?? '';
-        $password = $row['password'] ?? $studentNumber; // Default to student_number if no password
-        
-        // Basic trim/clean
-        $studentNumber = trim($studentNumber);
-        $firstName = trim($firstName);
-        $lastName = trim($lastName);
-        
-        // Skip if no student number or names
-        if (empty($studentNumber) || empty($firstName) || empty($lastName)) {
-            return null; // Skip this row
+        return 3000;
+    }
+
+    public function collection(Collection $rows)
+    {
+        $votersToInsert = [];
+        $studentNumbers = [];
+
+        foreach ($rows as $row) {
+            $studentNumber = trim($row['student_number'] ?? '');
+            $firstName     = trim($row['first_name'] ?? '');
+            $lastName      = trim($row['last_name'] ?? '');
+
+            // Skip invalid rows locally
+            if (empty($studentNumber) || empty($firstName) || empty($lastName)) {
+                continue;
+            }
+
+            $password = $row['password'] ?? $studentNumber;
+
+            // Prepare Voter Data Array
+            $votersToInsert[] = [
+                'student_number' => $studentNumber,
+                'first_name'     => $firstName,
+                'last_name'      => $lastName,
+                'middle_name'    => !empty($row['middle_name']) ? trim($row['middle_name']) : null,
+                'sex'            => trim($row['sex'] ?? 'Other'),
+                'dob'            => !empty($row['dob']) ? trim($row['dob']) : null,
+                'student_year'   => trim($row['student_year'] ?? ''),
+                'password'       => Hash::make($password), // Still computationally heavy
+                
+            ];
+
+            $studentNumbers[] = $studentNumber;
         }
-        
-        // Create the Voter
-        $voter = Voter::create([
-            'student_number' => $studentNumber,
-            'first_name'     => $firstName,
-            'last_name'      => $lastName,
-            'middle_name'    => !empty($middleName) ? trim($middleName) : null,
-            'student_year'   => trim($studentYear),
-            'sex'            => trim($sex),
-            'dob'            => !empty($dob) ? trim($dob) : null,
-            'password'       => Hash::make($password),
-        ]);
 
-        // Create voter status
-        VoterStatus::create([
-            'voter_id'  => $voter->id,
-            'activated' => true,
-            'voted'     => false
-        ]);
+        // Bulk Insert Voters
+        if (!empty($votersToInsert)) {
+            Voter::insert($votersToInsert);
+        }
 
-        return $voter;
+        // Retrieve IDs of inserted voters to link VoterStatus 
+        $insertedVoters = Voter::whereIn('student_number', $studentNumbers)
+            ->select('id', 'student_number')
+            ->get();
+
+        // Prepare VoterStatus Data
+        $statusesToInsert = [];
+        foreach ($insertedVoters as $voter) {
+            $statusesToInsert[] = [
+                'voter_id'   => $voter->id,
+                'activated'  => true,
+                'voted'      => false,
+            ];
+        }
+
+        // Bulk Insert Statuses (1 Query)
+        if (!empty($statusesToInsert)) {
+            VoterStatus::insert($statusesToInsert);
+        }
     }
 }
