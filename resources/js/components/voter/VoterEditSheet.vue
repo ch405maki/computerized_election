@@ -7,19 +7,18 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { useToast } from "vue-toastification";
 import { Loader2 } from "lucide-vue-next";
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
-
 
 interface Voter {
   id: number;
   student_number: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
+  middle_name?: string | null;
   student_year: string;
-  class_type: string;
   sex: string;
-  password: string;
 }
 
 const props = defineProps<{ voter: Voter }>();
@@ -32,21 +31,34 @@ const toast = useToast();
 const isLoading = ref(false);
 const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
-// Schema matching your Voter fields
+// Schema updated for split names
 const formSchema = toTypedSchema(z.object({
-  student_number: z.string().min(1),
-  full_name: z.string().min(2, "Full name is too short"),
+  student_number: z.string().min(1, "Student ID is required"),
+  first_name: z.string().min(2, "First name is too short"),
+  last_name: z.string().min(2, "Last name is too short"),
+  middle_name: z.string().optional().nullable(),
   student_year: z.string().min(1, "Year is required"),
-  class_type: z.string().min(1, "Class type is required"),
-  sex: z.enum(['Male', 'Female', 'Other']),
-  password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal(''))
+  sex: z.string().min(1, "Sex is required"), 
+  password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal(''))
 }));
 
-const formData = ref<Partial<Voter>>({ ...props.voter,
-    password: ''
+// Initialize form data
+const formData = ref({
+  ...props.voter,
+  middle_name: props.voter.middle_name || '', // Ensure null becomes empty string for input
+  password: ''
 });
 
-// The main update function
+// Watch for prop changes
+watch(() => props.voter, (newVal) => {
+  formData.value = {
+    ...newVal,
+    middle_name: newVal.middle_name || '',
+    password: ''
+  };
+});
+
+
 const updateVoter = async () => {
   isLoading.value = true;
   
@@ -62,7 +74,7 @@ const updateVoter = async () => {
     toast.success(response.data.message || 'Voter updated successfully');
     emit('updated', response.data.data);
 
-    // Refresh the page to show updated data across the UI
+    // Refresh page
     setTimeout(() => {
       window.location.reload();
     }, 1000);
@@ -76,44 +88,34 @@ const updateVoter = async () => {
   }
 };
 
-// Comprehensive error handling router
 const handleUpdateError = (error: unknown) => {
   if (axios.isAxiosError<{ message?: string; errors?: Record<string, string[]> }>(error)) {
-    // Handle Laravel/Backend Validation Errors (422 Unprocessable Entity)
     if (error.response?.status === 422 && error.response.data.errors) {
       handleValidationErrors(error.response.data.errors);
     } else {
-      // Handle other Axios errors (404, 500, etc.)
       toast.error(error.response?.data?.message || 'Failed to update voter');
     }
   } else if (error instanceof Error) {
-    // Handle generic JS errors
     toast.error(error.message || 'An unexpected error occurred');
     console.error('Update error:', error);
   } else {
-    // Fallback for unknown edge cases
     toast.error('An unexpected error occurred');
-    console.error('Unknown error:', error);
   }
 };
 
-// Specific handler for 422 validation errors
 const handleValidationErrors = (errors: Record<string, string[]>) => {
   Object.entries(errors).forEach(([field, messages]) => {
     messages.forEach(message => {
-      // Format field name (e.g., "student_number" to "Student Number") for better UX
       const friendlyField = field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
       toast.error(`${friendlyField}: ${message}`);
     });
   });
 };
-
-
 </script>
 
 <template>
   <Sheet defaultOpen @update:open="(val) => !val && $emit('close')">
-    <SheetContent side="right" class="w-full sm:max-w-md">
+    <SheetContent side="right" class="w-full sm:max-w-md overflow-y-auto">
       <Form 
         :validation-schema="formSchema" 
         :initial-values="formData"
@@ -123,18 +125,40 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
       >
         <SheetHeader>
           <SheetTitle>Edit Voter</SheetTitle>
-          <SheetDescription>Update the information for {{ voter.full_name }}</SheetDescription>
+          <SheetDescription>Update the information for {{ voter.student_number }}</SheetDescription>
         </SheetHeader>
 
-        <FormField v-slot="{ componentField, meta }" name="full_name">
+        <FormField v-slot="{ componentField, meta }" name="last_name">
           <FormItem>
-            <FormLabel>Full Name</FormLabel>
+            <FormLabel>Last Name</FormLabel>
             <FormControl>
-              <Input v-bind="componentField" v-model="formData.full_name" />
+              <Input v-bind="componentField" v-model="formData.last_name" placeholder="Surname" />
             </FormControl>
             <FormMessage v-if="meta.touched" />
           </FormItem>
         </FormField>
+
+        <div class="grid grid-cols-2 gap-4">
+            <FormField v-slot="{ componentField, meta }" name="first_name">
+            <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                <Input v-bind="componentField" v-model="formData.first_name" placeholder="First Name" />
+                </FormControl>
+                <FormMessage v-if="meta.touched" />
+            </FormItem>
+            </FormField>
+
+            <FormField v-slot="{ componentField, meta }" name="middle_name">
+            <FormItem>
+                <FormLabel>Middle Name</FormLabel>
+                <FormControl>
+                <Input v-bind="componentField" v-model="formData.middle_name" placeholder="Optional" />
+                </FormControl>
+                <FormMessage v-if="meta.touched" />
+            </FormItem>
+            </FormField>
+        </div>
 
         <div class="grid grid-cols-2 gap-4">
           <FormField v-slot="{ componentField, meta }" name="student_number">
@@ -155,9 +179,9 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
                   <SelectTrigger><SelectValue placeholder="Select sex" /></SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage v-if="meta.touched" />
@@ -171,71 +195,58 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
               <FormLabel>Student Year</FormLabel>
               <Select v-bind="componentField" v-model="formData.student_year">
                 <FormControl>
-                  <SelectTrigger><SelectValue placeholder="Select Student Year" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select Year" /></SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="1">1</SelectItem>
                   <SelectItem value="2">2</SelectItem>
                   <SelectItem value="3">3</SelectItem>
+                  <SelectItem value="4">4</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage v-if="meta.touched" />
             </FormItem>
           </FormField>
 
-          <FormField v-slot="{ componentField, meta }" name="class_type">
-            <FormItem>
-              <FormLabel>Class Type</FormLabel>
-              <Select v-bind="componentField" v-model="formData.class_type">
-                <FormControl>
-                  <SelectTrigger><SelectValue placeholder="Select class type" /></SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="A">A</SelectItem>
-                  <SelectItem value="B">B</SelectItem>
-                  <SelectItem value="C">C</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage v-if="meta.touched" />
-            </FormItem>
-          </FormField>
+          
         </div>
+
         <div>
-            <FormField v-slot="{ componentField, meta }" name="password">
-  <FormItem>
-    <FormLabel>New Password</FormLabel>
-    <FormControl>
-      <Input 
-        type="password" 
-        v-bind="componentField" 
-        v-model="formData.password" 
-        placeholder="Leave blank to keep current password"
-      />
-    </FormControl>
-    <FormMessage v-if="meta.touched" />
-  </FormItem>
-</FormField>
+          <FormField v-slot="{ componentField, meta }" name="password">
+            <FormItem>
+                <FormLabel>New Password</FormLabel>
+                <FormControl>
+                <Input 
+                    type="password" 
+                    v-bind="componentField" 
+                    v-model="formData.password" 
+                    placeholder="Leave blank to keep current"
+                />
+                </FormControl>
+                <FormMessage v-if="meta.touched" />
+            </FormItem>
+            </FormField>
         </div>
 
         <div class="flex justify-end gap-2 pt-4">
           <Button 
-          type="button" 
-          variant="outline" 
-          @click="$emit('close')"
-          :disabled="isLoading"
-        >
-          Cancel
-        </Button>
-        
-        <Button type="submit" :disabled="isLoading || !meta.dirty">
-          <template v-if="isLoading">
-            <Loader2 class="mr-2 h-4 w-4 animate-spin" />
-            Updating...
-          </template>
-          <template v-else>
-            Save Changes
-          </template>
-        </Button>
+            type="button" 
+            variant="outline" 
+            @click="$emit('close')"
+            :disabled="isLoading"
+          >
+            Cancel
+          </Button>
+          
+          <Button type="submit" :disabled="isLoading || !meta.dirty">
+            <template v-if="isLoading">
+              <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+              Updating...
+            </template>
+            <template v-else>
+              Save Changes
+            </template>
+          </Button>
         </div>
       </Form>
     </SheetContent>
