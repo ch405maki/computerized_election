@@ -128,6 +128,16 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
           <SheetDescription>Update the information for {{ voter.student_number }}</SheetDescription>
         </SheetHeader>
 
+        <FormField v-slot="{ componentField, meta }" name="student_number">
+            <FormItem>
+              <FormLabel>Student ID</FormLabel>
+              <FormControl>
+                <Input v-bind="componentField" v-model="formData.student_number" />
+              </FormControl>
+              <FormMessage v-if="meta.touched" />
+            </FormItem>
+          </FormField>
+
         <FormField v-slot="{ componentField, meta }" name="last_name">
           <FormItem>
             <FormLabel>Last Name</FormLabel>
@@ -161,15 +171,7 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <FormField v-slot="{ componentField, meta }" name="student_number">
-            <FormItem>
-              <FormLabel>Student ID</FormLabel>
-              <FormControl>
-                <Input v-bind="componentField" v-model="formData.student_number" />
-              </FormControl>
-              <FormMessage v-if="meta.touched" />
-            </FormItem>
-          </FormField>
+          
 
           <FormField v-slot="{ componentField, meta }" name="sex">
             <FormItem>
@@ -187,9 +189,7 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
               <FormMessage v-if="meta.touched" />
             </FormItem>
           </FormField>
-        </div>
 
-        <div class="grid grid-cols-2 gap-4">
           <FormField v-slot="{ componentField, meta }" name="student_year">
             <FormItem>
               <FormLabel>Student Year</FormLabel>
@@ -207,6 +207,10 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
               <FormMessage v-if="meta.touched" />
             </FormItem>
           </FormField>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          
 
           
         </div>
