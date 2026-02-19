@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -90,6 +90,12 @@ const resetForm = () => {
     candidate_name: '',
   };
 };
+
+watch(isOpen, (newVal) => {
+  if (!newVal) {
+    resetForm();
+  }
+});
 
 const onSubmit = () => {
   if (!validateForm()) {
@@ -230,7 +236,7 @@ const onSubmit = () => {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" @click="isOpen = false">Cancel</Button>
+          <Button type="button" variant="outline" @click="isOpen = false">Cancel</Button>
           <Button type="submit" :disabled="isLoading">
             <span v-if="!isLoading">Create Candidate</span>
             <span v-else>Creating...</span>
