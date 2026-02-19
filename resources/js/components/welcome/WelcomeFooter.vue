@@ -8,7 +8,7 @@
             <img src="/images/logo/itc-logo.png" alt="itc-Logo" class="h-10 w-auto">
             <span class="text-sm text-white border-black">Information Technology Center<br/>
               <p class="text-xs">
-                Email: <span class="underline">auslitcweb@gmail.com</span>
+                All Rights Reserved &copy; {{ new Date().getFullYear() }}
               </p>
             </span> 
         </div>
