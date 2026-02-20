@@ -64,6 +64,6 @@ class VoterAuthController extends Controller
         // Regenerate CSRF token
         $request->session()->regenerateToken();
 
-        return Inertia::render('Welcome');
+        return redirect('/');
     }
 }
