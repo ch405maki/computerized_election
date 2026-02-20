@@ -37,6 +37,7 @@ Route::patch('/voters/{voter}', [VoterController::class, 'update']);
 
 // Candidate Routes
 Route::post('/positions', [PositionController::class, 'store']);
+Route::delete('/positions/{position}', [PositionController::class, 'destroy']);
 
 // Election Routes
 Route::post('/elections', [ElectionController::class, 'store']);
