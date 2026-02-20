@@ -136,7 +136,7 @@ const submitPosition = async () => {
                             </FormField>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" @click="isDialogOpen = false">Cancel</Button>
+                            <Button type="button" variant="outline" @click="isDialogOpen = false">Cancel</Button>
                             <Button type="submit" :disabled="isLoading">
                                 <span v-if="!isLoading">Create Position</span>
                                 <span v-else>Creating...</span>
