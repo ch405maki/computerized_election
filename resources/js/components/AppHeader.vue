@@ -159,7 +159,7 @@ const rightNavItems: NavItem[] = [
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
+                                class=" size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
                             >
                                 <Avatar class="size-8 overflow-hidden rounded-full">
                                     <!-- You can add avatar functionality for voters if needed -->
@@ -167,6 +167,7 @@ const rightNavItems: NavItem[] = [
                                         {{ getInitials(voter.full_name) }}
                                     </AvatarFallback>
                                 </Avatar>
+                                <span class="text-white hover:text-gray-800 text-sm font-medium">{{ voter.full_name }}</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56">
@@ -201,7 +202,7 @@ const rightNavItems: NavItem[] = [
                             >
                                 <Avatar class="size-8 overflow-hidden rounded-full">
                                     <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
-                                        {{ getInitials(user?.name) }}
+                                        {{ getInitials(user?.name) }} 
                                     </AvatarFallback>
                                 </Avatar>
                             </Button>
