@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from "vue-toastification";
-import { Trash } from "lucide-vue-next";
+// Import sorting icons alongside Trash
+import { Trash, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-vue-next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +33,54 @@ const toast = useToast();
 const isDeleting = ref(false);
 const selectedCandidate = ref<{ id: number; candidate_name: string } | null>(null);
 const showDeleteDialog = ref(false);
+
+// --- Sorting Logic ---
+type SortKey = 'candidate_code' | 'candidate_name' | 'candidate_party' | 'position.name' | 'election.name';
+
+const sortKey = ref<SortKey | null>(null);
+const sortOrder = ref<'asc' | 'desc'>('asc');
+
+const sortBy = (key: SortKey) => {
+  if (sortKey.value === key) {
+    // Toggle order if clicking the same column
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    // Set new column to sort and default to ascending
+    sortKey.value = key;
+    sortOrder.value = 'asc';
+  }
+};
+
+const sortedCandidates = computed(() => {
+  // If no sort key is selected, return the original data
+  if (!sortKey.value) return props.candidates;
+
+  // Create a copy of the array to prevent prop mutation
+  return [...props.candidates].sort((a, b) => {
+    let valA = '';
+    let valB = '';
+
+    // Extract values, handling nested objects for election and position
+    if (sortKey.value === 'position.name') {
+      valA = a.position?.name?.toLowerCase() || '';
+      valB = b.position?.name?.toLowerCase() || '';
+    } else if (sortKey.value === 'election.name') {
+      valA = a.election?.name?.toLowerCase() || '';
+      valB = b.election?.name?.toLowerCase() || '';
+    } else {
+      // @ts-ignore
+      valA = String(a[sortKey.value] || '').toLowerCase();
+      // @ts-ignore
+      valB = String(b[sortKey.value] || '').toLowerCase();
+    }
+
+    // Compare values based on sort order
+    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
+    return 0;
+  });
+});
+// ---------------------
 
 const openDeleteDialog = (candidate: { id: number; candidate_name: string }) => {
   selectedCandidate.value = candidate;
@@ -77,11 +126,52 @@ const deleteCandidate = async () => {
         <TableHeader>
           <TableRow>
             <TableHead>Picture</TableHead>
-            <TableHead>Code</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Party</TableHead>
-            <TableHead>Position</TableHead>
-            <TableHead>Election</TableHead>
+            
+            <TableHead @click="sortBy('candidate_code')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
+              <div class="flex items-center gap-1">
+                Code
+                <ArrowUp v-if="sortKey === 'candidate_code' && sortOrder === 'asc'" class="w-4 h-4" />
+                <ArrowDown v-else-if="sortKey === 'candidate_code' && sortOrder === 'desc'" class="w-4 h-4" />
+                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
+              </div>
+            </TableHead>
+
+            <TableHead @click="sortBy('candidate_name')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
+              <div class="flex items-center gap-1">
+                Name
+                <ArrowUp v-if="sortKey === 'candidate_name' && sortOrder === 'asc'" class="w-4 h-4" />
+                <ArrowDown v-else-if="sortKey === 'candidate_name' && sortOrder === 'desc'" class="w-4 h-4" />
+                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
+              </div>
+            </TableHead>
+
+            <TableHead @click="sortBy('candidate_party')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
+              <div class="flex items-center gap-1">
+                Party
+                <ArrowUp v-if="sortKey === 'candidate_party' && sortOrder === 'asc'" class="w-4 h-4" />
+                <ArrowDown v-else-if="sortKey === 'candidate_party' && sortOrder === 'desc'" class="w-4 h-4" />
+                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
+              </div>
+            </TableHead>
+
+            <TableHead @click="sortBy('position.name')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
+              <div class="flex items-center gap-1">
+                Position
+                <ArrowUp v-if="sortKey === 'position.name' && sortOrder === 'asc'" class="w-4 h-4" />
+                <ArrowDown v-else-if="sortKey === 'position.name' && sortOrder === 'desc'" class="w-4 h-4" />
+                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
+              </div>
+            </TableHead>
+
+            <TableHead @click="sortBy('election.name')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
+              <div class="flex items-center gap-1">
+                Election
+                <ArrowUp v-if="sortKey === 'election.name' && sortOrder === 'asc'" class="w-4 h-4" />
+                <ArrowDown v-else-if="sortKey === 'election.name' && sortOrder === 'desc'" class="w-4 h-4" />
+                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
+              </div>
+            </TableHead>
+            
             <TableHead class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -91,7 +181,8 @@ const deleteCandidate = async () => {
               No candidates found
             </TableCell>
           </TableRow>
-          <TableRow v-for="candidate in candidates" :key="candidate.id">
+          
+          <TableRow v-for="candidate in sortedCandidates" :key="candidate.id">
             <TableCell class="w-10 h-10">
               <img 
                 v-if="candidate.candidate_picture" 
@@ -112,7 +203,7 @@ const deleteCandidate = async () => {
             <TableCell>{{ candidate.position.name }}</TableCell>
             <TableCell>{{ candidate.election.name }}</TableCell>
             <TableCell>
-              <div  class="text-right">
+              <div class="text-right">
                 <button 
                     size="sm" 
                     @click="openDeleteDialog(candidate)"
@@ -127,7 +218,6 @@ const deleteCandidate = async () => {
       </Table>
     </div>
 
-    <!-- Delete Confirmation Dialog -->
     <AlertDialog v-model:open="showDeleteDialog">
       <AlertDialogContent>
         <AlertDialogHeader>

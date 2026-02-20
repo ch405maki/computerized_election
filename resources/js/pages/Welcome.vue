@@ -86,7 +86,7 @@ const submit = () => {
             <div v-if="form.errors.invalid_credentials" class="mb-4">
                 <p class="text-center">* Please check if your Student Number or Password is correct 
                   or email at 
-                  <span class="font-bold text-purple-900 underline">auslitcweb@gmail.com</span> 
+                  <span class="font-bold text-purple-900 underline">onlinesupport@arellanolaw.edu</span> 
                   for verification.</p>
             </div>
             <Button
