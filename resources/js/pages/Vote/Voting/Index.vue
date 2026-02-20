@@ -160,11 +160,6 @@ const vote = async () => {
       <div v-if="elections.length === 0" class="text-muted-foreground">
         No active elections available.
       </div>
-
-      <!-- Show election name instead of selector when there's only one election -->
-      <div v-if="elections.length === 1" class="mb-4">
-        <h2 class="text-xl font-semibold">{{ elections[0].name }}</h2>
-      </div>
       
 
       <ElectionDetails
