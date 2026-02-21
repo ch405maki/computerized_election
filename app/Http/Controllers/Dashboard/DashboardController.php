@@ -25,7 +25,7 @@ class DashboardController extends Controller
         $uniqueVoters = $votes->unique('voter_id');
         $totalVotes = $uniqueVoters->count();
 
-        $logs = Log::with(['user:id,name', 'voter:id,full_name'])->latest()->get();
+        $logs = Log::with(['user:id,name', 'voter:id'])->latest()->get();
         
         return Inertia::render('Dashboard', [
             'stats' => [
