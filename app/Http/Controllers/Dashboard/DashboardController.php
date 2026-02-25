@@ -25,7 +25,7 @@ class DashboardController extends Controller
         $uniqueVoters = $votes->unique('voter_id');
         $totalVotes = $uniqueVoters->count();
 
-        $logs = Log::with(['user:id,name', 'voter:id'])->latest()->get();
+        $logs = Log::with(['user:id,name', 'voter:id,student_number'])->latest()->get();
         
         return Inertia::render('Dashboard', [
             'stats' => [
@@ -60,7 +60,7 @@ class DashboardController extends Controller
                     'action' => $log->action,
                     'created_at' => $log->created_at->format('Y-m-d H:i:s'),
                     'user_name' => $log->user?->name,
-                    'voter_name' => $log->voter?->full_name,
+                    'student_number' => $log->voter?->student_number,
                 ];
             }),
             'participation_data' => Vote::selectRaw('DATE(created_at) as date, COUNT(*) as votes')

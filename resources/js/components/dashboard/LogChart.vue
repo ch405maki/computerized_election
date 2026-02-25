@@ -8,12 +8,12 @@ const props = defineProps<{
     action: string;
     created_at: string;
     user_name: string | null;
-    voter_name: string | null;
+    student_number: string | null;
   }[];
 }>();
 
 const getActorName = (log: typeof props.logs[0]) => {
-  return log.user_name ?? log.voter_name ?? 'System';
+  return log.user_name ?? log.student_number ?? 'System';
 };
 </script>
 
