@@ -42,76 +42,77 @@ const submit = () => {
 
     <div class="min-h-[calc(100vh-130px)] grid place-items-center">
       <div class="flex items-center justify-center gap-0">
-        <!-- Card -->
-        <Card class="rounded-r-none w-full max-w-sm text-white bg-transparent-100 border backdrop-blur-xl px-5 py-10 shadow-2xl">
-          <CardHeader>
-            <CardTitle class="text-center tracking-widest">Voter's Login</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form @submit.prevent="submit">
-              <div class="mb-4">
-                <Label for="student_number" class="text-white">Student Number</Label>
+      <!-- Card -->
+      <Card class="rounded-2xl rounded-r-none w-[330px] h-[378px] text-white bg-transparent-100 border backdrop-blur-xl px-5 shadow-2xl">
+        <CardHeader>
+          <CardTitle class="text-center tracking-widest mb-4">Voter's Login</CardTitle>
+        </CardHeader>
+      <CardContent class="flex flex-col justify-center flex-1 overflow-y-auto">
+          <form @submit.prevent="submit">
+            <div class="mb-3">
+              <Label for="student_number" class="text-white">Student Number</Label>
+              <Input
+                id="student_number"
+                v-model="form.student_number"
+                type="text"
+                required
+                class="pr-10 border-2 border-white text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-white bg-transparent"
+              />
+            </div>
+
+            <div class="mb-3">
+              <Label for="password" class="text-white">Password</Label>
+              <div class="relative">
                 <Input
-                  id="student_number"
-                  v-model="form.student_number"
-                  type="text"
+                  id="password"
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
                   required
                   class="pr-10 border-2 border-white text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-white bg-transparent"
                 />
+                <HoverCard>
+                  <HoverCardTrigger as-child>
+                    <button
+                      type="button"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      @click="togglePasswordVisibility"
+                    >
+                      <Eye v-if="!showPassword" class="h-5 w-5 text-white" />
+                      <EyeOff v-else class="h-5 w-5 text-white" />
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent class="w-auto p-2 text-sm">
+                    {{ showPassword ? 'Hide password' : 'Show password' }}
+                  </HoverCardContent>
+                </HoverCard>
               </div>
+            </div>
 
-              <div class="mb-4">
-                <Label for="password" class="text-white">Password</Label>
-                <div class="relative">
-                  <Input
-                    id="password"
-                    v-model="form.password"
-                    :type="showPassword ? 'text' : 'password'"
-                    required
-                    class="pr-10 border-2 border-white text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-white bg-transparent"
-                  />
-                  <HoverCard>
-                    <HoverCardTrigger as-child>
-                      <button
-                        type="button"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                        @click="togglePasswordVisibility"
-                      >
-                        <Eye v-if="!showPassword" class="h-5 w-5 text-white" />
-                        <EyeOff v-else class="h-5 w-5 text-white" />
-                      </button>
-                    </HoverCardTrigger>
-                    <HoverCardContent class="w-auto p-2 text-sm">
-                      {{ showPassword ? 'Hide password' : 'Show password' }}
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
-              </div>
+            <div v-if="form.errors.invalid_credentials" class="mb-3">
+              <p class="text-center text-[0.70rem] leading-tight">
+                * Please check if your Student Number or Password is correct,
+                or email at
+                <span class="font-bold text-purple-900 underline">onlinesupport@arellanolaw.edu</span>
+                for verification.
+              </p>
+            </div>
 
-              <div v-if="form.errors.invalid_credentials" class="mb-4">
-                <p class="text-center">
-                  * Please check if your Student Number or Password is correct
-                  or email at
-                  <span class="font-bold text-purple-900 underline">onlinesupport@arellanolaw.edu</span>
-                  for verification.
-                </p>
-              </div>
+            <Button
+              type="submit"
+              class="w-full bg-purple-700 rounded-l hover:bg-purple-600"
+              :disabled="form.processing"
+            >
+              Login
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-              <Button
-                type="submit"
-                class="w-full bg-purple-700 rounded-l hover:bg-purple-600"
-                :disabled="form.processing"
-              >
-                Login
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-        <!-- Image -->
-        <img src="/images/STATUE.jpg" alt="Login illustration"
+      <!-- Image -->
+      <img src="/images/STATUE.jpg" alt="Login illustration"
           class="w-[330px] h-[378px] brightness-[1.25] object-cover border-t border-r border-b rounded-r-2xl shadow-2xl" />
-      </div>
-    </div>
-    <WelcomeFooter />
-  </div>
+            </div>
+          </div>
+          <WelcomeFooter />
+        </div>
 </template>
