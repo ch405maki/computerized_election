@@ -7,7 +7,7 @@
                     <img src="/images/logo/ausl.png" alt="ausl-Logo" class="h-[60px] w-auto">
                     <img src="/images/logo/alsg-logo.jpg" alt="alsg-Logo" class="object-cover rounded-full h-[60px] w-auto">
                     <img src="/images/logo/comelec-logo.jpg" alt="comelec-Logo" class="object-cover rounded-full h-[60px] w-auto">
-                    <span class="text-2xl text-white border-black font-black tracking-widest uppercase">AUSL Election System</span>
+                    <span class="text-2xl text-white font-bold tracking-widest uppercase">AUSL Election System</span>
                 </h1>
                 <div class="bg-purple-400 min-h-2 w-[600px]"></div>
         </div>

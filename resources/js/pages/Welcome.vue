@@ -38,12 +38,12 @@ const submit = () => {
 <template>
   <Head title="Election Login" />
   <div class="min-h-screen bg-cover bg-center bg-no-repeat" style="background-image: url('/images/AU BG.jpg');">
-    <WelcomeHeader class="bg-purple-200/20" />
+    <WelcomeHeader class="bg-purple-200/25" />
 
     <div class="min-h-[calc(100vh-130px)] grid place-items-center">
       <div class="flex items-center justify-center gap-0">
         <!-- Card -->
-        <Card class="rounded-r-none w-full max-w-sm text-white bg-transparent-100 border-2 backdrop-blur-xl px-5 py-10 shadow-2xl">
+        <Card class="rounded-r-none w-full max-w-sm text-white bg-transparent-100 border backdrop-blur-xl px-5 py-10 shadow-2xl">
           <CardHeader>
             <CardTitle class="text-center tracking-widest">Voter's Login</CardTitle>
           </CardHeader>
@@ -77,8 +77,8 @@ const submit = () => {
                         class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         @click="togglePasswordVisibility"
                       >
-                        <Eye v-if="!showPassword" class="h-5 w-5" />
-                        <EyeOff v-else class="h-5 w-5" />
+                        <Eye v-if="!showPassword" class="h-5 w-5 text-white" />
+                        <EyeOff v-else class="h-5 w-5 text-white" />
                       </button>
                     </HoverCardTrigger>
                     <HoverCardContent class="w-auto p-2 text-sm">
@@ -109,7 +109,7 @@ const submit = () => {
         </Card>
         <!-- Image -->
         <img src="/images/STATUE.jpg" alt="Login illustration"
-          class="w-[330px] h-[380px] object-cover rounded-r-2xl shadow-2xl" />
+          class="w-[330px] h-[378px] brightness-[1.25] object-cover border-t border-r border-b rounded-r-2xl shadow-2xl" />
       </div>
     </div>
     <WelcomeFooter />
