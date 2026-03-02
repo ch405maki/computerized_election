@@ -4,7 +4,7 @@ import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AuthBase from '@/layouts/AuthLayout.vue';
+import AuthSplitLayout from '@/layouts/auth/AuthSplitLayout.vue'; // Inimport ang layout
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 
@@ -23,61 +23,91 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthBase title="Create an account" description="Enter your details below to create your account">
+    <AuthSplitLayout
+        title="Create an account"
+        description="Enter your details below to create your account"
+    >
         <Head title="Register" />
 
-        <form @submit.prevent="submit" class="flex flex-col gap-6">
-            <div class="grid gap-6">
+        <template #logo>
+            <div class="flex items-center gap-2 mb-4">
+                <img src="/logo.svg" class="h-10 w-10" alt="Logo" />
+                <span class="text-xl font-bold">Your Brand</span>
+            </div>
+        </template>
+
+        <form @submit.prevent="submit" class="flex flex-col gap-5">
+            <div class="grid gap-4">
                 <div class="grid gap-2">
-                    <Label for="name">Name</Label>
-                    <Input id="name" type="text" required autofocus :tabindex="1" autocomplete="name" v-model="form.name" placeholder="Full name" />
+                    <Label for="name" class="font-medium text-xs">Name</Label>
+                    <Input 
+                        id="name" 
+                        type="text" 
+                        required 
+                        autofocus 
+                        v-model="form.name" 
+                        class="h-11 rounded-xl" 
+                        placeholder="Full name" 
+                    />
                     <InputError :message="form.errors.name" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
-                    <Input id="email" type="email" required :tabindex="2" autocomplete="email" v-model="form.email" placeholder="email@example.com" />
+                    <Label for="email" class="font-medium text-xs">Email address</Label>
+                    <Input 
+                        id="email" 
+                        type="email" 
+                        required 
+                        v-model="form.email" 
+                        class="h-11 rounded-xl" 
+                        placeholder="email@example.com" 
+                    />
                     <InputError :message="form.errors.email" />
                 </div>
 
-                <div class="grid gap-2">
-                    <Label for="password">Password</Label>
-                    <Input
-                        id="password"
-                        type="password"
-                        required
-                        :tabindex="3"
-                        autocomplete="new-password"
-                        v-model="form.password"
-                        placeholder="Password"
-                    />
-                    <InputError :message="form.errors.password" />
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="grid gap-2">
+                        <Label for="password" class="font-medium text-xs">Password</Label>
+                        <Input 
+                            id="password" 
+                            type="password" 
+                            required 
+                            v-model="form.password" 
+                            class="h-11 rounded-xl" 
+                            placeholder="••••••••" 
+                        />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="password_confirmation" class="font-medium text-xs">Confirm</Label>
+                        <Input 
+                            id="password_confirmation" 
+                            type="password" 
+                            required 
+                            v-model="form.password_confirmation" 
+                            class="h-11 rounded-xl"  
+                            placeholder="••••••••" 
+                        />
+                    </div>
                 </div>
+                <InputError :message="form.errors.password" />
+                <InputError :message="form.errors.password_confirmation" />
 
-                <div class="grid gap-2">
-                    <Label for="password_confirmation">Confirm password</Label>
-                    <Input
-                        id="password_confirmation"
-                        type="password"
-                        required
-                        :tabindex="4"
-                        autocomplete="new-password"
-                        v-model="form.password_confirmation"
-                        placeholder="Confirm password"
-                    />
-                    <InputError :message="form.errors.password_confirmation" />
-                </div>
-
-                <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="form.processing">
-                    <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                    Create account
+                <Button 
+                    type="submit" 
+                    class="mt-4 w-full py-6 font-bold rounded-lg transition-all active:scale-95" 
+                    :disabled="form.processing"
+                >
+                    <LoaderCircle v-if="form.processing" class="mr-2 h-5 w-5 animate-spin" />
+                    Sign Up
                 </Button>
             </div>
 
-            <div class="text-center text-sm text-muted-foreground">
+            <div class="text-center text-sm text-muted-foreground mt-2">
                 Already have an account?
-                <TextLink :href="route('login')" class="underline underline-offset-4" :tabindex="6">Log in</TextLink>
+                <TextLink :href="route('login')" class="hover:underline underline-offset-4 font-semibold ml-1">
+                    Log in
+                </TextLink>
             </div>
         </form>
-    </AuthBase>
+    </AuthSplitLayout>
 </template>
