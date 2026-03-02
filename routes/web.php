@@ -14,6 +14,7 @@ use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Election\ElectionController;
 use App\Http\Controllers\Dashboard\DashboardController;
 
+
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
@@ -62,9 +63,9 @@ Route::get('/results/{election}', [ReportController::class, 'show'])->name('resu
 Route::get('/results/{election}/export', [ReportController::class, 'export'])->name('results.export');
 
 // Candidates' Platform Sample Route
-Route::get('/candidates/platforms', function () {
-    return Inertia::render('Candidates/Platforms/Index');
-})->name('platforms.index');
+Route::get('/candidates/platforms', [VoteController::class, 'platformsPage'])->name('platforms.index');
+
+
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

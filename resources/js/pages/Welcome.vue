@@ -38,7 +38,7 @@ const submit = () => {
 <template>
   <Head title="Election Login" />
   <div class="min-h-screen bg-cover bg-center bg-no-repeat" style="background-image: url('/images/AU BG.jpg');">
-    <WelcomeHeader class="bg-purple-200/25" />
+    <WelcomeHeader class="bg-purple-200/30" />
 
     <div class="min-h-[calc(100vh-130px)] grid place-items-center">
       <div class="flex items-center justify-center gap-0">

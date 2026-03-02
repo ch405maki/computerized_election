@@ -171,6 +171,23 @@ class VoteController extends Controller
             ]);
         }
 
+    // Add this method to App\Http\Controllers\Vote\VoteController.php
+
+    public function platformsPage()
+    {
+        // Fetch active elections with candidates, positions, and any platform data
+        $elections = Election::where('status', 'active')
+            ->with(['candidates' => function($query) {
+                // We include 'position' so we can group them on the frontend
+                $query->with('position');
+            }])
+            ->get();
+
+        return Inertia::render('Candidates/Platforms/Index', [
+            'elections' => $elections,
+        ]);
+    }
+
     /**
      * Show the form for editing the specified resource.
      */
