@@ -29,6 +29,28 @@ description="Enter your details below to create your account"
 >
 <Head title="Register" />
 
+        <template #logo>
+            <div class="flex items-center gap-2 mb-4">
+                <img src="/logo.svg" class="h-10 w-10" alt="Logo" />
+                <span class="text-xl font-bold">Your Brand</span>
+            </div>
+        </template>
+
+        <form @submit.prevent="submit" class="flex flex-col gap-5">
+            <div class="grid gap-4">
+                <div class="grid gap-2">
+                    <Label for="name" class="font-medium text-xs">Name</Label>
+                    <Input 
+                        id="name" 
+                        type="text" 
+                        required 
+                        autofocus 
+                        v-model="form.name" 
+                        class="h-11 rounded-xl" 
+                        placeholder="Full name" 
+                    />
+                    <InputError :message="form.errors.name" />
+                </div>
 <form @submit.prevent="submit" class="flex flex-col gap-4 text-xs">
     <div class="grid gap-4">
     <!-- Name -->
@@ -48,71 +70,62 @@ description="Enter your details below to create your account"
         <InputError :message="form.errors.name" class="text-[11px]" />
     </div>
 
-    <!-- Email -->
-    <div class="grid gap-1">
-        <Label for="email" class="text-xs">Email address</Label>
-        <Input
-        id="email"
-        type="email"
-        required
-        :tabindex="2"
-        autocomplete="email"
-        v-model="form.email"
-        placeholder="email@example.com"
-        class="text-xs py-1.5"
-        />
-        <InputError :message="form.errors.email" class="text-[11px]" />
-    </div>
+                <div class="grid gap-2">
+                    <Label for="email" class="font-medium text-xs">Email address</Label>
+                    <Input 
+                        id="email" 
+                        type="email" 
+                        required 
+                        v-model="form.email" 
+                        class="h-11 rounded-xl" 
+                        placeholder="email@example.com" 
+                    />
+                    <InputError :message="form.errors.email" />
+                </div>
 
-    <!-- Password -->
-    <div class="grid gap-1">
-        <Label for="password" class="text-xs">Password</Label>
-        <Input
-        id="password"
-        type="password"
-        required
-        :tabindex="3"
-        autocomplete="new-password"
-        v-model="form.password"
-        placeholder="Password"
-        class="text-xs py-1.5"
-        />
-        <InputError :message="form.errors.password" class="text-[11px]" />
-    </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="grid gap-2">
+                        <Label for="password" class="font-medium text-xs">Password</Label>
+                        <Input 
+                            id="password" 
+                            type="password" 
+                            required 
+                            v-model="form.password" 
+                            class="h-11 rounded-xl" 
+                            placeholder="••••••••" 
+                        />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="password_confirmation" class="font-medium text-xs">Confirm</Label>
+                        <Input 
+                            id="password_confirmation" 
+                            type="password" 
+                            required 
+                            v-model="form.password_confirmation" 
+                            class="h-11 rounded-xl"  
+                            placeholder="••••••••" 
+                        />
+                    </div>
+                </div>
+                <InputError :message="form.errors.password" />
+                <InputError :message="form.errors.password_confirmation" />
 
-    <!-- Confirm Password -->
-    <div class="grid gap-1">
-        <Label for="password_confirmation" class="text-xs">Confirm password</Label>
-        <Input
-        id="password_confirmation"
-        type="password"
-        required
-        :tabindex="4"
-        autocomplete="new-password"
-        v-model="form.password_confirmation"
-        placeholder="Confirm password"
-        class="text-xs py-1.5"
-        />
-        <InputError :message="form.errors.password_confirmation" class="text-[11px]" />
-    </div>
+                <Button 
+                    type="submit" 
+                    class="mt-4 w-full py-6 font-bold rounded-lg transition-all active:scale-95" 
+                    :disabled="form.processing"
+                >
+                    <LoaderCircle v-if="form.processing" class="mr-2 h-5 w-5 animate-spin" />
+                    Sign Up
+                </Button>
+            </div>
 
-    <!-- Submit Button -->
-    <Button
-        type="submit"
-        class="mt-3 w-full text-xs py-1.5"
-        tabindex="5"
-        :disabled="form.processing"
-    >
-        <LoaderCircle v-if="form.processing" class="h-3 w-3 animate-spin" />
-        Create account
-    </Button>
-    </div>
-
-    <!-- Footer -->
-    <div class="text-center text-[11px] text-muted-foreground mt-2">
-    Already have an account?
-    <TextLink :href="route('login')" :tabindex="6">Log in</TextLink>
-    </div>
-</form>
-</AuthSplitLayout>
+            <div class="text-center text-sm text-muted-foreground mt-2">
+                Already have an account?
+                <TextLink :href="route('login')" class="hover:underline underline-offset-4 font-semibold ml-1">
+                    Log in
+                </TextLink>
+            </div>
+        </form>
+    </AuthSplitLayout>
 </template>
