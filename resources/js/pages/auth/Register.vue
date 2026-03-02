@@ -4,30 +4,30 @@ import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AuthSplitLayout from '@/layouts/auth/AuthSplitLayout.vue';
+import AuthSplitLayout from '@/layouts/auth/AuthSplitLayout.vue'; // Inimport ang layout
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 
 const form = useForm({
-name: '',
-email: '',
-password: '',
-password_confirmation: '',
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
 });
 
 const submit = () => {
-form.post(route('register'), {
-onFinish: () => form.reset('password', 'password_confirmation'),
-});
+    form.post(route('register'), {
+        onFinish: () => form.reset('password', 'password_confirmation'),
+    });
 };
 </script>
 
 <template>
-<AuthSplitLayout
-title="Create an account"
-description="Enter your details below to create your account"
->
-<Head title="Register" />
+    <AuthSplitLayout
+        title="Create an account"
+        description="Enter your details below to create your account"
+    >
+        <Head title="Register" />
 
         <template #logo>
             <div class="flex items-center gap-2 mb-4">
@@ -51,24 +51,6 @@ description="Enter your details below to create your account"
                     />
                     <InputError :message="form.errors.name" />
                 </div>
-<form @submit.prevent="submit" class="flex flex-col gap-4 text-xs">
-    <div class="grid gap-4">
-    <!-- Name -->
-    <div class="grid gap-1">
-        <Label for="name" class="text-xs">Name</Label>
-        <Input
-        id="name"
-        type="text"
-        required
-        autofocus
-        :tabindex="1"
-        autocomplete="name"
-        v-model="form.name"
-        placeholder="Full name"
-        class="text-xs py-1.5"
-        />
-        <InputError :message="form.errors.name" class="text-[11px]" />
-    </div>
 
                 <div class="grid gap-2">
                     <Label for="email" class="font-medium text-xs">Email address</Label>
