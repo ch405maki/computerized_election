@@ -61,5 +61,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 Route::get('/results/{election}', [ReportController::class, 'show'])->name('results.show');
 Route::get('/results/{election}/export', [ReportController::class, 'export'])->name('results.export');
 
+// Candidates' Platform Sample Route
+Route::get('/candidates/platforms', function () {
+    return Inertia::render('Candidates/Platforms/Index');
+})->name('platforms.index');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
