@@ -102,7 +102,7 @@ const submit = () => {
                 </Button>
             </div>
 
-            <div class="text-center text-sm text-muted-foreground mt-2">
+            <div class="text-center text-sm text-white mt-2">
                 Already have an account?
                 <TextLink :href="route('login')" class="hover:underline underline-offset-4 font-semibold ml-1">
                     Log in
