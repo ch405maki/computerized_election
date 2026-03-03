@@ -86,7 +86,7 @@ const submit = () => {
 
             <div class="text-center text-sm text-white">
                 Don't have an account?
-                <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
+                <TextLink :href="route('register')" class="hover:underline underline-offset-4 text-white underline font-semibold ml-1">Sign up</TextLink>
             </div>
         </form>
     </AuthSplitLayout>

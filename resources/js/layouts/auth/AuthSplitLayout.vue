@@ -57,7 +57,7 @@ onUnmounted(() => {
             <div class="w-full max-w-[400px] rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 p-8 shadow-2xl space-y-6">
                 
                 <div class="flex flex-col space-y-4 text-center items-center"> 
-                    <Link :href="route('home')" class="relative z-20 flex flex-col items-center">
+                    <Link :href="route('home')" class="relative z-20 flex flex-col items-center transition-transform hover:scale-110 active:scale-95">
                         <div class="h-20 w-20 overflow-hidden"> 
                             <AppLogoIcon class="h-full w-full fill-current text-white" />
                         </div>

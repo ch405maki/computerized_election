@@ -39,7 +39,7 @@ const submit = () => {
         <form @submit.prevent="submit" class="flex flex-col gap-5">
             <div class="grid gap-4">
                 <div class="grid gap-2">
-                    <Label for="name" class="font-medium text-xs">Name</Label>
+                    <Label for="name" class="font-medium text-xs">Full Name</Label>
                     <Input 
                         id="name" 
                         type="text" 
@@ -53,7 +53,7 @@ const submit = () => {
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="email" class="font-medium text-xs">Email address</Label>
+                    <Label for="email" class="font-medium text-xs">Email Address</Label>
                     <Input 
                         id="email" 
                         type="email" 
@@ -78,7 +78,7 @@ const submit = () => {
                         />
                     </div>
                     <div class="grid gap-2">
-                        <Label for="password_confirmation" class="font-medium text-xs">Confirm</Label>
+                        <Label for="password_confirmation" class="font-medium text-xs">Confirm Password</Label>
                         <Input 
                             id="password_confirmation" 
                             type="password" 
@@ -104,7 +104,7 @@ const submit = () => {
 
             <div class="text-center text-sm text-white mt-2">
                 Already have an account?
-                <TextLink :href="route('login')" class="hover:underline underline-offset-4 font-semibold ml-1">
+                <TextLink :href="route('login')" class="hover:underline underline-offset-4 text-white underline font-semibold ml-1">
                     Log in
                 </TextLink>
             </div>
