@@ -27,7 +27,7 @@ let timer: any = null;
 onMounted(() => {
     timer = setInterval(() => {
         currentIndex.value = (currentIndex.value + 1) % images.length;
-    }, 3000);
+    }, 5000);
 });
 
 onUnmounted(() => {
@@ -83,25 +83,19 @@ onUnmounted(() => {
 
 <style scoped>
 .fade-enter-active {
-  animation: kenburns 8s infinite alternate;
-  transition: opacity 1.5s ease;
+animation: kenburns 8s infinite alternate;
+transition: opacity 1.5s ease;
 }
 
 .fade-leave-active {
-  transition: opacity 1.5s ease;
+transition: opacity 1.5s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
-  opacity: 0;
+opacity: 0;
 }
 
-@keyframes kenburns {
-  from { transform: scale(1); }
-  to { transform: scale(1.1); }
-}
-
-/* Para siguradong puti ang labels at text sa loob ng slot */
 :deep(label) {
     color: white !important;
 }
