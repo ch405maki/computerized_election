@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 
 use Inertia\Inertia;
 
@@ -157,40 +158,56 @@ class VoterController extends Controller
 
     public function uploadVoters(Request $request)
     {
-        // Increase Time Limit
-        set_time_limit(0); 
-
-        // Memory Limit
         ini_set('memory_limit', '512M');
 
         try {
             $request->validate([
-                'file' => 'required|mimes:xlsx,xls,csv',
+                'file' => 'required|mimes:xlsx,xls,csv|max:10240',
             ]);
 
-            Excel::import(new VoterImport, $request->file('file'));
+            $file = $request->file('file');
+            $filePath = $file->store('temp_imports'); 
 
-            return response()->json(['message' => 'Voters uploaded successfully!'], 200);
+            // 1. Generate a unique ID for this specific upload
+            $importId = uniqid();
 
-        } catch (\Illuminate\Database\QueryException $e) {
-            Log::error('Database error: ' . $e->getMessage());
+            if ($request->input('use_queue') === 'true') {
+                
+                // 2. Set the initial status in the cache
+                Cache::put("import_status_{$importId}", 'processing', now()->addHours(1));
+
+                // 3. Pass the ID to the import class so it knows which cache key to update later
+                Excel::queueImport(new VoterImport($importId), $filePath);
+
+                return response()->json([
+                    'queued' => true,
+                    'message' => 'Your file is being processed in the background.',
+                    'import_id' => $importId, // 4. Send the ID to Vue
+                ], 200);
+            }
+
+            // Fallback for immediate processing (small files)
+            Excel::import(new VoterImport(), $filePath);
+
             return response()->json([
-                'message' => 'Database error during import.',
-                'error'   => 'Check for duplicate Student Numbers.'
-            ], 422);
-
-        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            return response()->json([
-                'message' => 'Some rows failed validation.',
-                'errors'  => $e->failures()
-            ], 422);
+                'message' => 'Voters uploaded successfully!'
+            ], 200);
 
         } catch (\Exception $e) {
             Log::error('Error uploading voters: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to upload file. Please check the format and data integrity.',
+                'message' => 'Failed to upload file.',
                 'error'   => $e->getMessage()
             ], 500);
         }
+    }
+
+    // 5. Create the endpoint that Vue will poll every 3 seconds
+    public function checkImportStatus($importId)
+    {
+        // If the cache key is missing, assume it either finished or failed
+        $status = Cache::get("import_status_{$importId}", 'completed'); 
+        
+        return response()->json(['status' => $status]);
     }
 }
