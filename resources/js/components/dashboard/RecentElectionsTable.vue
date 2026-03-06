@@ -4,8 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye } from "lucide-vue-next";
-import { router } from '@inertiajs/vue3';
-import { useToast } from 'vue-toastification';
 
 interface Election {
   id: number;
@@ -15,23 +13,11 @@ interface Election {
   votes_count: number;
 }
 
-const props = defineProps<{
+defineProps<{
   elections: Election[];
   getElectionStatus: (election: {start_date: string; end_date: string}) => string;
   formatDate: (dateString: string) => string;
 }>();
-
-const toast  = useToast();
-
-const handleViewClick = (election: Election) => {
-  const status = props.getElectionStatus(election);
-  
-  if (status === 'active') {
-    toast.error("This election is still ongoing. Results are not yet available.");
-  } else {
-    router.get(`/results/${election.id}`);
-  }
-};
 </script>
 
 <template>
@@ -56,7 +42,7 @@ const handleViewClick = (election: Election) => {
             <TableCell>
               <Badge 
                 :variant="getElectionStatus(election) === 'active' ? 'default' : 
-                         getElectionStatus(election) === 'upcoming' ? 'secondary' : 'outline'"
+                        getElectionStatus(election) === 'upcoming' ? 'secondary' : 'outline'"
               >
                 {{ getElectionStatus(election) }}
               </Badge>
@@ -64,9 +50,11 @@ const handleViewClick = (election: Election) => {
             <TableCell>{{ formatDate(election.start_date) }} to {{ formatDate(election.end_date) }}</TableCell>
             <TableCell>{{ election.votes_count }}</TableCell>
             <TableCell class="text-right">
-              <Button variant="ghost" size="sm" @click="handleViewClick(election)">
-                <Eye class="h-4 w-4 mr-1" />
-                View
+              <Button variant="ghost" size="sm" as-child>
+                <router-link :to="`/elections/${election.id}`">
+                  <Eye class="h-4 w-4 mr-1" />
+                  View
+                </router-link>
               </Button>
             </TableCell>
           </TableRow>
