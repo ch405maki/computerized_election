@@ -34,7 +34,6 @@ Route::post('/upload-voters', [VoterController::class, 'uploadVoters']);
 Route::post('/voters/status/activate/{id}', [VoterStatusController::class, 'activate']);
 Route::post('/voters/status/activate-all', [VoterStatusController::class, 'activateAll']);
 Route::patch('/voters/{voter}', [VoterController::class, 'update']);
-Route::get('/import-status/{importId}', [VoterController::class, 'checkImportStatus']);
 
 // Candidate Routes
 Route::post('/positions', [PositionController::class, 'store']);
