@@ -14,7 +14,6 @@ use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Election\ElectionController;
 use App\Http\Controllers\Dashboard\DashboardController;
 
-
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
@@ -61,11 +60,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 // Public Results Route (no auth required)
 Route::get('/results/{election}', [ReportController::class, 'show'])->name('results.show');
 Route::get('/results/{election}/export', [ReportController::class, 'export'])->name('results.export');
-
-// Candidates' Platform Sample Route
-Route::get('/candidates/platforms', [VoteController::class, 'platformsPage'])->name('platforms.index');
-
-
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
