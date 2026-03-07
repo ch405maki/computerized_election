@@ -40,7 +40,6 @@
               <Upload v-else class="w-4 h-4" />
               <span>{{ loading ? 'Uploading...' : 'Upload Excel' }}</span>
               
-              <!-- Progress Indicator -->
               <div v-if="loading && uploadProgress > 0" 
                    class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary/20">
                 <div class="h-full bg-primary transition-all duration-300" 
@@ -63,7 +62,6 @@
           </div>
         </div>
 
-        <!-- Upload Status Banner -->
         <div v-if="uploadStatus" 
              :class="['p-3 rounded-lg border flex items-start gap-3 animate-fade-in',
                uploadStatus.type === 'success' ? 'bg-green-50 border-green-200' :
@@ -123,7 +121,7 @@
             <Loader2 class="w-5 h-5 text-blue-600 animate-spin" />
             <div>
               <h4 class="font-medium text-blue-800">Processing large file...</h4>
-              <p class="text-sm text-blue-700">Please wait while we process {{ estimatedRowCount.toLocaleString() }} rows.</p>
+              <p class="text-sm text-blue-700">Please wait while we process {{ estimatedRowCount.toLocaleString() }} rows. The page will refresh automatically.</p>
             </div>
            </div>
         </div>
@@ -208,7 +206,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from "vue";
+import { ref, watch, onMounted, computed, onUnmounted } from "vue";
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
@@ -246,10 +244,10 @@ interface PaginatedVoters {
   current_page: number;
   from: number;
   last_page: number;
-  per_page: number; // Required for pagination math
+  per_page: number;
   to: number;
   total: number;
-  links: any[]; // Kept for type safety if Laravel sends it
+  links: any[];
 }
 
 interface UploadStatus {
@@ -296,14 +294,14 @@ const uploadErrors = ref<ValidationError[]>([]);
 const showErrorDetails = ref(false);
 const processingLargeFile = ref(false);
 const estimatedRowCount = ref(0);
+let pollInterval: ReturnType<typeof setInterval> | null = null; // Store interval globally for cleanup
 
 // --- Custom Pagination Logic ---
 const paginationRange = computed(() => {
     const current = props.voters.current_page;
     const total = props.voters.last_page;
-    const delta = 1; // Number of pages to show on each side of current page
+    const delta = 1;
 
-    // If total pages are 7 or less, show all
     if (total <= 7) {
         return Array.from({ length: total }, (_, i) => i + 1);
     }
@@ -312,25 +310,20 @@ const paginationRange = computed(() => {
     const left = current - delta;
     const right = current + delta;
 
-    // Always add first page
     range.push(1);
 
-    // Add ellipsis if gap exists between 1 and left window
     if (left > 2) {
         range.push("...");
     }
 
-    // Add pages in the middle window
     for (let i = Math.max(2, left); i <= Math.min(total - 1, right); i++) {
         range.push(i);
     }
 
-    // Add ellipsis if gap exists between right window and last page
     if (right < total - 1) {
         range.push("...");
     }
 
-    // Always add last page
     if (total > 1) {
         range.push(total);
     }
@@ -380,13 +373,11 @@ const navigateToActivationPage = () => {
   router.get('/voters/status');
 };
 
-// File Handling
 const triggerFileInput = () => {
   fileInput.value?.click();
 };
 
 const estimateRowCount = (file: File): number => {
-  // Very rough estimation: 1KB ≈ 10 rows for Excel
   const estimatedRows = Math.ceil(file.size / 100);
   return Math.min(estimatedRows, 10000);
 };
@@ -398,20 +389,17 @@ const handleFileUpload = async (event: Event) => {
 
   if (!file) return;
 
-  // Clear previous status
   clearUploadStatus();
   uploadErrors.value = [];
   showErrorDetails.value = false;
 
-  // File size validation (10MB max)
-  const maxSize = 10 * 1024 * 1024; // 10MB
+  const maxSize = 10 * 1024 * 1024;
   if (file.size > maxSize) {
     toast.error("File size must be less than 10MB");
     if (fileInput.value) fileInput.value.value = '';
     return;
   }
 
-  // Estimate row count for user feedback
   estimatedRowCount.value = estimateRowCount(file);
   if (estimatedRowCount.value > 1000) {
     processingLargeFile.value = true;
@@ -423,7 +411,6 @@ const handleFileUpload = async (event: Event) => {
   const formData = new FormData();
   formData.append("file", file);
   
-  // Auto-use queue for large files (>5MB or >3000 estimated rows)
   const useQueue = file.size > 5 * 1024 * 1024 || estimatedRowCount.value > 3000;
   if (useQueue) {
     formData.append("use_queue", "true");
@@ -443,16 +430,45 @@ const handleFileUpload = async (event: Event) => {
       timeout: 0, 
     });
 
-    // Handle queued response
     if (response.data.queued) {
+      const importId = response.data.import_id;
+
       uploadStatus.value = {
         type: 'info',
         title: 'Processing in Background',
-        message: `Your file with approximately ${estimatedRowCount.value.toLocaleString()} rows is being processed. You'll be notified when complete.`
+        message: `Your file with approximately ${estimatedRowCount.value.toLocaleString()} rows is being processed. The page will refresh automatically when done.`
       };
-      toast.info(`File processing started. Import ID: ${response.data.import_id}`);
+      toast.info(`File processing started.`);
+
+      // --- NEW POLLING LOGIC HERE ---
+      pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await axios.get(`/api/import-status/${importId}`);
+          
+          if (statusRes.data.status === 'completed') {
+            if (pollInterval) clearInterval(pollInterval);
+            processingLargeFile.value = false;
+            
+            uploadStatus.value = {
+              type: 'success',
+              title: 'Upload Successful!',
+              message: 'Background import has finished.'
+            };
+            toast.success("All voters have been imported!");
+            
+            // Refresh the Inertia page data
+            router.reload({ only: ['voters'] }); 
+          } else {
+             // Optional: silently refresh the table in the background while polling
+            router.reload({ only: ['voters'], preserveScroll: true, preserveState: true });
+          }
+        } catch (e) {
+          console.error("Failed to check status", e);
+           if (pollInterval) clearInterval(pollInterval);
+        }
+      }, 3000); // Check every 3 seconds
+
     } else {
-      // Handle immediate completion
       uploadResult.value = response.data;
       uploadStatus.value = {
         type: 'success',
@@ -460,7 +476,6 @@ const handleFileUpload = async (event: Event) => {
         message: response.data.message || 'Voters imported successfully.'
       };
       
-      // Show detailed results
       const processed = response.data.processed || 0;
       const skipped = response.data.skipped || 0;
       
@@ -468,7 +483,6 @@ const handleFileUpload = async (event: Event) => {
         toast.success(`Import completed: ${processed} processed, ${skipped} skipped`);
       }
       
-      // Refresh data
       router.reload({ only: ['voters'] });
     }
 
@@ -478,12 +492,12 @@ const handleFileUpload = async (event: Event) => {
         const data = error.response.data as any;
         const status = error.response.status;
         if (status === 422) {
-             uploadErrors.value = data.errors || [];
-             uploadStatus.value = { type: 'error', title: 'Validation Error', message: 'Validation failed.' };
+            uploadErrors.value = data.errors || [];
+            uploadStatus.value = { type: 'error', title: 'Validation Error', message: 'Validation failed.' };
         } else if (status === 409) {
-             uploadStatus.value = { type: 'error', title: 'Duplicate Data', message: data.message };
+          uploadStatus.value = { type: 'error', title: 'Duplicate Data', message: data.message };
         } else {
-             uploadStatus.value = { type: 'error', title: 'Error', message: data.message || 'Upload failed' };
+          uploadStatus.value = { type: 'error', title: 'Error', message: data.message || 'Upload failed' };
         }
     } else {
         uploadStatus.value = { type: 'error', title: 'Network/Timeout', message: 'Connection error' };
@@ -492,8 +506,10 @@ const handleFileUpload = async (event: Event) => {
   } finally {
     loading.value = false;
     uploadProgress.value = 0;
-    processingLargeFile.value = false;
-    // Reset file input
+    // Don't turn off processingLargeFile if we are still polling
+    if (!pollInterval) {
+      processingLargeFile.value = false;
+    }
     if (fileInput.value) fileInput.value.value = '';
   }
 };
@@ -505,7 +521,11 @@ const clearUploadStatus = () => {
   showErrorDetails.value = false;
 };
 
-// Auto-clear success status after 10 seconds
+// Cleanup interval if user navigates away from the page
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval);
+});
+
 onMounted(() => {
   if (uploadStatus.value?.type === 'success') {
     setTimeout(() => {
