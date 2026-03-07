@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
 use App\Exports\ElectionResultsExport;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Election;
 use App\Models\Candidate;
@@ -32,8 +33,28 @@ class ReportController extends Controller
         ]);
     }
 
+    // NEW: Verification Method
+    public function verify(Request $request, Election $election)
+    {
+        $request->validate([
+            // 'current_password' automatically checks against the logged-in user
+            'password' => ['required', 'current_password'], 
+        ]);
+
+        // Set a session flag to authorize viewing this specific election
+        session()->put("verified_election_{$election->id}", true);
+
+        return redirect()->route('results.show', $election->id);
+    }
+
     public function show(Election $election)
     {
+        // Guard against direct URL access
+        if (!session()->has("verified_election_{$election->id}")) {
+            return redirect()->route('results.index')
+                ->withErrors(['password' => 'Please verify your password to view these results.']);
+        }
+
         // Get candidates with their position and vote count
         $candidates = Candidate::where('election_id', $election->id)
             ->with('position')
@@ -67,6 +88,11 @@ class ReportController extends Controller
 
     public function export(Election $election)
     {
+        // You might want to add the session guard here too if exports should also be password protected!
+        if (!session()->has("verified_election_{$election->id}")) {
+            abort(403, 'Unauthorized action.');
+        }
+
         return Excel::download(new ElectionResultsExport($election), 'election_results.xlsx');
     }
 

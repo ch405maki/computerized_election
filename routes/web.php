@@ -49,17 +49,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 // Election Routes (Admin only)
 Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/election', [ElectionController::class, 'index'])->name('elections.index');
+    Route::post('/election/verify-password', [ElectionController::class, 'verifyPassword'])->name('elections.verify-password');
 });
 
 // Report Routes (Admin only)
 Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/reports/results', [ReportController::class, 'index'])->name('results.index');
-    Route::get('/reports/log', [LogController::class, 'index'])->name('log.index'); // Fixed name conflict
+    Route::get('/reports/log', [LogController::class, 'index'])->name('log.index'); 
+    
+    Route::post('/results/{election}/verify', [ReportController::class, 'verify'])->name('results.verify');
+    
+    Route::get('/results/{election}', [ReportController::class, 'show'])->name('results.show');
+    Route::get('/results/{election}/export', [ReportController::class, 'export'])->name('results.export');
 });
-
-// Public Results Route (no auth required)
-Route::get('/results/{election}', [ReportController::class, 'show'])->name('results.show');
-Route::get('/results/{election}/export', [ReportController::class, 'export'])->name('results.export');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
