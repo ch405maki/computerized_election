@@ -17,7 +17,7 @@ class LogController extends Controller
      */
     public function index()
     {
-        $logs = Log::with(['user:id,name', 'voter:id,full_name'])->latest()->get();
+        $logs = Log::with(['user:id,name', 'voter:id'])->latest()->get();
         
         return Inertia::render('Reports/Logs/Index', [
             'logs' => $logs->map(function ($log) {
