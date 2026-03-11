@@ -33,19 +33,48 @@ export function formatDate(dateStr: string): string {
   });
 }
 
-// Helper function to convert an image URL to Base64 for jsPDF
-const getBase64ImageFromURL = (url: string): Promise<string> => {
+// Helper function to convert an image URL to Base64 for jsPDF, with optional circular crop
+const getBase64ImageFromURL = (url: string, cropCircle: boolean = false): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.setAttribute("crossOrigin", "anonymous");
+    
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
       const ctx = canvas.getContext("2d");
-      ctx?.drawImage(img, 0, 0);
+      
+      if (!ctx) {
+        reject(new Error("Failed to get 2D context"));
+        return;
+      }
+
+      if (cropCircle) {
+        // Find the smallest dimension to make a perfect square canvas
+        const size = Math.min(img.width, img.height);
+        canvas.width = size;
+        canvas.height = size;
+
+        // Create a circular clipping path
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+
+        // Center the image if it is rectangular
+        const dx = (size - img.width) / 2;
+        const dy = (size - img.height) / 2;
+        ctx.drawImage(img, dx, dy, img.width, img.height);
+      } else {
+        // Default behavior for uncropped images
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+      }
+
+      // Export as PNG to preserve the transparent background outside the circle
       resolve(canvas.toDataURL("image/png"));
     };
+    
     img.onerror = (error) => reject(error);
     img.src = url;
   });
@@ -62,24 +91,20 @@ export async function exportElectionResultsPdf(
   const doc = new jsPDF({ orientation: "portrait" });
   
   // ==================== LOGOS ====================
+  // ==================== LOGOS ====================
   try {
-    // 1. Define paths to your two logos in the public folder
-    const leftLogoUrl = '/images/logo/ausl.png';  // Update this path
-    const rightLogoUrl = '/images/logo/au-logo.png'; // Update this path
+    const leftLogoUrl = '/images/logo/ausl.png'; 
+    const rightLogoUrl = '/images/logo/comelec-logo.jpg'; 
     
-    // 2. Load both images at the same time for performance
+    // Pass `true` to the right logo to trigger the circular crop
     const [leftLogoBase64, rightLogoBase64] = await Promise.all([
       getBase64ImageFromURL(leftLogoUrl),
-      getBase64ImageFromURL(rightLogoUrl)
+      getBase64ImageFromURL(rightLogoUrl, true) 
     ]);
     
-    // 3. Add to Document: addImage(imageData, format, X, Y, Width, Height)
-    
-    // Left Logo
+    // Add to Document: addImage(imageData, format, X, Y, Width, Height)
     doc.addImage(leftLogoBase64, 'PNG', 20, 8, 22, 22); 
-    
-    // Right Logo (210 page width - 20 right margin - 22 image width = X coordinate of 168)
-    doc.addImage(rightLogoBase64, 'PNG', 168, 8, 22, 22); 
+    doc.addImage(rightLogoBase64, 'PNG', 160, 8, 22, 22); 
 
   } catch (error) {
     console.warn("Could not load one or both logos. Generating PDF without them.", error);
@@ -145,6 +170,15 @@ export async function exportElectionResultsPdf(
         0: { halign: "center", cellWidth: 20 },
         3: { halign: "right", cellWidth: 30 }
       },
+
+
+      didParseCell: function(data) {
+        // Check if we are in the header row and specifically the 4th column (index 3)
+        if (data.section === 'head' && data.column.index === 3) {
+          data.cell.styles.halign = 'right'; 
+        }
+      },
+
       willDrawCell: function (data) {
         if (data.row.index === tableData.length - 1) {
           doc.setFont("helvetica", "bold");
