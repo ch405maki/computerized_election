@@ -70,16 +70,16 @@ const formattedDate = (dateString: string) => {
           <h1 class="text-2xl font-bold mb-2">Election Results</h1>
           <h2 class="text-xl">{{ election?.name || 'Loading...' }}</h2>
           <p v-if="election" class="text-muted-foreground">
-            {{ formattedDate(election.start_date) }} - 
+            {{ formattedDate(election.start_date) }}
             {{ formattedDate(election.end_date) }}
           </p>
         </div>
         
         <div class="flex flex-col gap-2 items-end">
-          <Button @click="exportToExcel" variant="default">
+          <!-- <Button @click="exportToExcel" variant="default">
             <Sheet class="w-4 h-4 mr-2"/>
             <span>Export to Excel</span>
-          </Button>
+          </Button> -->
           
           <Button @click="downloadPDF" variant="destructive">
             <FileDown class="w-4 h-4 mr-2"/>

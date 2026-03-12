@@ -1,10 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-/* =========================================================
-   TYPES
-========================================================= */
-
+/* TYPES */
 export interface CandidateResult {
   id: number;
   candidate_name: string;
@@ -20,9 +17,7 @@ export interface Election {
   end_date: string;
 }
 
-/* =========================================================
-   UTILS
-========================================================= */
+/* UTILS */
 
 export function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -80,18 +75,16 @@ const getBase64ImageFromURL = (url: string, cropCircle: boolean = false): Promis
   });
 };
 
-/* =========================================================
-   PDF EXPORT FOR ELECTION RESULTS
-========================================================= */
+/* PDF EXPORT FOR ELECTION RESULTS */
 
 export async function exportElectionResultsPdf(
   election: Election, 
   positions: Record<string, CandidateResult[]>
 ) {
   const doc = new jsPDF({ orientation: "portrait" });
+  const pageHeight = doc.internal.pageSize.getHeight(); // Get standard page height
   
-  // ==================== LOGOS ====================
-  // ==================== LOGOS ====================
+  // LOGOS 
   try {
     const leftLogoUrl = '/images/logo/ausl.png'; 
     const rightLogoUrl = '/images/logo/comelec-logo.jpg'; 
@@ -110,7 +103,7 @@ export async function exportElectionResultsPdf(
     console.warn("Could not load one or both logos. Generating PDF without them.", error);
   }
 
-  // ==================== HEADER ====================
+  // HEADER
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("ARELLANO LAW FOUNDATION", 105, 14, { align: "center" });
@@ -138,17 +131,10 @@ export async function exportElectionResultsPdf(
 
   let startY = 48;
 
-  // ==================== TABLES ====================
+  // TABLES
   for (const [positionName, candidates] of Object.entries(positions)) {
     const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
     const totalVotes = sortedCandidates.reduce((sum, c) => sum + c.votes, 0);
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(positionName, 14, startY);
-    
-    doc.setLineWidth(0.5);
-    doc.line(14, startY + 1, 196, startY + 1);
 
     const tableData: any[] = sortedCandidates.map((c, idx) => [
       (idx + 1).toString(),
@@ -158,6 +144,26 @@ export async function exportElectionResultsPdf(
     ]);
 
     tableData.push([ "", "", "TOTAL VOTES", totalVotes.toString() ]);
+
+    // --- NEW LOGIC: Estimate space to prevent awkward page breaks ---
+    // With fontSize 10 and cellPadding 2, each row is approximately 9 units tall.
+    const estimatedRowHeight = 9; 
+    const estimatedTableHeight = (tableData.length + 1) * estimatedRowHeight; // +1 for the header
+    const spaceNeeded = estimatedTableHeight + 15; // +15 buffers the position title and line
+
+    // If we aren't at the top of the page, and the table + title won't fit, jump to next page
+    if (startY > 30 && (startY + spaceNeeded) > (pageHeight - 20)) {
+      doc.addPage();
+      startY = 20; // Reset coordinate to top of the new page
+    }
+    // -----------------------------------------------------------------
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(positionName, 14, startY);
+    
+    doc.setLineWidth(0.5);
+    doc.line(14, startY + 1, 196, startY + 1);
 
     autoTable(doc, {
       startY: startY + 4,
@@ -170,7 +176,6 @@ export async function exportElectionResultsPdf(
         0: { halign: "center", cellWidth: 20 },
         3: { halign: "right", cellWidth: 30 }
       },
-
 
       didParseCell: function(data) {
         // Check if we are in the header row and specifically the 4th column (index 3)
@@ -191,21 +196,27 @@ export async function exportElectionResultsPdf(
     startY = (doc as any).lastAutoTable.finalY + 15;
   }
 
-  // ==================== FOOTER ====================
+  // FOOTER
+  // Ensure we have at least 40 units of space for the signature
   if (startY > 240) {
     doc.addPage();
     startY = 20;
   }
 
+  // Set the starting X coordinate for the right side
+  const rightX = 150; 
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("Prepared by:", 14, startY + 10);
+  doc.text("Prepared by:", rightX, startY + 10);
 
   doc.setLineWidth(0.5);
-  doc.line(14, startY + 30, 60, startY + 30);
+  // Line goes from X: 150 to X: 196 (46 units wide)
+  doc.line(rightX, startY + 30, rightX + 46, startY + 30); 
+  
   doc.setFont("helvetica", "bold");
-  doc.text("ADMINISTRATOR", 14, startY + 35);
+  doc.text("ADMINISTRATOR", rightX, startY + 35);
 
-  const safeFilename = `${election.name.replace(/\s+/g, "_")}_Results.pdf`;
+  const safeFilename = `${election.name.replace(/\s+/g, " ")}-RESULTS.pdf`;
   doc.save(safeFilename);
 }
