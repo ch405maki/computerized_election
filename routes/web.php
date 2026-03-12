@@ -55,8 +55,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 // Report Routes (Admin only)
 Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/reports/results', [ReportController::class, 'index'])->name('results.index');
-    Route::get('/reports/log', [LogController::class, 'index'])->name('log.index'); 
-    
+    Route::get('/reports/log', [LogController::class, 'index'])->name('log.index');
+    Route::get('/reports/log/{electionId}/turnout-by-year', [LogController::class, 'getTurnoutByYear'])->name('log.turnout-by-year');
+
     Route::post('/results/{election}/verify', [ReportController::class, 'verify'])->name('results.verify');
     
     Route::get('/results/{election}', [ReportController::class, 'show'])->name('results.show');
