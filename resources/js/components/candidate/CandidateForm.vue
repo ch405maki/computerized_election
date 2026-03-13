@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -18,7 +18,7 @@ import {
 
 const props = defineProps<{
   positions: Array<{ id: number; name: string }>;
-  elections: Array<{ id: number; name: string }>;
+  elections: Array<{ id: number; name: string; status: string }>; // Added 'status' to the type
 }>();
 
 const emit = defineEmits(['candidateCreated']);
@@ -28,6 +28,11 @@ const imagePreview = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const isLoading = ref(false);
 const isOpen = ref(false);
+
+// Filter out active elections
+const availableElections = computed(() => {
+  return props.elections.filter(election => election.status !== 'active');
+});
 
 // Form fields
 const election_id = ref<string>('');
@@ -159,7 +164,7 @@ const onSubmit = () => {
                   <SelectValue placeholder="Select election" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem v-for="election in elections" :key="election.id" :value="String(election.id)">
+                  <SelectItem v-for="election in availableElections" :key="election.id" :value="String(election.id)">
                     {{ election.name }}
                   </SelectItem>
                 </SelectContent>
