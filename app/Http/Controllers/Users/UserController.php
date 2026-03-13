@@ -85,6 +85,9 @@ class UserController extends Controller
 
             // Validate input
             $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $id, 
+                'role' => 'required|in:admin,user',
                 'status' => 'required|string|in:active,inactive',
             ]);
 
@@ -92,7 +95,7 @@ class UserController extends Controller
             $user->update($validated);
 
             return response()->json(['message' => 'User updated successfully!', 'user' => $user], 200);
-        } catch (ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to update user', 'error' => $e->getMessage()], 500);
