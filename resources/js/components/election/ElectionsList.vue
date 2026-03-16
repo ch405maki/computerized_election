@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // <-- Added Input component
+import { Input } from '@/components/ui/input';
 import { useToast } from "vue-toastification";
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
@@ -40,9 +40,13 @@ const electionToDelete = ref<number | null>(null);
 const hasAgreed = ref(false);
 const showFinalWarning = ref(false);
 
+const deletePassword = ref('');
+const isDeleting = ref(false);
+
 const openDeleteDialog = (id: number) => {
   electionToDelete.value = id;
   hasAgreed.value = false;
+  deletePassword.value = ''; // Reset password field when opening dialog
   isDeleteDialogOpen.value = true;
 };
 
@@ -56,8 +60,21 @@ const proceedToFinalWarning = () => {
 
 const deleteElection = async () => {
   if (!electionToDelete.value) return;
+  
+  if (!deletePassword.value) {
+    toast.error('Password is required to confirm deletion');
+    return;
+  }
+
+  isDeleting.value = true;
 
   try {
+    // 1. Verify the password first
+    await axios.post('/election/verify-password', {
+      password: deletePassword.value
+    });
+
+    // 2. If password is correct, proceed with deletion
     await axios.delete(`/api/elections/${electionToDelete.value}`, {
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
@@ -74,14 +91,15 @@ const deleteElection = async () => {
     }, 2000);
     
   } catch (error) {
-    if (axios.isAxiosError(error)) {
+    if (axios.isAxiosError(error) && error.response?.status === 422) {
+      toast.error('Incorrect password.');
+    } else if (axios.isAxiosError(error)) {
       toast.error(error.response?.data?.message || 'Failed to delete election');
     } else {
       toast.error('An unexpected error occurred');
     }
   } finally {
-    electionToDelete.value = null;
-    hasAgreed.value = false;
+    isDeleting.value = false;
   }
 };
 
@@ -89,7 +107,7 @@ const deleteElection = async () => {
 const isEditSheetOpen = ref(false);
 const selectedElection = ref<Election | null>(null);
 
-// Password Verification State
+// Password Verification State for Editing
 const isPasswordDialogOpen = ref(false);
 const adminPassword = ref('');
 const pendingElectionToEdit = ref<Election | null>(null);
@@ -109,15 +127,8 @@ const verifyPasswordAndOpenEdit = async () => {
 
   isVerifying.value = true;
   try {
-    // UPDATED URL HERE:
     await axios.post('/election/verify-password', {
       password: adminPassword.value
-    }, {
-      headers: {
-        // Inertia handles CSRF automatically, but keeping this is fine if your setup requires it
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-        'Accept': 'application/json'
-      }
     });
 
     // If successful, open the edit sheet
@@ -209,14 +220,14 @@ const handleElectionUpdated = () => {
     <AlertDialog v-model:open="isPasswordDialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Admin Authentication Required</AlertDialogTitle>
+          <AlertDialogTitle>Password Required</AlertDialogTitle>
           <AlertDialogDescription>
             <div class="space-y-4 pt-2">
-              <p>Please enter your admin password to edit this election.</p>
+              <p>Please enter your password to edit this election.</p>
               <Input 
                 type="password" 
                 v-model="adminPassword" 
-                placeholder="Enter admin password" 
+                placeholder="Enter your password" 
                 @keyup.enter="verifyPasswordAndOpenEdit"
               />
             </div>
@@ -283,15 +294,26 @@ const handleElectionUpdated = () => {
               <li>Make recovery impossible</li>
             </ul>
             <p>Are you absolutely sure you want to proceed?</p>
+            
+            <div class="pt-4 mt-2 border-t border-border">
+              <p class="mb-2 font-medium text-foreground">Password:</p>
+              <Input 
+                type="password" 
+                v-model="deletePassword" 
+                placeholder="Enter your password" 
+                @keyup.enter="deleteElection"
+              />
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>No, Go Back</AlertDialogCancel>
+          <AlertDialogCancel @click="deletePassword = ''">No, Go Back</AlertDialogCancel>
           <AlertDialogAction 
-            @click="deleteElection"
-            class="bg-red-600 hover:bg-red-700"
+            @click.prevent="deleteElection"
+            :disabled="!deletePassword || isDeleting"
+            class="bg-red-600 hover:bg-red-700 disabled:opacity-50"
           >
-            Yes, Delete Permanently
+            {{ isDeleting ? 'Deleting...' : 'Yes, Delete Permanently' }}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

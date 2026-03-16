@@ -70,7 +70,7 @@ const formattedDate = (dateString: string) => {
           <h1 class="text-2xl font-bold mb-2">Election Results</h1>
           <h2 class="text-xl">{{ election?.name || 'Loading...' }}</h2>
           <p v-if="election" class="text-muted-foreground">
-            {{ formattedDate(election.start_date) }}
+            {{ formattedDate(election.start_date) }} - 
             {{ formattedDate(election.end_date) }}
           </p>
         </div>
