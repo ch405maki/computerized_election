@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Cache;
+use App\Jobs\ProcessVoterUpload;
+use App\Jobs\ImportCompleted;
 
 use Inertia\Inertia;
 
@@ -159,6 +161,7 @@ class VoterController extends Controller
     public function uploadVoters(Request $request)
     {
         ini_set('memory_limit', '512M');
+        set_time_limit(0);
 
         try {
             $request->validate([
@@ -200,6 +203,21 @@ class VoterController extends Controller
                 'error'   => $e->getMessage()
             ], 500);
         }
+
+        if ($request->input('use_queue') === 'true') {
+                
+                // Set the initial status
+                Cache::put("import_status_{$importId}", 'processing', now()->addHours(1));
+
+                // Dispatch our custom wrapper job
+                ProcessVoterUpload::dispatch($importId, $filePath);
+
+                return response()->json([
+                    'queued' => true,
+                    'message' => 'Your file is being processed in the background.',
+                    'import_id' => $importId, 
+                ], 200);
+            }
     }
 
     // 5. Create the endpoint that Vue will poll every 3 seconds

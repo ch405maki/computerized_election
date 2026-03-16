@@ -6,25 +6,13 @@ use App\Models\Voter;
 use App\Models\VoterStatus;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache; // Required for status tracking
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Maatwebsite\Excel\Concerns\WithEvents; // Required for events
-use Maatwebsite\Excel\Events\AfterImport; // Required for events
 
-// Add WithEvents to the implemented interfaces
-class VoterImport implements ToCollection, WithHeadingRow, WithChunkReading, ShouldQueue, WithEvents 
+
+class VoterImport implements ToCollection, WithHeadingRow, WithChunkReading 
 {
-    private $importId;
-
-    // Accept the import ID from the controller
-    public function __construct($importId = null)
-    {
-        $this->importId = $importId;
-    }
-
     public function chunkSize(): int
     {
         return 1000;
@@ -84,21 +72,5 @@ class VoterImport implements ToCollection, WithHeadingRow, WithChunkReading, Sho
         if (!empty($statusesToInsert)) {
             VoterStatus::insert($statusesToInsert);
         }
-    }
-
-    // THIS IS THE MAGIC: When the queue worker finishes, it updates the Cache
-    public function registerEvents(): array
-    {
-        return [
-            AfterImport::class => function(AfterImport $event) {
-                if ($this->importId) {
-
-                    // Add this log to verify the event fires
-                    \Illuminate\Support\Facades\Log::info("Excel import finished for ID: {$this->importId}");
-                    // Tell the system this specific import is done
-                    Cache::put("import_status_{$this->importId}", 'completed', now()->addHours(1));
-                }
-            },
-        ];
     }
 }
