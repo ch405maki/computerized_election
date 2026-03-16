@@ -15,6 +15,7 @@
               <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 v-model="searchQuery"
+                @input="handleSearch"
                 type="text"
                 placeholder="Search voters..."
                 class="w-full pl-9 h-9"
@@ -206,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, onUnmounted } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
@@ -357,16 +358,16 @@ function debounce<T extends (...args: any[]) => any>(fn: T, wait: number) {
   };
 }
 
-// --- Watchers ---
-watch(searchQuery, debounce((value: string) => {
-    router.get('/voters', { search: value }, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-        onStart: () => { isFetching.value = true },
-        onFinish: () => { isFetching.value = false }
-    });
-}, 300));
+// --- Search Action ---
+const handleSearch = debounce(() => {
+  router.get('/voters', { search: searchQuery.value }, {
+    preserveState: true,
+    preserveScroll: true,
+    replace: true,
+    onStart: () => { isFetching.value = true },
+    onFinish: () => { isFetching.value = false }
+  });
+}, 300);
 
 // --- Navigation & File Actions ---
 const navigateToActivationPage = () => {
