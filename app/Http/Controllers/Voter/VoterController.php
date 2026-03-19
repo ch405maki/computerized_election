@@ -29,12 +29,12 @@ class VoterController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->input('search');
-            
-            $query->where(function($q) use ($search) {
+
+            $query->where(function ($q) use ($search) {
                 $q->where('student_number', 'like', "%{$search}%")
-                  ->orWhere('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('middle_name', 'like', "%{$search}%"); // Added middle_name
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('middle_name', 'like', "%{$search}%"); // Added middle_name
             });
         }
 
@@ -42,8 +42,8 @@ class VoterController extends Controller
         $voters = $query->paginate(15)->withQueryString();
 
         return Inertia::render('Voters/Index', [
-            'voters' => $voters, 
-            
+            'voters' => $voters,
+
             // Pass the search term back to Vue as a prop
             'filters' => $request->only(['search']),
         ]);
@@ -64,12 +64,12 @@ class VoterController extends Controller
     {
         $validated = $request->validate([
             'student_number' => 'required|string|unique:voters',
-            'first_name'     => 'required|string|max:255',
-            'last_name'      => 'required|string|max:255',
-            'middle_name'    => 'nullable|string|max:255', // Made nullable just in case
-            'student_year'   => 'required|string',
-            'sex'            => 'required|string',
-            'password'       => 'required|string|min:6',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255', // Made nullable just in case
+            'student_year' => 'required|string',
+            'sex' => 'required|string',
+            'password' => 'required|string|min:6',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -78,14 +78,14 @@ class VoterController extends Controller
 
         // Create an INACTIVE voter status
         VoterStatus::create([
-            'voter_id'  => $voter->id,
+            'voter_id' => $voter->id,
             'activated' => true,
-            'voted'     => false
+            'voted' => false
         ]);
 
         return response()->json([
-            'message' => 'Voter registered successfully! Waiting for activation.',
-            'voter'   => $voter
+            'message' => 'Voter registered successfully!',
+            'voter' => $voter
         ], 201);
     }
 
@@ -108,21 +108,22 @@ class VoterController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id) 
+    public function update(Request $request, $id)
     {
-        $voter = Voter::findOrFail($id); 
+        $voter = Voter::findOrFail($id);
 
         $validated = $request->validate([
             'student_number' => [
-                'required', 'string',
+                'required',
+                'string',
                 Rule::unique('voters')->ignore($voter->id)
             ],
-            'first_name'     => 'required|string|max:255',
-            'last_name'      => 'required|string|max:255',
-            'middle_name'    => 'nullable|string|max:255',
-            'student_year'   => 'required|string',
-            'sex'            => 'required|string',
-            'password'       => 'nullable|string|min:6',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'student_year' => 'required|string',
+            'sex' => 'required|string',
+            'password' => 'nullable|string|min:6',
         ]);
 
         // Check if the password was actually filled in request
@@ -138,7 +139,7 @@ class VoterController extends Controller
 
         return response()->json([
             'message' => 'Voter updated successfully!',
-            'data'    => $voter->fresh()
+            'data' => $voter->fresh()
         ]);
     }
 
@@ -169,13 +170,13 @@ class VoterController extends Controller
             ]);
 
             $file = $request->file('file');
-            $filePath = $file->store('temp_imports'); 
+            $filePath = $file->store('temp_imports');
 
             // 1. Generate a unique ID for this specific upload
             $importId = uniqid();
 
             if ($request->input('use_queue') === 'true') {
-                
+
                 // 2. Set the initial status in the cache
                 Cache::put("import_status_{$importId}", 'processing', now()->addHours(1));
 
@@ -200,32 +201,32 @@ class VoterController extends Controller
             Log::error('Error uploading voters: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to upload file.',
-                'error'   => $e->getMessage()
+                'error' => $e->getMessage()
             ], 500);
         }
 
         if ($request->input('use_queue') === 'true') {
-                
-                // Set the initial status
-                Cache::put("import_status_{$importId}", 'processing', now()->addHours(1));
 
-                // Dispatch our custom wrapper job
-                ProcessVoterUpload::dispatch($importId, $filePath);
+            // Set the initial status
+            Cache::put("import_status_{$importId}", 'processing', now()->addHours(1));
 
-                return response()->json([
-                    'queued' => true,
-                    'message' => 'Your file is being processed in the background.',
-                    'import_id' => $importId, 
-                ], 200);
-            }
+            // Dispatch our custom wrapper job
+            ProcessVoterUpload::dispatch($importId, $filePath);
+
+            return response()->json([
+                'queued' => true,
+                'message' => 'Your file is being processed in the background.',
+                'import_id' => $importId,
+            ], 200);
+        }
     }
 
     // 5. Create the endpoint that Vue will poll every 3 seconds
     public function checkImportStatus($importId)
     {
         // If the cache key is missing, assume it either finished or failed
-        $status = Cache::get("import_status_{$importId}", 'completed'); 
-        
+        $status = Cache::get("import_status_{$importId}", 'completed');
+
         return response()->json(['status' => $status]);
     }
 }
