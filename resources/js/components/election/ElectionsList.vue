@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from "vue-toastification";
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
@@ -33,15 +34,19 @@ const props = defineProps<{
     elections: Election[]; 
 }>();
 
-// Modal state
+// --- Delete Logic State ---
 const isDeleteDialogOpen = ref(false);
 const electionToDelete = ref<number | null>(null);
 const hasAgreed = ref(false);
 const showFinalWarning = ref(false);
 
+const deletePassword = ref('');
+const isDeleting = ref(false);
+
 const openDeleteDialog = (id: number) => {
   electionToDelete.value = id;
   hasAgreed.value = false;
+  deletePassword.value = ''; // Reset password field when opening dialog
   isDeleteDialogOpen.value = true;
 };
 
@@ -55,8 +60,21 @@ const proceedToFinalWarning = () => {
 
 const deleteElection = async () => {
   if (!electionToDelete.value) return;
+  
+  if (!deletePassword.value) {
+    toast.error('Password is required to confirm deletion');
+    return;
+  }
+
+  isDeleting.value = true;
 
   try {
+    // 1. Verify the password first
+    await axios.post('/election/verify-password', {
+      password: deletePassword.value
+    });
+
+    // 2. If password is correct, proceed with deletion
     await axios.delete(`/api/elections/${electionToDelete.value}`, {
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
@@ -65,7 +83,6 @@ const deleteElection = async () => {
     });
     
     toast.success('Election deleted successfully!');
-    // Close the dialogs
     isDeleteDialogOpen.value = false;
     showFinalWarning.value = false;
 
@@ -74,27 +91,63 @@ const deleteElection = async () => {
     }, 2000);
     
   } catch (error) {
-    if (axios.isAxiosError(error)) {
+    if (axios.isAxiosError(error) && error.response?.status === 422) {
+      toast.error('Incorrect password.');
+    } else if (axios.isAxiosError(error)) {
       toast.error(error.response?.data?.message || 'Failed to delete election');
     } else {
       toast.error('An unexpected error occurred');
     }
   } finally {
-    electionToDelete.value = null;
-    hasAgreed.value = false;
+    isDeleting.value = false;
   }
 };
 
+// --- Edit Logic State ---
 const isEditSheetOpen = ref(false);
 const selectedElection = ref<Election | null>(null);
 
-const openEditSheet = (election: any) => {
-  selectedElection.value = election;
-  isEditSheetOpen.value = true;
+// Password Verification State for Editing
+const isPasswordDialogOpen = ref(false);
+const adminPassword = ref('');
+const pendingElectionToEdit = ref<Election | null>(null);
+const isVerifying = ref(false);
+
+const initiateEdit = (election: Election) => {
+  pendingElectionToEdit.value = election;
+  adminPassword.value = ''; // Reset password field
+  isPasswordDialogOpen.value = true;
+};
+
+const verifyPasswordAndOpenEdit = async () => {
+  if (!adminPassword.value) {
+    toast.error('Password is required');
+    return;
+  }
+
+  isVerifying.value = true;
+  try {
+    await axios.post('/election/verify-password', {
+      password: adminPassword.value
+    });
+
+    // If successful, open the edit sheet
+    selectedElection.value = pendingElectionToEdit.value;
+    isPasswordDialogOpen.value = false;
+    isEditSheetOpen.value = true;
+
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 422) {
+      toast.error('Incorrect admin password.');
+    } else {
+      toast.error('An error occurred while verifying the password.');
+    }
+  } finally {
+    isVerifying.value = false;
+  }
 };
 
 const handleElectionUpdated = () => {
-  // Refresh data or update local state
   setTimeout(() => {
     window.location.reload();
   }, 1500);
@@ -139,7 +192,7 @@ const handleElectionUpdated = () => {
                 variant="outline" 
                 size="sm" 
                 class="mr-2"
-                @click="openEditSheet(election)"
+                @click="initiateEdit(election)"
               >
                 <FilePenLine />
               </Button>
@@ -156,16 +209,42 @@ const handleElectionUpdated = () => {
       </Table>
     </div>
 
-        <!-- Edit Sheet -->
-        <ElectionEditSheet
-          v-if="selectedElection"
-          :election="selectedElection"
-          :open="isEditSheetOpen"
-          @close="isEditSheetOpen = false"
-          @updated="handleElectionUpdated"
-        />
+    <ElectionEditSheet
+      v-if="selectedElection"
+      :election="selectedElection"
+      :open="isEditSheetOpen"
+      @close="isEditSheetOpen = false"
+      @updated="handleElectionUpdated"
+    />
 
-    <!-- Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="isPasswordDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Password Required</AlertDialogTitle>
+          <AlertDialogDescription>
+            <div class="space-y-4 pt-2">
+              <p>Please enter your password to edit this election.</p>
+              <Input 
+                type="password" 
+                v-model="adminPassword" 
+                placeholder="Enter your password" 
+                @keyup.enter="verifyPasswordAndOpenEdit"
+              />
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="adminPassword = ''">Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            @click.prevent="verifyPasswordAndOpenEdit"
+            :disabled="!adminPassword || isVerifying"
+          >
+            {{ isVerifying ? 'Verifying...' : 'Continue' }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
     <AlertDialog v-model:open="isDeleteDialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -202,10 +281,9 @@ const handleElectionUpdated = () => {
       </AlertDialogContent>
     </AlertDialog>
 
-    <!-- Final Warning Dialog -->
     <AlertDialog v-model:open="showFinalWarning">
       <AlertDialogContent>
-        <AlertDialogHeader>
+         <AlertDialogHeader>
           <AlertDialogTitle>Final Confirmation Required</AlertDialogTitle>
           <AlertDialogDescription class="space-y-4">
             <p class="font-semibold text-red-600">You are about to permanently delete this election and all its data.</p>
@@ -216,15 +294,26 @@ const handleElectionUpdated = () => {
               <li>Make recovery impossible</li>
             </ul>
             <p>Are you absolutely sure you want to proceed?</p>
+            
+            <div class="pt-4 mt-2 border-t border-border">
+              <p class="mb-2 font-medium text-foreground">Password:</p>
+              <Input 
+                type="password" 
+                v-model="deletePassword" 
+                placeholder="Enter your password" 
+                @keyup.enter="deleteElection"
+              />
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>No, Go Back</AlertDialogCancel>
+          <AlertDialogCancel @click="deletePassword = ''">No, Go Back</AlertDialogCancel>
           <AlertDialogAction 
-            @click="deleteElection"
-            class="bg-red-600 hover:bg-red-700"
+            @click.prevent="deleteElection"
+            :disabled="!deletePassword || isDeleting"
+            class="bg-red-600 hover:bg-red-700 disabled:opacity-50"
           >
-            Yes, Delete Permanently
+            {{ isDeleting ? 'Deleting...' : 'Yes, Delete Permanently' }}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

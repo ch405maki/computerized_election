@@ -9,6 +9,9 @@ use Inertia\Inertia;
 use App\Models\Log;
 use App\Models\User;
 use App\Models\Voter;
+use App\Models\Election;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\JsonResponse;
 
 class LogController extends Controller
 {
@@ -17,7 +20,23 @@ class LogController extends Controller
      */
     public function index()
     {
-        $logs = Log::with(['user:id,name', 'voter:id,full_name'])->latest()->get();
+        $logs = Log::with(['user:id,name', 'voter:id'])->latest()->get();
+        
+        $currentElection = Election::latest()->first(); 
+        
+        $canViewChart = false;
+        $electionId = null;
+
+        if ($currentElection) {
+            $electionId = $currentElection->id;
+            
+            // Check if at least one voter has voted in this election
+            $hasVotes = DB::table('votes')->where('election_id', $electionId)->exists();
+            
+            if (in_array($currentElection->status, ['active', 'completed']) && $hasVotes) {
+                $canViewChart = true;
+            }
+        }
         
         return Inertia::render('Reports/Logs/Index', [
             'logs' => $logs->map(function ($log) {
@@ -28,7 +47,10 @@ class LogController extends Controller
                     'user_name' => $log->user?->name,
                     'voter_name' => $log->voter?->full_name,
                 ];
-            })
+            }),
+            'currentElectionId' => $electionId,
+            'canViewChart' => $canViewChart,
+            'electionStatus' => $currentElection ? $currentElection->status : 'none',
         ]);
     }
 
@@ -78,5 +100,21 @@ class LogController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function getTurnoutByYear($electionId): JsonResponse
+    {
+        $turnout = DB::table('votes')
+            ->join('voters', 'votes.voter_id', '=', 'voters.id')
+            ->where('votes.election_id', $electionId)
+            ->select(
+                DB::raw('COALESCE(voters.student_year, "Unspecified") as year'),
+                DB::raw('COUNT(DISTINCT votes.voter_id) as votes')
+            )
+            ->groupBy('year')
+            ->orderBy('year')
+            ->get();
+
+        return response()->json($turnout);
     }
 }

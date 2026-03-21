@@ -117,11 +117,11 @@ const onSubmit = async () => {
 
             <FormField v-slot="{ componentField }" name="student_year">
                 <FormItem>
-                    <FormLabel>Year</FormLabel>
+                    <FormLabel>Year Level</FormLabel>
                     <Select v-bind="componentField" v-model="formData.student_year" :disabled="isLoading">
                         <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select year" />
+                                <SelectValue placeholder="Select year level" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>

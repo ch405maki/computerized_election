@@ -5,12 +5,11 @@ namespace App\Http\Controllers\Election;
 use App\Models\Election;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Hash; // <-- Add this
 use Inertia\Inertia;
 
 class ElectionController extends Controller
 {
-
     public function index()
     {
         $elections = Election::latest()->get();
@@ -18,6 +17,24 @@ class ElectionController extends Controller
             'elections' => $elections
         ]);
     }
+
+    // --- Add this new method ---
+    public function verifyPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        // Check if the provided password matches the currently authenticated user's password
+        if (Hash::check($request->password, $request->user()->password)) {
+            return response()->json(['message' => 'Password verified successfully']);
+        }
+
+        return response()->json([
+            'message' => 'The provided password does not match our records.'
+        ], 422);
+    }
+    // ---------------------------
 
     public function store(Request $request)
     {

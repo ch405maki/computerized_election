@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from "vue-toastification";
-// Import sorting icons alongside Trash
 import { Trash, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-vue-next";
 import {
   AlertDialog,
@@ -32,7 +32,11 @@ const props = defineProps<{
 const toast = useToast();
 const isDeleting = ref(false);
 const selectedCandidate = ref<{ id: number; candidate_name: string } | null>(null);
+
+// Dialog states
 const showDeleteDialog = ref(false);
+const showPasswordDialog = ref(false);
+const deletePassword = ref('');
 
 // --- Sorting Logic ---
 type SortKey = 'candidate_code' | 'candidate_name' | 'candidate_party' | 'position.name' | 'election.name';
@@ -84,15 +88,30 @@ const sortedCandidates = computed(() => {
 
 const openDeleteDialog = (candidate: { id: number; candidate_name: string }) => {
   selectedCandidate.value = candidate;
+  deletePassword.value = ''; 
   showDeleteDialog.value = true;
+};
+
+const proceedToPasswordConfirmation = () => {
+  showDeleteDialog.value = false;
+  showPasswordDialog.value = true;
 };
 
 const deleteCandidate = async () => {
   if (!selectedCandidate.value) return;
 
+  if (!deletePassword.value) {
+    toast.error("Password is required to confirm deletion");
+    return;
+  }
+
   isDeleting.value = true;
 
   try {
+    await axios.post('/election/verify-password', {
+      password: deletePassword.value
+    });
+
     await axios.delete(`/api/candidates/${selectedCandidate.value.id}`, {
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
@@ -100,21 +119,22 @@ const deleteCandidate = async () => {
     });
     
     toast.success("Candidate deleted successfully!");
+    showPasswordDialog.value = false;
 
     setTimeout(() => {
       window.location.reload();
     }, 2000);
 
   } catch (error) {
-    if (axios.isAxiosError(error)) {
+    if (axios.isAxiosError(error) && error.response?.status === 422) {
+      toast.error('Incorrect admin password.');
+    } else if (axios.isAxiosError(error)) {
       toast.error(error.response?.data?.message || "Failed to delete candidate");
     } else {
       toast.error("An unexpected error occurred");
     }
   } finally {
     isDeleting.value = false;
-    showDeleteDialog.value = false;
-    selectedCandidate.value = null;
   }
 };
 </script>
@@ -221,19 +241,48 @@ const deleteCandidate = async () => {
     <AlertDialog v-model:open="showDeleteDialog">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Delete Candidate Confirmation</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete 
-            <span class="font-semibold">{{ selectedCandidate?.candidate_name }}</span> 
-            and remove all associated data.
+            <p>
+              This action cannot be undone. This will permanently delete 
+              <span class="font-semibold">{{ selectedCandidate?.candidate_name }}</span> 
+              and remove all associated data.
+            </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel :disabled="isDeleting">Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction @click="proceedToPasswordConfirmation">
+            Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog v-model:open="showPasswordDialog">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Password Required</AlertDialogTitle>
+          <AlertDialogDescription>
+            <div class="space-y-4 pt-2">
+              <p class="font-medium text-foreground">
+                Confirm your password to delete the candidate.
+              </p>
+              <Input 
+                type="password"   
+                v-model="deletePassword" 
+                placeholder="Enter admin password" 
+                @keyup.enter="deleteCandidate"
+              />
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="deletePassword = ''" :disabled="isDeleting">Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            variant="destructive"
-            :disabled="isDeleting"
-            @click="deleteCandidate"
+            :disabled="isDeleting || !deletePassword"
+            @click.prevent="deleteCandidate"
+            class="bg-red-600 hover:bg-red-700 disabled:opacity-50"
           >
             <span v-if="!isDeleting">Delete Candidate</span>
             <span v-else>Deleting...</span>

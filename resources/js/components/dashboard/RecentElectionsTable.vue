@@ -33,7 +33,6 @@ defineProps<{
             <TableHead>Status</TableHead>
             <TableHead>Period</TableHead>
             <TableHead>Votes</TableHead>
-            <TableHead class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -49,14 +48,6 @@ defineProps<{
             </TableCell>
             <TableCell>{{ formatDate(election.start_date) }} to {{ formatDate(election.end_date) }}</TableCell>
             <TableCell>{{ election.votes_count }}</TableCell>
-            <TableCell class="text-right">
-              <Button variant="ghost" size="sm" as-child>
-                <router-link :to="`/elections/${election.id}`">
-                  <Eye class="h-4 w-4 mr-1" />
-                  View
-                </router-link>
-              </Button>
-            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
