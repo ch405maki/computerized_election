@@ -248,7 +248,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Voters', href: '/voters' },
-  { title: 'Register', href: '/voters/register' },
+  { title: 'Voter List', href: '/voters/register' },
 ];
 
 // Refs

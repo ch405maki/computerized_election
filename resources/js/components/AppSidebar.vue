@@ -57,6 +57,7 @@
                 { title: 'Activation', href: '/voters/status', icon: KeyRound },
             ],
         },
+        /* 
         {
             title: 'Voting Page',
             href: '#',
@@ -66,6 +67,7 @@
                 { title: 'Vote', href: '/vote', icon: List },
             ],
         },
+        */
         {
             title: 'Candidates',
             href: '#',
@@ -83,7 +85,7 @@
             isOpen: false,
             children: [
                 { title: 'Results', href: '/reports/results', icon: Package2 },
-                { title: 'Log', href: '/reports/log', icon: Logs },
+                { title: 'Voter Turnout', href: '/reports/log', icon: Logs },
             ],
         },
     ]);

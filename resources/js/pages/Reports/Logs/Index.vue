@@ -24,12 +24,12 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Reports', href: '/reports' },
-    { title: 'Logs', href: '/reports/log' },
+    { title: 'Voter Turnout', href: '/reports/log' },
 ];
 
-const getActorName = (log: typeof props.logs[0]) => {
-    return log.user_name ?? log.voter_name ?? 'System';
-};
+// const getActorName = (log: typeof props.logs[0]) => {
+//     return log.user_name ?? log.voter_name ?? 'System';
+// };
 
 const votingData = ref([]);
 const isLoading = ref(false);
@@ -56,12 +56,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Logs" />
+    <Head title="Voter Turnout" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <TitleHeader 
-                title="System Logs" 
+                title="Voter Turnout" 
                 description="Displays graph info of Voted Students per Year Level" 
             />
             
