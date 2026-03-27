@@ -36,10 +36,8 @@
 
     const page = usePage();
     
-    const userRole = computed(() => {
-        const props = page.props as { auth?: { user?: { role?: string } } };
-        return props.auth?.user?.role || 'user';
-    });
+    // Grab the clean boolean flags we set up in the HandleInertiaRequests middleware
+    const isAdmin = computed(() => page.props.isAdmin as boolean);
 
     const baseMainNavItems = ref<DropdownNavItem[]>([
         {
@@ -57,8 +55,7 @@
                 /*{ title: 'Activation', href: '/voters/status', icon: KeyRound },*/
             ],
         },
-        /* 
-        {
+        /* {
             title: 'Voting Page',
             href: '#',
             icon: Vote,
@@ -107,16 +104,18 @@
         },
     ]);
 
+    // Filter main navigations based on the isAdmin flag
     const mainNavItems = computed<DropdownNavItem[]>(() => {
-        if (userRole.value === 'user') {
+        if (!isAdmin.value) {
             const restrictedTitles = ['Voters', 'Voting Page', 'Candidates'];
             return baseMainNavItems.value.filter(item => !restrictedTitles.includes(item.title));
         }
         return baseMainNavItems.value;
     });
 
+    // Filter config navigations based on the isAdmin flag
     const configNavItems = computed<DropdownNavItem[]>(() => {
-        if (userRole.value === 'user') {
+        if (!isAdmin.value) {
             return [];
         }
         return baseConfigNavItems.value;
