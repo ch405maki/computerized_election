@@ -14,7 +14,8 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $elections = Election::withCount('votes')
+        $elections = Election::withTrashed()
+            ->withCount('votes')
             ->latest()
             ->get()
             ->map(function ($election) {

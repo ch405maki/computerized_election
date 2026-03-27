@@ -4,9 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
-import { Sheet, FileDown } from 'lucide-vue-next'; // Swapped Printer for FileDown
+import { Sheet, FileDown } from 'lucide-vue-next';
 import { computed } from 'vue';
-
 // Import the new PDF utility you just created
 import { exportElectionResultsPdf } from '@/lib/exportElectionResultsPdf';
 
@@ -33,10 +32,12 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
   { title: props.election?.name || 'Election Results', href: route('results.show', props.election?.id) },
 ]);
 
+/*
 const exportToExcel = () => {
   const exportUrl = route('results.export', props.election?.id);
   window.open(exportUrl, '_blank');
 };
+*/
 
 // --- NEW PDF DOWNLOAD FUNCTION ---
 const downloadPDF = async () => {

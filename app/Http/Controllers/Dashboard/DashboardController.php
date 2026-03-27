@@ -18,18 +18,27 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // Total active voters (Laravel automatically hides deleted ones here)
         $totalVoters = Voter::count();
         $votesToday = Vote::whereDate('created_at', today())->distinct('voter_id')->count('voter_id');
 
-        $votes = Vote::all();
-        $uniqueVoters = $votes->unique('voter_id');
-        $totalVotes = $uniqueVoters->count();
+        // We can do this directly in the database instead:
+        $totalVotes = Vote::distinct('voter_id')->count('voter_id');
 
-        $logs = Log::with(['user:id,name', 'voter:id,student_number'])->latest()->get();
+        $logs = Log::with([
+    'user' => function($query) { 
+        $query->select('id', 'name'); 
+    }, 
+    'voter' => function($query) { 
+        $query->withTrashed()->select('id', 'student_number'); 
+    }
+])->latest()->get();
         
         return Inertia::render('Dashboard', [
             'stats' => [
-                'total_elections' => Election::count(),
+                // Added withTrashed() to get the true total of all past elections.
+                'total_elections' => Election::withTrashed()->count(),
+                
                 'active_elections' => Election::where('start_date', '<=', now())
                     ->where('end_date', '>=', now())
                     ->count(),
@@ -37,23 +46,28 @@ class DashboardController extends Controller
                 'votes_today' => $votesToday,
                 'participation_rate' => $totalVoters > 0 ? round(($totalVotes / $totalVoters) * 100, 2) : 0,
             ],
-            'recent_elections' => Election::withCount([
-                'votes as votes_count' => function ($query) {
-                    $query->select(DB::raw('COUNT(DISTINCT voter_id)'));
-                }
-            ])
-            ->orderBy('start_date', 'desc')
-            ->limit(5)
-            ->get()
-            ->map(function ($election) {
-                return [
-                    'id' => $election->id,
-                    'name' => $election->name,
-                    'start_date' => \Carbon\Carbon::parse($election->start_date)->format('Y-m-d'),
-                    'end_date' => \Carbon\Carbon::parse($election->end_date)->format('Y-m-d'),
-                    'votes_count' => $election->votes_count,
-                ];
-            }),
+            
+            // Added withTrashed() to fetch archived elections
+            'recent_elections' => Election::withTrashed()
+                ->withCount([
+                    'votes as votes_count' => function ($query) {
+                        $query->select(DB::raw('COUNT(DISTINCT voter_id)'));
+                    }
+                ])
+                ->orderBy('start_date', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function ($election) {
+                    return [
+                        'id' => $election->id,
+                        'name' => $election->name,
+                        'start_date' => Carbon::parse($election->start_date)->format('Y-m-d'),
+                        'end_date' => Carbon::parse($election->end_date)->format('Y-m-d'),
+                        'votes_count' => $election->votes_count,
+                        'deleted_at' => $election->deleted_at ? $election->deleted_at->toIso8601String() : null,
+                    ];
+                }),
+                
             'logs' => $logs->map(function ($log) {
                 return [
                     'id' => $log->id,

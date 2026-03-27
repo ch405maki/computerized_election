@@ -40,6 +40,8 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -48,8 +50,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(), // Admin user (web guard)
                 'voter' => $request->user('voter'), // Voter user (voter guard)
             ],
-            'isAdmin' => Auth::guard('web')->check(),
-            'isVoter' => Auth::guard('voter')->check(),
+            'isAdmin' => $user?->role === 'admin',
+            'isUser' => $user?->role === 'user',
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),

@@ -22,7 +22,7 @@ class LogController extends Controller
     {
         $logs = Log::with(['user:id,name', 'voter:id'])->latest()->get();
         
-        $currentElection = Election::latest()->first(); 
+        $currentElection = Election::withTrashed()->latest()->first();
         
         $canViewChart = false;
         $electionId = null;
