@@ -54,7 +54,7 @@
             isOpen: false,
             children: [
                 { title: 'Voter List', href: '/voters', icon: List },
-                { title: 'Activation', href: '/voters/status', icon: KeyRound },
+                /*{ title: 'Activation', href: '/voters/status', icon: KeyRound },*/
             ],
         },
         /* 

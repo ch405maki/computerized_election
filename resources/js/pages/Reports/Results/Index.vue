@@ -24,7 +24,8 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Results History', href: '/results' },
+  { title: 'Reports', href: '/reports/results' },
+  { title: 'Election Results', href: '#' },
 ];
 
 const formattedDate = (dateString: string) => {

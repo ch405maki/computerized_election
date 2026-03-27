@@ -4,8 +4,8 @@
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <TitleHeader
-        title="Election Results" 
-        description="Breakdown of vote counts and winning statistics." 
+        title="Users Management" 
+        description="Manage all users and their permissions." 
       />
       <!-- Search and Buttons -->
       <div class="flex items-center justify-between gap-4">
@@ -57,6 +57,7 @@
 import { ref, computed } from "vue";
 import { Head } from "@inertiajs/vue3";
 import AppLayout from "@/layouts/AppLayout.vue";
+import TitleHeader from '@/components/ui/title-header/header.vue';
 import CreateUserDialog from "@/components/users/CreateUserDialog.vue";
 import UsersTable from "@/components/users/UsersTable.vue";
 import { Button } from "@/components/ui/button";
