@@ -27,7 +27,7 @@ class Candidate extends Model
 
     public function election()
     {
-        return $this->belongsTo(Election::class);
+        return $this->belongsTo(Election::class)->withTrashed();
     }
 
 

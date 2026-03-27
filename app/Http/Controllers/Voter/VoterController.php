@@ -62,8 +62,17 @@ class VoterController extends Controller
      */
     public function store(Request $request)
     {
+        // Check if a trashed voter already exists with this student number
+        $trashedVoter = Voter::onlyTrashed()
+            ->where('student_number', $request->student_number)
+            ->first();
+
         $validated = $request->validate([
-            'student_number' => 'required|string|unique:voters',
+            'student_number' => [
+                'required',
+                'string',
+                $trashedVoter ? Rule::unique('voters')->ignore($trashedVoter->id) : 'unique:voters'
+            ],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255', // Made nullable just in case
@@ -74,17 +83,26 @@ class VoterController extends Controller
 
         $validated['password'] = Hash::make($validated['password']);
 
-        $voter = Voter::create($validated);
+        if ($trashedVoter) {
+            // Restore and update the existing soft-deleted voter
+            $trashedVoter->restore();
+            $trashedVoter->update($validated);
+            $voter = $trashedVoter;
+            $message = 'Voter registered successfully!';
+        } else {
+            // Or create a brand new one
+            $voter = Voter::create($validated);
 
-        // Create an INACTIVE voter status
-        VoterStatus::create([
-            'voter_id' => $voter->id,
-            'activated' => true,
-            'voted' => false
-        ]);
+            VoterStatus::create([
+                'voter_id' => $voter->id,
+                'activated' => true,
+                'voted' => false
+            ]);
+            $message = 'Voter registered successfully!';
+        }
 
         return response()->json([
-            'message' => 'Voter registered successfully!',
+            'message' => $message,
             'voter' => $voter
         ], 201);
     }
