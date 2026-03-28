@@ -55,7 +55,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // ==========================================
     // ADMIN-ONLY ROUTES
     // ==========================================
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['admin', 'verified'])->group(function () {
         
         // User Management
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
