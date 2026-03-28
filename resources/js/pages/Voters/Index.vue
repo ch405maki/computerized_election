@@ -381,11 +381,6 @@ const handleFileUpload = async (event: Event) => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const useQueue = file.size > 5 * 1024 * 1024 || estimatedRowCount.value > 3000;
-  if (useQueue) {
-    formData.append("use_queue", "true");
-  }
-
   try {
     const response = await axios.post("/api/upload-voters", formData, {
       headers: {
@@ -410,12 +405,14 @@ const handleFileUpload = async (event: Event) => {
       };
       toast.info(`File processing started.`);
 
-      // --- NEW POLLING LOGIC HERE ---
+      // --- REFACTORED POLLING LOGIC ---
       pollInterval = setInterval(async () => {
         try {
           const statusRes = await axios.get(`/api/import-status/${importId}`);
+          const currentStatus = statusRes.data.status;
 
-          if (statusRes.data.status === 'completed') {
+          if (currentStatus === 'completed') {
+            // 1. Success State
             if (pollInterval) clearInterval(pollInterval);
             processingLargeFile.value = false;
 
@@ -426,15 +423,29 @@ const handleFileUpload = async (event: Event) => {
             };
             toast.success("All voters have been imported!");
 
-            // Refresh the Inertia page data
+            // Refresh the Inertia page data ONCE
             router.reload({ only: ['voters'] });
-          } else {
-            // Optional: silently refresh the table in the background while polling
-            router.reload({ only: ['voters'], preserveScroll: true, preserveState: true });
+
+          } else if (currentStatus === 'failed') {
+            // 2. Failure State (Prevents Infinite Loop)
+            if (pollInterval) clearInterval(pollInterval);
+            processingLargeFile.value = false;
+
+            uploadStatus.value = {
+              type: 'error',
+              title: 'Import Failed',
+              message: 'There was an issue processing your file. Please check your column headers and try again.'
+            };
+            toast.error("Import failed.");
           }
+
+          // 3. Processing State - Do nothing, just let it wait for the next tick.
+
         } catch (e) {
           console.error("Failed to check status", e);
+          // Optional: Stop polling if the network completely drops to avoid console spam
           if (pollInterval) clearInterval(pollInterval);
+          processingLargeFile.value = false;
         }
       }, 3000); // Check every 3 seconds
 

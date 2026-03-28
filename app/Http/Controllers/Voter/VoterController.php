@@ -4,16 +4,13 @@ namespace App\Http\Controllers\Voter;
 
 use App\Http\Controllers\Controller;
 use App\Models\Voter;
-use App\Imports\VoterImport;
 use App\Models\VoterStatus;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Cache;
-use App\Jobs\ProcessVoterUpload;
-use App\Jobs\ImportCompleted;
+use App\Jobs\ProcessVoterImport;
 
 use Inertia\Inertia;
 
@@ -179,9 +176,6 @@ class VoterController extends Controller
 
     public function uploadVoters(Request $request)
     {
-        ini_set('memory_limit', '512M');
-        set_time_limit(0);
-
         try {
             $request->validate([
                 'file' => 'required|mimes:xlsx,xls,csv|max:10240',
@@ -189,30 +183,18 @@ class VoterController extends Controller
 
             $file = $request->file('file');
             $filePath = $file->store('temp_imports');
-
-            // 1. Generate a unique ID for this specific upload
             $importId = uniqid();
 
-            if ($request->input('use_queue') === 'true') {
+            // Always use the queue for large files with PhpSpreadsheet to prevent timeouts
+            Cache::put("import_status_{$importId}", 'processing', now()->addHours(1));
 
-                // 2. Set the initial status in the cache
-                Cache::put("import_status_{$importId}", 'processing', now()->addHours(1));
-
-                // 3. Pass the ID to the import class so it knows which cache key to update later
-                Excel::queueImport(new VoterImport($importId), $filePath);
-
-                return response()->json([
-                    'queued' => true,
-                    'message' => 'Your file is being processed in the background.',
-                    'import_id' => $importId, // 4. Send the ID to Vue
-                ], 200);
-            }
-
-            // Fallback for immediate processing (small files)
-            Excel::import(new VoterImport(), $filePath);
+            // Dispatch the job
+            ProcessVoterImport::dispatch($importId, $filePath);
 
             return response()->json([
-                'message' => 'Voters uploaded successfully!'
+                'queued' => true,
+                'message' => 'Your file is being processed in the background.',
+                'import_id' => $importId,
             ], 200);
 
         } catch (\Exception $e) {
@@ -222,29 +204,11 @@ class VoterController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-
-        if ($request->input('use_queue') === 'true') {
-
-            // Set the initial status
-            Cache::put("import_status_{$importId}", 'processing', now()->addHours(1));
-
-            // Dispatch our custom wrapper job
-            ProcessVoterUpload::dispatch($importId, $filePath);
-
-            return response()->json([
-                'queued' => true,
-                'message' => 'Your file is being processed in the background.',
-                'import_id' => $importId,
-            ], 200);
-        }
     }
 
-    // 5. Create the endpoint that Vue will poll every 3 seconds
     public function checkImportStatus($importId)
     {
-        // If the cache key is missing, assume it either finished or failed
         $status = Cache::get("import_status_{$importId}", 'completed');
-
         return response()->json(['status' => $status]);
     }
 }
