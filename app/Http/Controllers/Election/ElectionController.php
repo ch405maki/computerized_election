@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Election;
 use App\Models\Election;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash; // <-- Add this
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class ElectionController extends Controller
@@ -52,18 +52,30 @@ class ElectionController extends Controller
 
     public function update(Request $request, Election $election)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'sometimes|string|max:255',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after:start_date',
             'status' => 'sometimes|in:active,completed,upcoming',
         ]);
 
-        $election->update($validated);
+        if ($request->status === 'active' && $election->status !== 'active') {
+            
+            $activeExists = Election::where('status', 'active')->exists();
+
+            if ($activeExists) {
+                return response()->json([
+                    'message' => 'Another election is currently active.'
+                ], 400); 
+            }
+        }
+
+        // 3. If the checks pass, process the update
+        $election->update($request->all());
 
         return response()->json([
-            'message' => 'Election updated successfully!',
-            'election' => $election->fresh()
+            'message' => 'Election updated successfully.',
+            'election' => $election
         ]);
     }
 
