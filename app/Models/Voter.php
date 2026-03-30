@@ -43,6 +43,12 @@ class Voter extends Authenticatable
                $this->last_name);
     }
 
+    // Checks if the voter has already voted in the current active election
+    public function hasVotedInElection($electionId)
+    {
+        return $this->votes()->where('election_id', $electionId)->exists();
+    }
+
     // Relationship with Votes
     public function votes()
     {
