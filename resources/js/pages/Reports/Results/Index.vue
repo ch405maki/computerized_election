@@ -54,7 +54,7 @@ function openPasswordDialog(id: number | string) {
 
 function submitPassword() {
   if (!selectedElectionId.value) return;
-  
+
   // Post to a new verification route
   form.post(route('results.verify', selectedElectionId.value), {
     preserveScroll: true,
@@ -66,13 +66,11 @@ function submitPassword() {
 </script>
 
 <template>
+
   <Head title="Election Results" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4 ">
-      <TitleHeader
-        title="Election Results" 
-        description="Breakdown of vote counts and winning statistics." 
-      />
+      <TitleHeader title="Election Results" description="Breakdown of vote counts and winning statistics." />
       <div class="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
@@ -96,15 +94,12 @@ function submitPassword() {
                 </span>
               </TableCell>
               <TableCell>
-                {{ formattedDate(election.start_date) }} - 
+                {{ formattedDate(election.start_date) }} -
                 {{ formattedDate(election.end_date) }}
               </TableCell>
               <TableCell class="text-right">
-                <Button 
-                  v-if="election.status === 'completed'"
-                  @click="openPasswordDialog(election.id)"
-                  class="inline-flex items-center px-4 py-2 bg-zinc-800 text-white rounded hover:bg-zinc-700 transition-colors"
-                >
+                <Button v-if="election.status === 'completed'" @click="openPasswordDialog(election.id)"
+                  class="inline-flex items-center px-4 py-2 bg-zinc-800 text-white rounded hover:bg-zinc-700 transition-colors">
                   <ScrollText class="w-4 h-4 mr-2" />
                   View Results
                 </Button>
@@ -131,27 +126,21 @@ function submitPassword() {
             Please enter your account password.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form @submit.prevent="submitPassword">
           <div class="grid gap-4 py-4">
             <div class="grid grid-cols-4 items-center gap-4">
               <Label for="password" class="text-right">
                 Password
               </Label>
-              <Input
-                id="password"
-                type="password"
-                v-model="form.password"
-                class="col-span-3"
-                autocomplete="current-password"
-                autofocus
-              />
+              <Input id="password" type="password" v-model="form.password" class="col-span-3"
+                autocomplete="current-password" autofocus />
             </div>
             <div v-if="form.errors.password" class="text-sm text-red-500 text-right pr-2">
               {{ form.errors.password }}
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button type="button" variant="outline" @click="isDialogOpen = false">
               Cancel
