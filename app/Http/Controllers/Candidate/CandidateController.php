@@ -19,14 +19,15 @@ class CandidateController extends Controller
     public function index()
     {
         return Inertia::render('Candidates/Index', [
+            // Added withTrashed() to include soft-deleted records
             'candidates' => Candidate::with(['election', 'position'])
+                ->withTrashed() 
                 ->latest()
                 ->get(),
             'positions' => Position::all(),
             'elections' => Election::where('status', '!=', 'completed')->get()
         ]);
     }
-
     /**
      * Store a newly created resource in storage.
      */
@@ -83,7 +84,7 @@ class CandidateController extends Controller
         do {
             $randomNumber = rand(1000, 9999);
             $candidateCode = $formattedPrefix . $randomNumber;
-        } while (Candidate::where('candidate_code', $candidateCode)->exists());
+        } while (Candidate::withTrashed()->where('candidate_code', $candidateCode)->exists());
 
         return $candidateCode;
     }
@@ -95,11 +96,6 @@ class CandidateController extends Controller
     {
         $candidate = Candidate::findOrFail($id);
         
-        // Delete candidate picture from storage if it exists
-        if ($candidate->candidate_picture) {
-            Storage::disk('public')->delete($candidate->candidate_picture);
-        }
-
         $candidate->delete();
 
         return response()->json([
