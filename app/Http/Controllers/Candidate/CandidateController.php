@@ -21,7 +21,6 @@ class CandidateController extends Controller
         return Inertia::render('Candidates/Index', [
             // Added withTrashed() to include soft-deleted records
             'candidates' => Candidate::with(['election', 'position'])
-                ->withTrashed() 
                 ->latest()
                 ->get(),
             'positions' => Position::all(),
