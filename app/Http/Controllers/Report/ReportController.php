@@ -22,7 +22,7 @@ class ReportController extends Controller
                 return [
                     'id' => $election->id,
                     'name' => $election->name,
-                    'status' => $this->getElectionStatus($election),
+                    'status' => $election->status,
                     'start_date' => $election->start_date->format('Y-m-d'),
                     'end_date' => $election->end_date->format('Y-m-d'),
                     'votes_count' => $election->votes_count,
@@ -97,14 +97,4 @@ class ReportController extends Controller
         return Excel::download(new ElectionResultsExport($election), 'election_results.xlsx');
     }
 
-    private function getElectionStatus(Election $election): string
-    {
-        $now = now();
-        $start = $election->start_date;
-        $end = $election->end_date;
-
-        if ($now < $start) return 'upcoming';
-        if ($now > $end) return 'completed';
-        return 'active';
-    }
 }

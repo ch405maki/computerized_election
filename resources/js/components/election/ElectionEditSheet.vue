@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from "vue-toastification";
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
 
@@ -32,7 +32,7 @@ interface ApiResponse<T> {
   errors?: Record<string, string[]>;
 }
 
-interface ElectionResponse extends ApiResponse<Election> {}
+interface ElectionResponse extends ApiResponse<Election> { }
 
 // Constants and reactive state
 const toast = useToast();
@@ -59,6 +59,13 @@ const dateSchema = z.string()
     message: "Invalid date format"
   });
 
+const date = new Date();
+const todayDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+const minEndDate = computed(() => {
+  return formData.value.start_date ? formData.value.start_date : todayDateString;
+});
+
 const formSchema = toTypedSchema(z.object({
   name: z.string()
     .min(2, "Name must be at least 2 characters")
@@ -67,6 +74,15 @@ const formSchema = toTypedSchema(z.object({
   status: z.enum(['active', 'completed', 'upcoming']).optional(),
   start_date: dateSchema.optional(),
   end_date: dateSchema.optional()
+}).refine((data) => {
+  // Only validate if both dates are present
+  if (data.start_date && data.end_date) {
+    return new Date(data.end_date) >= new Date(data.start_date);
+  }
+  return true;
+}, {
+  message: "End date cannot be earlier than start date",
+  path: ["end_date"],
 }));
 
 const currentDate = (dateString: string) => {
@@ -83,10 +99,20 @@ const formData = ref<ElectionUpdatePayload>({
   end_date: currentDate(props.election.end_date)
 });
 
+// Ensures the form updates if the parent passes a different election
+watch(() => props.election, (newElection) => {
+  formData.value = {
+    name: newElection.name,
+    status: newElection.status,
+    start_date: currentDate(newElection.start_date),
+    end_date: currentDate(newElection.end_date)
+  };
+}, { deep: true });
+
 // Improved update function with proper typing
 const updateElection = async () => {
   const payload = getChangedFields();
-  
+
   if (Object.keys(payload).length === 0) {
     toast.info('No changes detected');
     emit('close');
@@ -94,7 +120,7 @@ const updateElection = async () => {
   }
 
   isLoading.value = true;
-  
+
   try {
     const response = await axios.patch<ElectionResponse>(
       `/api/elections/${props.election.id}`,
@@ -107,11 +133,11 @@ const updateElection = async () => {
         }
       }
     );
-    
+
     toast.success(response.data.message || 'Election updated successfully');
     emit('updated', response.data.data);
     emit('close');
-    
+
   } catch (error: unknown) {
     handleUpdateError(error);
   } finally {
@@ -171,18 +197,13 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
           Make changes to the election here. Click save when you're done.
         </SheetDescription>
       </SheetHeader>
-      
+
       <Form :validation-schema="formSchema" @submit="updateElection" class="space-y-6 mt-4">
         <FormField v-slot="{ componentField }" name="name">
           <FormItem>
             <FormLabel>Election Name</FormLabel>
             <FormControl>
-              <Input 
-                type="text" 
-                placeholder="Enter election name" 
-                v-bind="componentField" 
-                v-model="formData.name" 
-              />
+              <Input type="text" placeholder="Enter election name" v-bind="componentField" v-model="formData.name" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -211,11 +232,7 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
           <FormItem>
             <FormLabel>Start Date</FormLabel>
             <FormControl>
-              <Input
-                type="date"
-                v-bind="componentField"
-                v-model="formData.start_date"
-              />
+              <Input type="date" v-bind="componentField" v-model="formData.start_date" :min="todayDateString" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -225,30 +242,25 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
           <FormItem>
             <FormLabel>End Date</FormLabel>
             <FormControl>
-              <Input
-                type="date"
-                v-bind="componentField"
-                v-model="formData.end_date"
-              />
+              <Input type="date" v-bind="componentField" v-model="formData.end_date" :min="minEndDate" />
             </FormControl>
             <FormMessage />
           </FormItem>
         </FormField>
 
         <div class="flex justify-end gap-4 pt-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            @click="$emit('close')"
-          >
+          <Button type="button" variant="outline" @click="$emit('close')">
             Cancel
           </Button>
           <Button type="submit" :disabled="isLoading">
             <span v-if="!isLoading">Save Changes</span>
             <span v-else>
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
               </svg>
               Saving...
             </span>
