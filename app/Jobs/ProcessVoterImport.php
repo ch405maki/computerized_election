@@ -96,6 +96,7 @@ class ProcessVoterImport implements ShouldQueue
 
                     'created_at' => now(),
                     'updated_at' => now(),
+                    'deleted_at' => null,
                 ];
 
                 $studentNumbersBatch[] = $studentNumber;
@@ -136,7 +137,7 @@ class ProcessVoterImport implements ShouldQueue
             Voter::upsert(
                 $votersBatch,
                 ['student_number'],
-                ['first_name', 'last_name', 'middle_name', 'sex', 'dob', 'student_year', 'password', 'updated_at']
+                ['first_name', 'last_name', 'middle_name', 'sex', 'dob', 'student_year', 'password', 'updated_at', 'deleted_at']
             );
 
             $insertedVoters = Voter::whereIn('student_number', $studentNumbersBatch)->pluck('id');
