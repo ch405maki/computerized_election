@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from "vue-toastification";
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
 
@@ -30,6 +30,14 @@ const formData = ref({
     end_date: ''
 });
 
+const date = new Date();
+const todayDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+// Ensure the end date cannot be earlier than the chosen start date (or today)
+const minEndDate = computed(() => {
+    return startDate.value ? startDate.value : todayDateString;
+});
+
 const submitElection = async () => {
     isLoading.value = true;
     try {
@@ -47,14 +55,14 @@ const submitElection = async () => {
                 'Accept': 'application/json'
             }
         });
-        
+
         toast.success(response.data.message);
         resetForm();
         isDialogOpen.value = false;
         setTimeout(() => {
             window.location.reload();
         }, 1500);
-        
+
     } catch (error) {
         handleError(error);
     } finally {
@@ -103,19 +111,15 @@ const handleError = (error: unknown) => {
                     Fill out the form to create a new election. Click save when you're done.
                 </DialogDescription>
             </DialogHeader>
-            
+
             <Form :validation-schema="formSchema" @submit="submitElection" class="space-y-6">
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField v-slot="{ componentField }" name="name">
                         <FormItem>
                             <FormLabel>Election Name</FormLabel>
                             <FormControl>
-                                <Input 
-                                    type="text" 
-                                    placeholder="Enter election name" 
-                                    v-bind="componentField" 
-                                    v-model="formData.name" 
-                                />
+                                <Input type="text" placeholder="Enter election name" v-bind="componentField"
+                                    v-model="formData.name" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -144,11 +148,7 @@ const handleError = (error: unknown) => {
                         <FormItem>
                             <FormLabel>Start Date</FormLabel>
                             <FormControl>
-                                <Input
-                                    type="date"
-                                    v-bind="componentField"
-                                    v-model="startDate"
-                                />
+                                <Input type="date" v-bind="componentField" v-model="startDate" :min="todayDateString" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -158,11 +158,7 @@ const handleError = (error: unknown) => {
                         <FormItem>
                             <FormLabel>End Date</FormLabel>
                             <FormControl>
-                                <Input
-                                    type="date"
-                                    v-bind="componentField"
-                                    v-model="endDate"
-                                />
+                                <Input type="date" v-bind="componentField" v-model="endDate" :min="minEndDate" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -170,22 +166,22 @@ const handleError = (error: unknown) => {
                 </div>
 
                 <div class="flex justify-end gap-4">
-                    <Button 
-                        type="button" 
-                        variant="outline" 
-                        @click="() => { 
-                            resetForm(); 
-                            isDialogOpen = false; 
-                        }"
-                    >
+                    <Button type="button" variant="outline" @click="() => {
+                        resetForm();
+                        isDialogOpen = false;
+                    }">
                         Cancel
                     </Button>
                     <Button type="submit" :disabled="isLoading">
                         <span v-if="!isLoading">Create Election</span>
                         <span v-else>
-                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
                             </svg>
                             Creating...
                         </span>
