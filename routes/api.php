@@ -24,6 +24,7 @@ Route::post('/users', [UserController::class, 'store']);
 Route::post('/upload-users', [UserController::class, 'uploadUsers']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
+Route::patch('/users/{user}/permissions', [UserController::class, 'updatePermissions']);
 
 // Voter Routes
 Route::delete('/voters/{id}', [VoterController::class, 'destroy']);
@@ -58,4 +59,5 @@ Route::get('/vote-ranking', [VoteDataController::class, 'getVoteRanking']);
 
 // Protect the API endpoints the dashboard relies on
 Route::get('/vote-ranking', [VoteDataController::class, 'getVoteRanking'])
-    ->middleware(['auth:sanctum', 'permission:viewDashboard']);
+    ->middleware(['auth:sanctum', 'permission:viewDashboard'])
+    ->name('dashboard');

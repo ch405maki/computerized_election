@@ -1,90 +1,3 @@
-<template>
-  <Sheet>
-    <!-- Sheet Trigger -->
-    <SheetTrigger variant="destructive" @click="openDialog">
-      <div class="bg-blue-50 hover:bg-blue-100 rounded-md mr-2 py-[10px] px-3">
-        <UserRoundPen class="w-4 h-4 text-blue-500 dark:text-blue-400 hover:text-blue-700" />
-      </div>
-    </SheetTrigger>
-
-    <!-- Sheet Content -->
-    <!-- Added flex layout here so the header stays fixed and the body scrolls -->
-    <SheetContent class="text-gray-900 dark:text-gray-200 flex flex-col h-full max-h-screen">
-      <SheetHeader>
-        <SheetTitle>Edit User</SheetTitle>
-        <SheetDescription>Modify user details and save changes.</SheetDescription>
-      </SheetHeader>
-
-      <!-- Scrollable Form Container -->
-      <!-- Added overflow-y-auto and flex-1 to take up remaining space and allow scrolling -->
-      <div class="flex-1 overflow-y-auto pr-2 mt-4 -mr-2">
-        <form @submit.prevent="updateUser">
-          <div class="space-y-4 pb-6">
-            <!-- Name Field -->
-            <label class="block">
-              <span class="text-gray-700 dark:text-gray-300">Name</span>
-              <input v-model="userData.name" type="text" class="input dark:bg-gray-700 dark:text-white" required />
-            </label>
-
-            <!-- Email Field -->
-            <label class="block">
-              <span class="text-gray-700 dark:text-gray-300">Email</span>
-              <input v-model="userData.email" type="email" class="input dark:bg-gray-700 dark:text-white" required />
-            </label>
-
-            <!-- Role Field -->
-            <label class="block">
-              <span class="text-gray-700 dark:text-gray-300">Role</span>
-              <select v-model="userData.role" class="input dark:bg-gray-700 dark:text-white">
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-              </select>
-            </label>
-
-            <!-- Status Field -->
-            <label class="block">
-              <span class="text-gray-700 dark:text-gray-300">Status</span>
-              <select v-model="userData.status" class="input dark:bg-gray-700 dark:text-white">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </label>
-
-            <!-- Permissions Field -->
-            <div class="block pt-2">
-              <span class="text-gray-700 dark:text-gray-300 mb-2 block font-medium">Permissions</span>
-              <div class="space-y-4 p-4 border rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                
-                <!-- Iterate over the permissions object using shadcn-vue Checkbox -->
-                <div 
-                  v-for="(value, key) in userData.permissions" 
-                  :key="key"
-                  class="flex items-center space-x-3"
-                >
-                  <Checkbox 
-                    :id="key" 
-                    v-model:checked="userData.permissions[key]" 
-                  />
-                  <label 
-                    :for="key" 
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300 capitalize cursor-pointer select-none"
-                  >
-                    {{ key.replace(/([A-Z])/g, ' $1').trim() }}
-                  </label>
-                </div>
-
-              </div>
-            </div>
-
-            <!-- Save Changes Button -->
-            <Button type="submit" class="w-full mt-4">Save Changes</Button>
-          </div>
-        </form>
-      </div>
-    </SheetContent>
-  </Sheet>
-</template>
-
 <script setup lang="ts">
 import { ref } from "vue";
 import {
@@ -101,55 +14,66 @@ import { UserRoundPen } from "lucide-vue-next";
 import axios from "axios";
 import { useToast } from "vue-toastification";
 
+type Permissions = Record<string, boolean>;
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
+interface UserProp extends User {
+  permissions?: Permissions;
+}
+
+interface UserData extends User {
+  permissions: Permissions;
+}
+
 // Props
-const props = defineProps<{
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    status: string;
-    permissions?: Record<string, boolean>; 
-  };
-}>();
+const props = defineProps<{ user: UserProp }>();
 
 // Toast
 const toast = useToast();
 
-// Default fallback permissions
 const defaultPermissions = {
-  viewDashboard: true,
-  manageUsers: false,
-  editContent: false,
-  generateReports: false
+  dashboard: false,
+  voters: false,
+  voting: false,
+  reports: false,
+  election: false,
 };
 
-// User Data
-const userData = ref({
-  id: props.user.id,
-  name: props.user.name,
-  email: props.user.email,
-  role: props.user.role,
-  status: props.user.status,
-  permissions: props.user.permissions ? { ...props.user.permissions } : { ...defaultPermissions },
-});
+const userPermissions = (): UserData => {
+  const filteredPermissions: Permissions = { ...defaultPermissions };
+
+  if (props.user.permissions) {
+    for (const key of Object.keys(defaultPermissions)) {
+      if (key in props.user.permissions) {
+        filteredPermissions[key] = props.user.permissions[key];
+      }
+    }
+  }
+
+  return {
+    ...props.user,
+    permissions: filteredPermissions,
+  };
+};
+
+const userData = ref<UserData>(userPermissions());
 
 // Open Dialog
 const openDialog = () => {
-  userData.value = {
-    id: props.user.id,
-    name: props.user.name,
-    email: props.user.email,
-    role: props.user.role,
-    status: props.user.status,
-    permissions: props.user.permissions ? { ...props.user.permissions } : { ...defaultPermissions },
-  };
+  userData.value = userPermissions();
 };
 
 // Update User
 const updateUser = async () => {
   try {
-    const response = await axios.put(`/api/users/${userData.value.id}`, userData.value);
+    await axios.put(`/api/users/${userData.value.id}`, userData.value);
     toast.success("User updated successfully!");
     setTimeout(() => {
       location.reload(); 
@@ -160,10 +84,101 @@ const updateUser = async () => {
 };
 </script>
 
+<template>
+  <Sheet>
+    <!-- Sheet Trigger -->
+    <SheetTrigger variant="destructive" @click="openDialog">
+      <div class="bg-blue-50 hover:bg-blue-100 rounded-md mr-2 py-[10px] px-3">
+        <UserRoundPen class="w-4 h-4 text-blue-500 dark:text-blue-400 hover:text-blue-700" />
+      </div>
+    </SheetTrigger>
+
+    <!-- Sheet Content -->
+    <SheetContent class="text-gray-900 dark:text-gray-200 flex flex-col h-full max-h-screen">
+      <SheetHeader>
+        <SheetTitle>Edit User</SheetTitle>
+        <SheetDescription>Modify user details and save changes.</SheetDescription>
+      </SheetHeader>
+
+      <div class="flex-1 overflow-y-auto pr-2 mt-4 -mr-2">
+        <form @submit.prevent="updateUser">
+          <div class="space-y-4 pb-6">
+            <!-- Name Field -->
+            <label class="form-field">
+              <span class="field-label">Name</span>
+              <input v-model="userData.name" type="text" class="input" required />
+            </label>
+
+            <!-- Email Field -->
+            <label class="form-field">
+              <span class="field-label">Email</span>
+              <input v-model="userData.email" type="email" class="input" required />
+            </label>
+
+            <!-- Role Field -->
+            <label class="form-field">
+              <span class="field-label">Role</span>
+              <select v-model="userData.role" class="input">
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </label>
+
+            <!-- Status Field -->
+            <label class="form-field">
+              <span class="field-label">Status</span>
+              <select v-model="userData.status" class="input">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </label>
+
+            <!-- Permissions Field -->
+            <div class="pt-2">
+              <span class="field-label mb-2 block font-medium">Permissions</span>
+              <div class="space-y-4 p-4 border rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                
+                <div 
+                  v-for="(value, key) in userData.permissions" 
+                  :key="key"
+                  class="flex items-center space-x-3"
+                >
+                  <Checkbox 
+                    :id="String(key)" 
+                    v-model:checked="userData.permissions[key]" 
+                  />
+                  <label 
+                    :for="String(key)" 
+                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300 capitalize cursor-pointer select-none"
+                  >
+                    {{ String(key).replace(/([A-Z])/g, ' $1').trim() }}
+                  </label>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Save Changes Button -->
+            <Button type="submit" class="w-full mt-4">Save Changes</Button>
+          </div>
+        </form>
+      </div>
+    </SheetContent>
+  </Sheet>
+</template>
+
 <style scoped>
+.form-field {
+  @apply block;
+}
+.field-label {
+  @apply text-gray-700 dark:text-gray-300;
+}
 .input {
   @apply w-full p-2 border rounded-md bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-200;
 }
+
+/* Scrollbar Styles */
 .overflow-y-auto::-webkit-scrollbar {
   width: 6px;
 }

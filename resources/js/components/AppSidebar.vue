@@ -42,7 +42,7 @@
     // Helper to safely check user permissions
     const hasPermission = (permissionName: string) => {
         // Cast to any to bypass strict typing for the auth object if types aren't fully defined
-        const user = page.props.auth?.user as any;
+        const user = (page.props.auth as any)?.user as any;
         
         // If the user has a permissions object, check if the specific key is true
         if (user?.permissions && user.permissions[permissionName] === true) {
