@@ -32,19 +32,25 @@ interface UserData extends User {
   permissions: Permissions;
 }
 
-// Props
 const props = defineProps<{ user: UserProp }>();
-
-// Toast
 const toast = useToast();
 
-const defaultPermissions = {
-  dashboard: false,
-  voters: false,
-  voting: false,
-  reports: false,
-  election: false,
+const permissionModules: Record<string, string[]> = {
+  "Dashboard": ["showRanking", "showChart"],
+  "Voter List": ["addVoter", "editVoter", "deleteVoter"],
+  "Candidates": ["addCandidate", "deleteCandidate"],
+  "Reports": ["electionResults", "showVoterTurnout"],
+  "Election System": ["createElection", "editElection", "deleteElection"],
 };
+
+const selectedModule = ref<string>(Object.keys(permissionModules)[0]);
+
+const defaultPermissions: Permissions = Object.values(permissionModules)
+  .flat()
+  .reduce((acc, key) => {
+    acc[key] = false;
+    return acc;
+  }, {} as Permissions);
 
 const userPermissions = (): UserData => {
   const filteredPermissions: Permissions = { ...defaultPermissions };
@@ -68,12 +74,14 @@ const userData = ref<UserData>(userPermissions());
 // Open Dialog
 const openDialog = () => {
   userData.value = userPermissions();
+  selectedModule.value = Object.keys(permissionModules)[0]; // Reset dropdown on open
 };
 
 // Update User
 const updateUser = async () => {
   try {
     await axios.put(`/api/users/${userData.value.id}`, userData.value);
+    
     toast.success("User updated successfully!");
     setTimeout(() => {
       location.reload(); 
@@ -136,25 +144,45 @@ const updateUser = async () => {
             <!-- Permissions Field -->
             <div class="pt-2">
               <span class="field-label mb-2 block font-medium">Permissions</span>
+              
               <div class="space-y-4 p-4 border rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                 
-                <div 
-                  v-for="(value, key) in userData.permissions" 
-                  :key="key"
-                  class="flex items-center space-x-3"
-                >
-                  <Checkbox 
-                    :id="String(key)" 
-                    v-model:checked="userData.permissions[key]" 
-                  />
-                  <label 
-                    :for="String(key)" 
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300 capitalize cursor-pointer select-none"
+                <!-- Module Dropdown -->
+                <select v-model="selectedModule" class="input font-medium">
+                  <option 
+                    v-for="(keys, moduleName) in permissionModules" 
+                    :key="moduleName" 
+                    :value="moduleName"
                   >
-                    {{ String(key).replace(/([A-Z])/g, ' $1').trim() }}
-                  </label>
-                </div>
+                    {{ moduleName }}
+                  </option>
+                </select>
 
+                <hr class="border-gray-300 dark:border-gray-600" />
+
+                <!-- Dynamic Checkboxes -->
+                <div class="space-y-4">
+                  <div 
+                    v-for="key in permissionModules[selectedModule]" 
+                    :key="key"
+                    class="flex items-center space-x-3"
+                  >
+                    <Checkbox 
+                      :id="String(key)" 
+                      v-model:checked="userData.permissions[key]" 
+                    />
+                    <label 
+                      :for="String(key)" 
+                      class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300 capitalize cursor-pointer select-none"
+                    >
+                      {{ String(key).replace(/([A-Z])/g, ' $1').trim() }}
+                    </label>
+                  </div>
+                  
+                  <p v-if="permissionModules[selectedModule].length === 0" class="text-sm text-gray-500 italic">
+                    No permissions available for this module.
+                  </p>
+                </div>
               </div>
             </div>
 

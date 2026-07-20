@@ -124,7 +124,6 @@ class UserController extends Controller
         }
     }
 
-    // NEW: Stub function prepared for when you decide on permission toggles
     public function updatePermissions(Request $request, User $user)
     {
         try {

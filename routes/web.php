@@ -32,8 +32,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // ==========================================
     
     // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')
-        ->middleware(['auth', 'permission:viewDashboard']);
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 
     // Reports

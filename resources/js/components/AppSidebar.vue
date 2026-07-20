@@ -74,15 +74,6 @@
             ],
         },
         {
-            title: 'Voting Page',
-            href: '#',
-            icon: Vote,
-            isOpen: false,
-            children: [
-                { title: 'Vote', href: '/vote', icon: List },
-            ],
-        },
-        {
             title: 'Candidates',
             href: '#',
             icon: UserRound,
@@ -125,15 +116,10 @@
     const mainNavItems = computed<DropdownNavItem[]>(() => {
         let items = baseMainNavItems.value;
 
-        // 1. Role-based filtering
+        // Role-based filtering
         if (!isAdmin.value) {
             const restrictedTitles = ['Voters', 'Voting Page', 'Candidates'];
             items = items.filter(item => !restrictedTitles.includes(item.title));
-        }
-
-        // 2. Permission-based filtering for Dashboard
-        if (!hasPermission('viewDashboard')) {
-            items = items.filter(item => item.title !== 'Dashboard');
         }
 
         return items;
