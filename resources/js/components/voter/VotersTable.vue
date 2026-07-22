@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, watch } from "vue";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import EditUserDialog from "@/components/users/EditUserDialog.vue";
 import VoterEditSheet from "@/components/voter/VoterEditSheet.vue";
 import DeleteVoterDialog from "@/components/voter/DeleteVoterDialog.vue";
-import CustomSwitch from '@/components/ui/customswitch/CustomSwitch.vue';
-import { useToast } from 'vue-toastification';
 import { FilePenLine } from "lucide-vue-next";
-import axios from 'axios';
+import { usePage } from '@inertiajs/vue3';
 
 interface Voter {
   id: number;
@@ -24,17 +21,22 @@ const props = defineProps<{
   voters: Voter[];
 }>();
 
-const toast = useToast();
+// --- Permissions Logic ---
+const page = usePage();
+const permissions = computed(() => (page.props.auth?.user as any)?.permissions || {});
 
-// Local copy of voters for reactivity
+const canEdit = computed(() => permissions.value.editVoter);
+const canDelete = computed(() => permissions.value.deleteVoter);
+const hasAnyActionPermission = computed(() => canEdit.value || canDelete.value);
+
+// --- Local State ---
 const localVoters = ref<Voter[]>([...props.voters]);
-
-// State for the Sheet
 const editingVoter = ref<Voter | null>(null);
 
-const handleEdit = (voter: Voter) => {
-  editingVoter.value = voter;
-};
+// Keep local state synced if Inertia refreshes the props data
+watch(() => props.voters, (newVoters) => {
+  localVoters.value = [...newVoters];
+});
 
 const updateLocalList = (updatedVoter: Voter) => {
   const index = localVoters.value.findIndex(v => v.id === updatedVoter.id);
@@ -50,36 +52,47 @@ const updateLocalList = (updatedVoter: Voter) => {
         <TableHead>Full Name</TableHead>
         <TableHead>Year</TableHead>
         <TableHead>Sex</TableHead>
-        <TableHead class="text-right">Actions</TableHead>
+        <TableHead v-if="hasAnyActionPermission" class="text-right">Actions</TableHead>
       </TableRow>
     </TableHeader>
+    
     <TableBody>
-      <TableRow v-for="voter in voters" :key="voter.id">
-        <TableCell class="font-medium">{{ voter.student_number }}</TableCell>
-        <TableCell>{{ voter.full_name }}</TableCell>
-        <TableCell>{{ voter.student_year }}</TableCell>
-        <TableCell>{{ voter.sex }}</TableCell>
-        <TableCell class="text-right flex justify-end items-center">
-          <Button 
-                variant="outline" 
-                size="sm" 
-                class="mr-2"
-                @click="handleEdit(voter)"
-              >
-                <FilePenLine class="w-4 h-4"/>
+      <template v-if="localVoters.length > 0">
+        <TableRow v-for="voter in localVoters" :key="voter.id">
+          <TableCell class="font-medium">{{ voter.student_number }}</TableCell>
+          <TableCell>{{ voter.full_name }}</TableCell>
+          <TableCell>{{ voter.student_year }}</TableCell>
+          <TableCell>{{ voter.sex }}</TableCell>
+          
+          <TableCell v-if="hasAnyActionPermission" class="text-right flex justify-end items-center space-x-2">
+            <Button 
+              v-if="canEdit"
+              variant="outline" 
+              size="sm" 
+              @click="editingVoter = voter"
+            >
+              <FilePenLine class="w-4 h-4"/>
             </Button>
 
-          <!-- Delete User -->
-          <DeleteVoterDialog :voter="voter" />
-        </TableCell>
-      </TableRow>
-      <TableRow v-if="voters.length === 0">
-        <TableCell colspan="5" class="text-center py-4 text-muted-foreground">
+            <DeleteVoterDialog 
+              v-if="canDelete" 
+              :voter="voter" 
+            />
+          </TableCell>
+        </TableRow>
+      </template>
+      
+      <TableRow v-else>
+        <TableCell 
+          :colspan="hasAnyActionPermission ? 5 : 4" 
+          class="text-center py-4 text-muted-foreground"
+        >
           No voters found
         </TableCell>
       </TableRow>
     </TableBody>
   </Table>
+  
   <VoterEditSheet 
     v-if="editingVoter" 
     :voter="editingVoter" 

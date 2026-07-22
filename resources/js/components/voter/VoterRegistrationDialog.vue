@@ -1,16 +1,16 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import axios from 'axios';
+import { useToast } from "vue-toastification";
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from '@/components/ui/dialog'
-import { useToast } from "vue-toastification";
-import axios from 'axios';
-import { ref } from 'vue';
 import VoterRegistrationForm from './VoterRegistrationForm.vue';
 
 const toast = useToast();
@@ -18,28 +18,24 @@ const isDialogOpen = ref(false);
 
 const handleSubmit = async (formData: any) => {
     try {
-        const response = await axios.post('/api/voters', formData);
+        await axios.post('/api/voters', formData);
         
         toast.success('Voter registered successfully! Waiting for activation.');
         isDialogOpen.value = false;
-        // Reload the page after a short delay
-        setTimeout(() => {
-            location.reload();
-        }, 2000);
+        
+        setTimeout(() => location.reload(), 2000);
 
     } catch (error) {
-        if (axios.isAxiosError(error) && error.response) {
-            if (error.response.status === 422) {
-                const errors = error.response.data.errors;
-                Object.values(errors).flat().forEach(message => {
-                    toast.error(message);
-                });
-            } else {
-                toast.error(error.response.data.message || 'An error occurred');
-            }
-        } else {
-            toast.error('An unexpected error occurred');
+        const response = axios.isAxiosError(error) ? error.response : null;
+
+        if (response?.status === 422) {
+            Object.values(response.data.errors)
+                .flat()
+                .forEach(message => toast.error(String(message)));
+            return;
         }
+
+        toast.error(response?.data?.message || 'An unexpected error occurred');
     }
 };
 </script>
@@ -47,12 +43,8 @@ const handleSubmit = async (formData: any) => {
 <template>
     <Dialog v-model:open="isDialogOpen">
         <DialogTrigger as-child>
-            <Button
-                size="sm"
-                variant="default">
-                <slot name="trigger">
-                    New Voter
-                </slot>
+            <Button size="sm" variant="default">
+                <slot name="trigger">Add a Voter</slot>
             </Button>
         </DialogTrigger>
         
@@ -78,8 +70,7 @@ const handleSubmit = async (formData: any) => {
                         Cancel
                     </Button>
                     <Button type="submit" :disabled="isLoading">
-                        <span v-if="!isLoading">Register Voter</span>
-                        <span v-else>Processing...</span>
+                        {{ isLoading ? 'Processing...' : 'Register Voter' }}
                     </Button>
                 </template>
             </VoterRegistrationForm>

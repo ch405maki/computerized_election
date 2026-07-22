@@ -37,7 +37,7 @@ const toast = useToast();
 
 const permissionModules: Record<string, string[]> = {
   "Dashboard": ["showRanking", "showChart"],
-  "Voter List": ["addVoter", "editVoter", "deleteVoter"],
+  "Voter List": ["uploadExcel","addVoter", "editVoter", "deleteVoter"],
   "Candidates": ["addCandidate", "deleteCandidate"],
   "Reports": ["electionResults", "showVoterTurnout"],
   "Election System": ["createElection", "editElection", "deleteElection"],
