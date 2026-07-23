@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import CandidateForm from '@/components/candidate/CandidateForm.vue';
 import CandidatesList from '@/components/candidate/CandidatesList.vue';
@@ -32,6 +32,14 @@ const props = defineProps<{
     name: string;
   }>;
 }>();
+
+const page = usePage();
+
+// Safely extract the authenticated user's permissions from Inertia shared props
+// Note: Adjust "page.props.auth.user.permissions" if your backend shares the user object under a different key
+const userPermissions = computed(() => {
+  return (page.props.auth as any)?.user?.permissions || {};
+});
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Candidates', href: '/candidates' },
@@ -87,6 +95,7 @@ const filteredCandidates = computed(() => {
           <CandidateForm 
             :positions="positions" 
             :elections="elections" 
+            :userPermissions="userPermissions"
             @candidateCreated="refreshCandidates" 
           />
         </div>

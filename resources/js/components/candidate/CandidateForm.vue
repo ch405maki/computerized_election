@@ -18,7 +18,8 @@ import {
 
 const props = defineProps<{
   positions: Array<{ id: number; name: string }>;
-  elections: Array<{ id: number; name: string; status: string }>; // Added 'status' to the type
+  elections: Array<{ id: number; name: string; status: string }>;
+  userPermissions?: Record<string, boolean>; // Added permissions prop
 }>();
 
 const emit = defineEmits(['candidateCreated']);
@@ -32,6 +33,13 @@ const isOpen = ref(false);
 // Filter out active elections
 const availableElections = computed(() => {
   return props.elections.filter(election => election.status !== 'active');
+});
+
+// Check if user has addCandidate permission
+const canAddCandidate = computed(() => {
+  // If no permissions are passed, we default to false (or true depending on your app's standard)
+  if (!props.userPermissions) return false; 
+  return !!props.userPermissions.addCandidate;
 });
 
 // Form fields
@@ -139,11 +147,13 @@ const onSubmit = () => {
 
 <template>
   <Dialog v-model:open="isOpen">
-    <DialogTrigger as-child>
+    <!-- Wrap DialogTrigger with v-if to conditionally remove it from the DOM -->
+    <DialogTrigger as-child v-if="canAddCandidate">
       <Button variant="default">
         Add New Candidate
       </Button>
     </DialogTrigger>
+    
     <DialogContent class="sm:max-w-[625px]">
       <DialogHeader>
         <DialogTitle>Add New Candidate</DialogTitle>
