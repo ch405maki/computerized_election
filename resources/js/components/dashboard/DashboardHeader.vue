@@ -4,28 +4,38 @@ import { RefreshCw, BarChart2, Table } from 'lucide-vue-next';
 
 defineProps<{
   isLoading: boolean;
-  isChartView: boolean;
-  showCharts: boolean;
+  showRanking: boolean;
+  showChart: boolean;
+  canShowRanking?: boolean;
+  canShowChart?: boolean;
 }>();
 
-const emit = defineEmits(['refresh', 'toggleView', 'toggleCharts']);
+const emit = defineEmits(['refresh', 'toggleRanking', 'toggleChart']);
 </script>
 
 <template>
   <div class="flex justify-between items-center">
     <h1 class="text-3xl font-bold">Election Dashboard</h1>
     <div class="flex gap-2">
-      <Button variant="outline" @click="emit('toggleCharts')">
-        <BarChart2 class="h-4 w-4 mr-2" />
-        {{ showCharts ? 'Hide Ranking' : 'Show Ranking' }}
+      
+      <!-- Show Ranking Button -->
+      <Button 
+        v-if="canShowRanking" 
+        variant="outline" 
+        @click="emit('toggleRanking')"
+      >
+        <Table class="h-4 w-4 mr-2" />
+        {{ showRanking ? 'Hide Ranking' : 'Show Ranking' }}
       </Button>
-      <!-- Toggle Button -->
-      <Button variant="outline" @click="emit('toggleView')">
-        <component
-          :is="isChartView ? Table : BarChart2"
-          class="h-4 w-4 mr-2"
-        />
-        {{ isChartView ? 'Show Table' : 'Show Chart' }}
+      
+      <!-- Show Chart Button -->
+      <Button 
+        v-if="canShowChart" 
+        variant="outline" 
+        @click="emit('toggleChart')"
+      >
+        <BarChart2 class="h-4 w-4 mr-2" />
+        {{ showChart ? 'Hide Chart' : 'Show Chart' }}
       </Button>
 
       <!-- Refresh Button -->
@@ -33,6 +43,7 @@ const emit = defineEmits(['refresh', 'toggleView', 'toggleCharts']);
         <RefreshCw class="h-4 w-4 mr-2" :class="{ 'animate-spin': isLoading }" />
         Refresh
       </Button>
+      
     </div>
   </div>
 </template>

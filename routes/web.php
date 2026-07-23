@@ -34,6 +34,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+
     // Reports
     Route::get('/reports/results', [ReportController::class, 'index'])->name('results.index');
     Route::get('/reports/log', [LogController::class, 'index'])->name('log.index');

@@ -7,9 +7,8 @@ use Illuminate\Http\JsonResponse;
 use App\Imports\UsersImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-
-
 use App\Models\User;
 
 class UserController extends Controller
@@ -30,6 +29,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'role' => 'required|in:admin,user',
             'status' => 'required|in:active,inactive',
+            // 'permissions' => 'nullable|array', // Uncomment when adding to migration
         ]);
 
         $user = User::create([
@@ -38,6 +38,7 @@ class UserController extends Controller
             'password' => bcrypt($validatedData['password']),
             'role' => $validatedData['role'],
             'status' => $validatedData['status'],
+            // 'permissions' => $validatedData['permissions'] ?? [], // Uncomment when adding to migration
         ]);
 
         return response()->json(['message' => 'User created successfully', 'user' => $user], 201);
@@ -54,22 +55,20 @@ class UserController extends Controller
 
             return response()->json(['message' => 'Users uploaded successfully!'], 200);
         } catch (\Illuminate\Database\QueryException $e) {
-            // Handle database errors (e.g., duplicate entry)
-            \Log::error('Database error: ' . $e->getMessage());
+            Log::error('Database error: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'Duplicate entry found! Some records already exist.',
                 'error' => $e->getMessage(),
             ], 422);
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            // Handle validation errors inside Excel import
             $failures = $e->failures();
             return response()->json([
                 'message' => 'Some rows failed validation.',
                 'errors' => $failures
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Error uploading users: ' . $e->getMessage());
+            Log::error('Error uploading users: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'Failed to upload file. Please check the format and data integrity.',
@@ -83,19 +82,18 @@ class UserController extends Controller
         try {
             $user = User::findOrFail($id);
 
-            // Validate input
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users,email,' . $id, 
                 'role' => 'required|in:admin,user',
                 'status' => 'required|string|in:active,inactive',
+                'permissions' => 'nullable|array',
             ]);
 
-            // Update user status
             $user->update($validated);
 
             return response()->json(['message' => 'User updated successfully!', 'user' => $user], 200);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to update user', 'error' => $e->getMessage()], 500);
@@ -105,27 +103,51 @@ class UserController extends Controller
     public function updateStatus(Request $request, User $user)
     {
         try {
-            // Validate input
             $validated = $request->validate([
                 'status' => 'required|string|in:active,inactive',
             ]);
 
-            // Log the request data
-            \Log::info('Updating user status:', [
+            Log::info('Updating user status:', [
                 'user_id' => $user->id,
                 'new_status' => $validated['status'],
             ]);
 
-            // Update user status
             $user->update($validated);
 
             return response()->json(['message' => 'User status updated successfully!', 'user' => $user], 200);
         } catch (ValidationException $e) {
-            \Log::error('Validation failed:', $e->errors());
+            Log::error('Validation failed:', $e->errors());
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            \Log::error('Failed to update user status:', ['error' => $e->getMessage()]);
+            Log::error('Failed to update user status:', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to update user status', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updatePermissions(Request $request, User $user)
+    {
+        try {
+            // Later you can change 'array' to match your exact boolean/toggle fields
+            $validated = $request->validate([
+                'permissions' => 'required|array',
+            ]);
+
+            Log::info('Updating user permissions:', [
+                'user_id' => $user->id,
+                'permissions' => $validated['permissions'],
+            ]);
+
+            $user->update([
+                'permissions' => $validated['permissions']
+            ]);
+
+            return response()->json(['message' => 'User permissions updated successfully!', 'user' => $user], 200);
+        } catch (ValidationException $e) {
+            Log::error('Permissions validation failed:', $e->errors());
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Failed to update user permissions:', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to update user permissions', 'error' => $e->getMessage()], 500);
         }
     }
 

@@ -11,7 +11,6 @@ use App\Http\Controllers\Vote\VoteController;
 use App\Http\Controllers\Voter\VoterStatusController;
 use App\Http\Controllers\Election\ElectionController;
 use App\Http\Controllers\Log\LogController;
-use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\VoteDataController;
 
 Route::get('/user', function (Request $request) {
@@ -25,6 +24,7 @@ Route::post('/users', [UserController::class, 'store']);
 Route::post('/upload-users', [UserController::class, 'uploadUsers']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
+Route::put('/users/{user}/permissions', [UserController::class, 'updatePermissions']);
 
 // Voter Routes
 Route::delete('/voters/{id}', [VoterController::class, 'destroy']);
@@ -54,5 +54,6 @@ Route::post('/votes', [VoteController::class, 'store']);
 
 Route::apiResource('logs', LogController::class);
 
-// Ranking Route
-Route::get('/vote-ranking', [VoteDataController::class, 'getVoteRanking']);
+// Protect the API endpoints the dashboard relies on
+Route::get('/vote-ranking', [VoteDataController::class, 'getVoteRanking'])
+    ->name('dashboard');
