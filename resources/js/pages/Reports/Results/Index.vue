@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ScrollText } from 'lucide-vue-next';
 import TitleHeader from '@/components/ui/title-header/header.vue';
 
@@ -36,6 +36,13 @@ const formattedDate = (dateString: string) => {
     day: 'numeric'
   });
 };
+
+// --- Check User Permission ---
+const page = usePage<any>();
+const hasElectionResultsPermission = computed(() => {
+  // Adjust this path if your Inertia auth object is structured differently
+  return page.props.auth?.user?.permissions?.electionResults === true;
+});
 
 // --- Dialog & Password Verification State ---
 const isDialogOpen = ref(false);
@@ -66,7 +73,6 @@ function submitPassword() {
 </script>
 
 <template>
-
   <Head title="Election Results" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4 ">
@@ -78,7 +84,8 @@ function submitPassword() {
               <TableHead>Election Name</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Election Period</TableHead>
-              <TableHead class="text-right">Action</TableHead>
+              <!-- Conditionally render Action header -->
+              <TableHead v-if="hasElectionResultsPermission" class="text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -97,7 +104,8 @@ function submitPassword() {
                 {{ formattedDate(election.start_date) }} -
                 {{ formattedDate(election.end_date) }}
               </TableCell>
-              <TableCell class="text-right">
+              <!-- Conditionally render Action cell -->
+              <TableCell v-if="hasElectionResultsPermission" class="text-right">
                 <Button v-if="election.status === 'completed'" @click="openPasswordDialog(election.id)"
                   class="inline-flex items-center px-4 py-2 bg-zinc-800 text-white rounded hover:bg-zinc-700 transition-colors">
                   <ScrollText class="w-4 h-4 mr-2" />
@@ -109,7 +117,8 @@ function submitPassword() {
               </TableCell>
             </TableRow>
             <TableRow v-if="elections.length === 0">
-              <TableCell colspan="4" class="text-center py-4 text-muted-foreground">
+              <!-- Dynamically adjust colspan based on visibility of Action column -->
+              <TableCell :colspan="hasElectionResultsPermission ? 4 : 3" class="text-center py-4 text-muted-foreground">
                 No elections found
               </TableCell>
             </TableRow>
