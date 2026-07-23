@@ -4,6 +4,7 @@ use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PreventMixedAuthentication;
 use App\Http\Middleware\HandleUserRole;
+use App\Http\Middleware\CheckPermission;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'prevent.mixed.auth' => PreventMixedAuthentication::class,
             'admin' => HandleUserRole::class,
+            'permission' => CheckPermission::class,
         ]);
 
         $middleware->web(append: [

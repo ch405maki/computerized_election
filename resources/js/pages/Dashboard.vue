@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useToast } from "vue-toastification";
@@ -46,12 +46,29 @@ const props = defineProps<{
 }>();
 
 const toast = useToast();
+const page = usePage();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 const isLoading = ref(false);
-const isChartView = ref(false); // Set to false for table to be default
+
+// Separated visibility states
+const showRanking = ref(false); 
+const showChart = ref(false);
+
 const voteRanking = ref<PositionVotes[]>([]);
 
 let refreshInterval: number | null = null;
+
+// Permission Logic
+const hasPermission = (permission: string) => {
+  const user = page.props.auth.user as any; 
+  if (!user) return false;
+  
+  // Standard user check
+  return user.permissions && user.permissions[permission] === true;
+};
+
+const canShowRanking = computed(() => hasPermission('showRanking'));
+const canShowChart = computed(() => hasPermission('showChart'));
 
 // Vote ranking data
 interface CandidateVote {
@@ -92,6 +109,9 @@ const getElectionStatus = (election: { start_date: string; end_date: string }) =
 
 // Function to fetch data
 const fetchVoteRanking = async () => {
+  // Don't fetch if they aren't allowed to see rankings
+  if (!canShowRanking.value && !canShowChart.value) return; 
+
   isLoading.value = true;
   try {
     const response = await axios.get('/api/vote-ranking');
@@ -131,7 +151,7 @@ const fetchVoteRanking = async () => {
 // Auto-refresh every 30 seconds
 onMounted(() => {
   fetchVoteRanking();
-  refreshInterval = setInterval(fetchVoteRanking, 30000);
+  refreshInterval = window.setInterval(fetchVoteRanking, 30000);
 });
 
 onUnmounted(() => {
@@ -146,18 +166,14 @@ const refreshData = async () => {
   toast.success('Dashboard updated!');
 };
 
-// Toggle between chart and table view
-const toggleView = () => {
-  isChartView.value = !isChartView.value;
+// Toggle logic for the separated buttons
+const toggleRanking = () => {
+  showRanking.value = !showRanking.value;
 };
 
-const showCharts = ref(false); 
-
-const toggleCharts = () => {
-  showCharts.value = !showCharts.value;
+const toggleChart = () => {
+  showChart.value = !showChart.value;
 };
-
-onMounted(fetchVoteRanking);
 </script>
 
 <template>
@@ -166,33 +182,32 @@ onMounted(fetchVoteRanking);
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <div class="space-y-6">
-        <!-- Updated: Pass toggle state & event to DashboardHeader -->
+        
         <DashboardHeader
           :isLoading="isLoading"
-          :isChartView="isChartView"
-          :showCharts="showCharts"
+          :showRanking="showRanking"
+          :showChart="showChart"
+          :canShowRanking="canShowRanking"
+          :canShowChart="canShowChart"
           @refresh="refreshData"
-          @toggleView="toggleView"
-          @toggleCharts="toggleCharts"
+          @toggleRanking="toggleRanking"
+          @toggleChart="toggleChart"
         />
 
         <StatsGrid :stats="stats" />
 
-        <!-- Add Togle Button to show unshow charts -->
-        <!-- Conditional Rendering: Table (Default) or Chart -->
-        <template v-if="showCharts">
-          <!-- Conditional Rendering: Table (Default) or Chart -->
-          <VoteRankingTable
-            v-if="!isChartView"
-            :voteRanking="voteRanking"
-            :isLoading="isLoading"
-          />
-          <VoteRankingChart
-            v-else
-            :voteRanking="voteRanking"
-            :isLoading="isLoading"
-          />
-        </template>
+        <!-- Protected Rendering for separated views -->
+        <VoteRankingTable
+          v-if="showRanking && canShowRanking"
+          :voteRanking="voteRanking"
+          :isLoading="isLoading"
+        />
+          
+        <VoteRankingChart
+          v-if="showChart && canShowChart"
+          :voteRanking="voteRanking"
+          :isLoading="isLoading"
+        />
 
         <RecentElectionsTable
           :elections="recent_elections"

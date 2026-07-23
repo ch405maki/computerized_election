@@ -39,6 +39,24 @@
     // Grab the clean boolean flags we set up in the HandleInertiaRequests middleware
     const isAdmin = computed(() => page.props.isAdmin as boolean);
 
+    // Helper to safely check user permissions
+    const hasPermission = (permissionName: string) => {
+        // Cast to any to bypass strict typing for the auth object if types aren't fully defined
+        const user = (page.props.auth as any)?.user as any;
+        
+        // If the user has a permissions object, check if the specific key is true
+        if (user?.permissions && user.permissions[permissionName] === true) {
+            return true;
+        }
+        
+        // Fallback for legacy users who haven't been updated with the JSON column yet
+        if (user && !user.permissions && permissionName === 'viewDashboard') {
+            return true; 
+        }
+
+        return false;
+    };
+
     const baseMainNavItems = ref<DropdownNavItem[]>([
         {
             title: 'Dashboard',
@@ -52,19 +70,9 @@
             isOpen: false,
             children: [
                 { title: 'Voter List', href: '/voters', icon: List },
-                /*{ title: 'Activation', href: '/voters/status', icon: KeyRound },*/
+                { title: 'Activation', href: '/voters/status', icon: KeyRound },
             ],
         },
-        /* {
-            title: 'Voting Page',
-            href: '#',
-            icon: Vote,
-            isOpen: false,
-            children: [
-                { title: 'Vote', href: '/vote', icon: List },
-            ],
-        },
-        */
         {
             title: 'Candidates',
             href: '#',
@@ -104,13 +112,17 @@
         },
     ]);
 
-    // Filter main navigations based on the isAdmin flag
+    // Filter main navigations based on isAdmin AND permissions
     const mainNavItems = computed<DropdownNavItem[]>(() => {
+        let items = baseMainNavItems.value;
+
+        // Role-based filtering
         if (!isAdmin.value) {
             const restrictedTitles = ['Voters', 'Voting Page', 'Candidates'];
-            return baseMainNavItems.value.filter(item => !restrictedTitles.includes(item.title));
+            items = items.filter(item => !restrictedTitles.includes(item.title));
         }
-        return baseMainNavItems.value;
+
+        return items;
     });
 
     // Filter config navigations based on the isAdmin flag
@@ -144,7 +156,7 @@
         </SidebarContent>
 
         <SidebarFooter>
-        <NavFooter :items="footerNavItems" />
+        <NavFooter :items="footerNavItems" />   
         <NavUser />
         </SidebarFooter>
     </Sidebar>
