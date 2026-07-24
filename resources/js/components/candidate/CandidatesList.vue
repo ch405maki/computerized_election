@@ -27,7 +27,7 @@ const props = defineProps<{
     election: { name: string };
     position: { name: string };
   }>;
-  userPermissions?: Record<string, boolean>;
+  userPermissions?: any; 
 }>();
 
 const toast = useToast();
@@ -39,10 +39,28 @@ const showDeleteDialog = ref(false);
 const showPasswordDialog = ref(false);
 const deletePassword = ref('');
 
-// Check if user has deleteCandidate permission
+// Robust check for deleteCandidate permission
 const canDeleteCandidate = computed(() => {
-  if (!props.userPermissions) return false;
-  return !!props.userPermissions.deleteCandidate;
+  let perms = props.userPermissions;
+  
+  if (!perms) return false;
+
+  // 1. If backend sends it as a raw stringified JSON, parse it
+  if (typeof perms === 'string') {
+    try {
+      perms = JSON.parse(perms);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 2. If backend uses an array of strings (e.g. Spatie permissions: ['addCandidate', 'deleteCandidate'])
+  if (Array.isArray(perms)) {
+    return perms.includes('deleteCandidate');
+  }
+
+  // 3. Default object evaluation (handles booleans, strings, and integers)
+  return perms.deleteCandidate === true || perms.deleteCandidate === 'true' || perms.deleteCandidate === 1;
 });
 
 // --- Sorting Logic ---
@@ -125,7 +143,7 @@ const deleteCandidate = async () => {
     setTimeout(() => {
       window.location.reload();
     }, 2000);
-
+    
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 422) {
       toast.error('Incorrect admin password.');
@@ -199,7 +217,6 @@ const deleteCandidate = async () => {
         </TableHeader>
         <TableBody>
           <TableRow v-if="candidates.length === 0">
-            <!-- Dynamically adjust the colspan based on whether Actions column is showing -->
             <TableCell :colspan="canDeleteCandidate ? 7 : 6" class="text-center">
               No candidates found
             </TableCell>
@@ -229,13 +246,14 @@ const deleteCandidate = async () => {
             <!-- Hide the TableCell entirely if permission is missing -->
             <TableCell v-if="canDeleteCandidate">
               <div class="text-right">
-                <button 
-                    size="sm" 
+                <Button 
+                    size="sm"
+                    variant="destructive"
                     @click="openDeleteDialog(candidate)"
                     :disabled="isDeleting"
                   >
-                  <Trash class="w-4 h-4 text-red-600 hover:text-red-700" />
-                </button>
+                  <Trash class="w-4 h-4 hover:text-red-700" />
+                </Button>
               </div>
             </TableCell>
           </TableRow>

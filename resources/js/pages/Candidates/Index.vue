@@ -101,7 +101,7 @@ const filteredCandidates = computed(() => {
         </div>
       </div>
       <div>
-        <CandidatesList :candidates="filteredCandidates" />
+        <CandidatesList :candidates="filteredCandidates" :userPermissions="userPermissions" />
       </div>
     </div>
   </AppLayout>
