@@ -27,6 +27,7 @@ const props = defineProps<{
     election: { name: string };
     position: { name: string };
   }>;
+  userPermissions?: Record<string, boolean>;
 }>();
 
 const toast = useToast();
@@ -38,6 +39,12 @@ const showDeleteDialog = ref(false);
 const showPasswordDialog = ref(false);
 const deletePassword = ref('');
 
+// Check if user has deleteCandidate permission
+const canDeleteCandidate = computed(() => {
+  if (!props.userPermissions) return false;
+  return !!props.userPermissions.deleteCandidate;
+});
+
 // --- Sorting Logic ---
 type SortKey = 'candidate_code' | 'candidate_name' | 'candidate_party' | 'position.name' | 'election.name';
 
@@ -46,25 +53,20 @@ const sortOrder = ref<'asc' | 'desc'>('asc');
 
 const sortBy = (key: SortKey) => {
   if (sortKey.value === key) {
-    // Toggle order if clicking the same column
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
   } else {
-    // Set new column to sort and default to ascending
     sortKey.value = key;
     sortOrder.value = 'asc';
   }
 };
 
 const sortedCandidates = computed(() => {
-  // If no sort key is selected, return the original data
   if (!sortKey.value) return props.candidates;
 
-  // Create a copy of the array to prevent prop mutation
   return [...props.candidates].sort((a, b) => {
     let valA = '';
     let valB = '';
 
-    // Extract values, handling nested objects for election and position
     if (sortKey.value === 'position.name') {
       valA = a.position?.name?.toLowerCase() || '';
       valB = b.position?.name?.toLowerCase() || '';
@@ -78,7 +80,6 @@ const sortedCandidates = computed(() => {
       valB = String(b[sortKey.value] || '').toLowerCase();
     }
 
-    // Compare values based on sort order
     if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
     if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
     return 0;
@@ -192,12 +193,14 @@ const deleteCandidate = async () => {
               </div>
             </TableHead>
             
-            <TableHead class="text-right">Actions</TableHead>
+            <!-- Hide the Actions header entirely if permission is missing -->
+            <TableHead v-if="canDeleteCandidate" class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="candidates.length === 0">
-            <TableCell colspan="7" class="text-center">
+            <!-- Dynamically adjust the colspan based on whether Actions column is showing -->
+            <TableCell :colspan="canDeleteCandidate ? 7 : 6" class="text-center">
               No candidates found
             </TableCell>
           </TableRow>
@@ -222,7 +225,9 @@ const deleteCandidate = async () => {
             <TableCell>{{ candidate.candidate_party || 'Independent' }}</TableCell>
             <TableCell>{{ candidate.position.name }}</TableCell>
             <TableCell>{{ candidate.election.name }}</TableCell>
-            <TableCell>
+            
+            <!-- Hide the TableCell entirely if permission is missing -->
+            <TableCell v-if="canDeleteCandidate">
               <div class="text-right">
                 <button 
                     size="sm" 
@@ -238,6 +243,7 @@ const deleteCandidate = async () => {
       </Table>
     </div>
 
+    <!-- Dialogs stay the same... -->
     <AlertDialog v-model:open="showDeleteDialog">
       <AlertDialogContent>
         <AlertDialogHeader>
