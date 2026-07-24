@@ -72,7 +72,7 @@ class VoterController extends Controller
             ],
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255', // Made nullable just in case
+            'middle_name' => 'nullable|string|max:255',
             'student_year' => 'required|string',
             'sex' => 'required|string',
             'password' => 'required|string|min:6',
