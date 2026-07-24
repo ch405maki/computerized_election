@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class HandleUserRole
+class HandleSuperAdminRole
 {
     /**
      * Handle an incoming request.
@@ -16,10 +16,9 @@ class HandleUserRole
     public function handle(Request $request, Closure $next): Response
     {
 
-        // Check if the user is logged in AND their role is 'superadmin' or 'admin'
-        $role = $request->user()?->role;
-        if ($role !== 'superadmin' && $role !== 'admin') {
-            // Throw a 403 Forbidden error if not superadmin or admin.
+        // Check if the user is logged in AND their role is 'superadmin'
+        if ($request->user()?->role !== 'superadmin') {
+            // Throw a 403 Forbidden error if not superadmin.
             abort(403, 'Unauthorized action.');
         }
 
