@@ -25,7 +25,7 @@ interface User {
 }
 
 interface UserProp extends User {
-  permissions?: Permissions;
+  permissions?: any; // Changed to 'any' to safely handle stringified JSON from DB
 }
 
 interface UserData extends User {
@@ -55,10 +55,23 @@ const defaultPermissions: Permissions = Object.values(permissionModules)
 const userPermissions = (): UserData => {
   const filteredPermissions: Permissions = { ...defaultPermissions };
 
-  if (props.user.permissions) {
+  let rawPermissions = props.user.permissions;
+
+  // Handle if the backend returns stringified JSON
+  if (typeof rawPermissions === 'string') {
+    try {
+      rawPermissions = JSON.parse(rawPermissions);
+    } catch (e) {
+      rawPermissions = {};
+    }
+  }
+
+  if (rawPermissions && typeof rawPermissions === 'object') {
     for (const key of Object.keys(defaultPermissions)) {
-      if (key in props.user.permissions) {
-        filteredPermissions[key] = props.user.permissions[key];
+      if (key in rawPermissions) {
+        // Force boolean evaluation in case DB returns string 'true' or 1
+        const val = rawPermissions[key];
+        filteredPermissions[key] = val === true || val === 'true' || val === 1;
       }
     }
   }
@@ -127,6 +140,7 @@ const updateUser = async () => {
             <label class="form-field">
               <span class="field-label">Role</span>
               <select v-model="userData.role" class="input">
+                <option value="superadmin">Superadmin</option>
                 <option value="admin">Admin</option>
                 <option value="user">User</option>
               </select>

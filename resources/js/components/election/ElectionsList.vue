@@ -30,9 +30,16 @@ interface Election {
 }
 
 const toast = useToast();
-const props = defineProps<{
+
+// Update props to accept permission flags
+const props = withDefaults(defineProps<{
     elections: Election[]; 
-}>();
+    canEdit?: boolean;
+    canDelete?: boolean;
+}>(), {
+    canEdit: false,
+    canDelete: false
+});
 
 // --- Delete Logic State ---
 const isDeleteDialogOpen = ref(false);
@@ -44,9 +51,13 @@ const deletePassword = ref('');
 const isDeleting = ref(false);
 
 const openDeleteDialog = (id: number) => {
+  if (!props.canDelete) {
+    toast.error("You do not have permission to delete elections.");
+    return;
+  }
   electionToDelete.value = id;
   hasAgreed.value = false;
-  deletePassword.value = ''; // Reset password field when opening dialog
+  deletePassword.value = '';
   isDeleteDialogOpen.value = true;
 };
 
@@ -60,7 +71,6 @@ const proceedToFinalWarning = () => {
 
 const deleteElection = async () => {
   if (!electionToDelete.value) return;
-  
   if (!deletePassword.value) {
     toast.error('Password is required to confirm deletion');
     return;
@@ -69,12 +79,10 @@ const deleteElection = async () => {
   isDeleting.value = true;
 
   try {
-    // 1. Verify the password first
     await axios.post('/election/verify-password', {
       password: deletePassword.value
     });
 
-    // 2. If password is correct, proceed with deletion
     await axios.delete(`/api/elections/${electionToDelete.value}`, {
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
@@ -114,8 +122,12 @@ const pendingElectionToEdit = ref<Election | null>(null);
 const isVerifying = ref(false);
 
 const initiateEdit = (election: Election) => {
+  if (!props.canEdit) {
+    toast.error("You do not have permission to edit elections.");
+    return;
+  }
   pendingElectionToEdit.value = election;
-  adminPassword.value = ''; // Reset password field
+  adminPassword.value = ''; 
   isPasswordDialogOpen.value = true;
 };
 
@@ -131,7 +143,6 @@ const verifyPasswordAndOpenEdit = async () => {
       password: adminPassword.value
     });
 
-    // If successful, open the edit sheet
     selectedElection.value = pendingElectionToEdit.value;
     isPasswordDialogOpen.value = false;
     isEditSheetOpen.value = true;
@@ -165,12 +176,14 @@ const handleElectionUpdated = () => {
             <TableHead>Status</TableHead>
             <TableHead>Start Date</TableHead>
             <TableHead>End Date</TableHead>
-            <TableHead class="text-right">Actions</TableHead>
+            <!-- Hide the header if both are false -->
+            <TableHead v-if="canEdit || canDelete" class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="elections.length === 0">
-            <TableCell colspan="5" class="text-center py-8 text-muted-foreground">
+            <!-- Dynamically adjust colspan based on whether the action column exists -->
+            <TableCell :colspan="(canEdit || canDelete) ? 5 : 4" class="text-center py-8 text-muted-foreground">
               No elections found
             </TableCell>
           </TableRow>
@@ -187,8 +200,10 @@ const handleElectionUpdated = () => {
             </TableCell>
             <TableCell>{{ new Date(election.start_date).toLocaleDateString() }}</TableCell>
             <TableCell>{{ new Date(election.end_date).toLocaleDateString() }}</TableCell>
-            <TableCell class="text-right">
+            
+            <TableCell v-if="canEdit || canDelete" class="text-right">
               <Button 
+                v-if="canEdit"
                 variant="outline" 
                 size="sm" 
                 class="mr-2"
@@ -197,12 +212,13 @@ const handleElectionUpdated = () => {
                 <FilePenLine />
               </Button>
               <Button 
+                v-if="canDelete"
                 variant="destructive" 
                 size="sm"
                 @click="openDeleteDialog(election.id)"
               >
-              <Trash />
-                </Button>
+                <Trash />
+              </Button>
             </TableCell>
           </TableRow>
         </TableBody>
@@ -217,7 +233,9 @@ const handleElectionUpdated = () => {
       @updated="handleElectionUpdated"
     />
 
+    <!-- AlertDialogs remain unchanged... -->
     <AlertDialog v-model:open="isPasswordDialogOpen">
+      <!-- (Omitted for brevity, keep your existing markup here) -->
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Password Required</AlertDialogTitle>
@@ -246,6 +264,7 @@ const handleElectionUpdated = () => {
     </AlertDialog>
 
     <AlertDialog v-model:open="isDeleteDialogOpen">
+      <!-- (Omitted for brevity, keep your existing markup here) -->
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Election Confirmation</AlertDialogTitle>
@@ -282,8 +301,9 @@ const handleElectionUpdated = () => {
     </AlertDialog>
 
     <AlertDialog v-model:open="showFinalWarning">
+      <!-- (Omitted for brevity, keep your existing markup here) -->
       <AlertDialogContent>
-         <AlertDialogHeader>
+        <AlertDialogHeader>
           <AlertDialogTitle>Final Confirmation Required</AlertDialogTitle>
           <AlertDialogDescription class="space-y-4">
             <p class="font-semibold text-red-600">You are about to permanently delete this election and all its data.</p>
@@ -318,5 +338,6 @@ const handleElectionUpdated = () => {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
   </div>
 </template>

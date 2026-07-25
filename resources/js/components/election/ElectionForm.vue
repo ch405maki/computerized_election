@@ -10,6 +10,13 @@ import { ref, computed } from 'vue';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
 
+// Define the prop to accept the permission flag from the parent component/page
+const props = withDefaults(defineProps<{
+    canCreate?: boolean;
+}>(), {
+    canCreate: false // Defaults to false to ensure strict access control
+});
+
 const toast = useToast();
 const isLoading = ref(false);
 const isDialogOpen = ref(false);
@@ -39,6 +46,12 @@ const minEndDate = computed(() => {
 });
 
 const submitElection = async () => {
+    // Extra guard to prevent submission if permission is missing
+    if (!props.canCreate) {
+        toast.error("You do not have permission to create an election.");
+        return;
+    }
+
     isLoading.value = true;
     try {
         const payload = {
@@ -86,7 +99,7 @@ const handleError = (error: unknown) => {
         if (error.response?.status === 422) {
             const errors = error.response.data.errors;
             Object.values(errors).flat().forEach(message => {
-                toast.error(message);
+                toast.error(message as string);
             });
         } else {
             toast.error(error.response?.data?.message || 'Failed to create election');
@@ -98,7 +111,8 @@ const handleError = (error: unknown) => {
 </script>
 
 <template>
-    <Dialog v-model:open="isDialogOpen">
+    <!-- Conditionally render the entire Dialog based on permissions -->
+    <Dialog v-model:open="isDialogOpen" v-if="canCreate">
         <DialogTrigger as-child>
             <Button variant="default" class="ml-auto">
                 Create New Election

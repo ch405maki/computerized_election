@@ -38,6 +38,7 @@
     
     // Grab the clean boolean flags we set up in the HandleInertiaRequests middleware
     const isAdmin = computed(() => page.props.isAdmin as boolean);
+    const isSuperAdmin = computed(() => page.props.isSuperAdmin as boolean);
 
     // Helper to safely check user permissions
     const hasPermission = (permissionName: string) => {
@@ -47,11 +48,6 @@
         // If the user has a permissions object, check if the specific key is true
         if (user?.permissions && user.permissions[permissionName] === true) {
             return true;
-        }
-        
-        // Fallback for legacy users who haven't been updated with the JSON column yet
-        if (user && !user.permissions && permissionName === 'viewDashboard') {
-            return true; 
         }
 
         return false;
@@ -112,12 +108,12 @@
         },
     ]);
 
-    // Filter main navigations based on isAdmin AND permissions
+    // Filter main navigations based on isAdmin OR isSuperAdmin
     const mainNavItems = computed<DropdownNavItem[]>(() => {
         let items = baseMainNavItems.value;
 
-        // Role-based filtering
-        if (!isAdmin.value) {
+        // Role-based filtering: If user is neither admin nor superadmin, restrict them
+        if (!isAdmin.value && !isSuperAdmin.value) {
             const restrictedTitles = ['Voters', 'Voting Page', 'Candidates'];
             items = items.filter(item => !restrictedTitles.includes(item.title));
         }
@@ -125,11 +121,19 @@
         return items;
     });
 
-    // Filter config navigations based on the isAdmin flag
+    // Filter config navigations - only show Users tab to superadmin
     const configNavItems = computed<DropdownNavItem[]>(() => {
-        if (!isAdmin.value) {
+        // If user is neither admin nor superadmin, hide config entirely
+        if (!isAdmin.value && !isSuperAdmin.value) {
             return [];
         }
+        
+        // If user is not superadmin (meaning they are just a regular admin at this point), filter out User Management
+        if (!isSuperAdmin.value) {
+            return baseConfigNavItems.value.filter(item => item.title !== 'User Management');
+        }
+        
+        // Superadmin gets everything
         return baseConfigNavItems.value;
     });
 
