@@ -84,7 +84,6 @@ const filteredCandidates = computed(() => {
           title="Candidates List"
           description="Manage election candidates, their affiliations, and profiles." 
         />
-
         <div class="flex items-center gap-3">
           <input 
             v-model="searchQuery" 
@@ -101,7 +100,7 @@ const filteredCandidates = computed(() => {
         </div>
       </div>
       <div>
-        <CandidatesList :candidates="filteredCandidates" />
+        <CandidatesList :candidates="filteredCandidates" :userPermissions="userPermissions" />
       </div>
     </div>
   </AppLayout>

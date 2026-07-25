@@ -54,24 +54,31 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
 
     // ==========================================
-    // ADMIN-ONLY ROUTES
+    // ADMIN & SUPERADMIN ROUTES
     // ==========================================
     Route::middleware(['admin', 'verified'])->group(function () {
         
-        // User Management
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-
-        // Voters Management
+        // Voters Management (Admin & Superadmin)
         Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
         Route::get('/voters/status', [VoterStatusController::class, 'index'])->name('status.index');
 
-        // Candidate Management
+        // Candidate Management (Admin & Superadmin)
         Route::get('/candidates', [CandidateController::class, 'index'])->name('candidates.index');
         Route::get('/candidates/positions', [PositionController::class, 'index'])->name('positions.index');
 
-        // Election Configuration
+        // Election Configuration (Admin & Superadmin)
         Route::get('/election', [ElectionController::class, 'index'])->name('elections.index');
         Route::post('/election/verify-password', [ElectionController::class, 'verifyPassword'])->name('elections.verify-password');
+        
+    });
+
+    // ==========================================
+    // SUPERADMIN-ONLY ROUTES
+    // ==========================================
+    Route::middleware(['superadmin', 'verified'])->group(function () {
+        
+        // User Management (Superadmin Only)
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
         
     });
 });

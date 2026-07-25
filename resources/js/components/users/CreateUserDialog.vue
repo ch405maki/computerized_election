@@ -18,6 +18,7 @@
                     <input v-model="formData.email" type="email" placeholder="Email" class="form-input" required />
                     <input v-model="formData.password" type="password" placeholder="Password" class="form-input" required />
                     <select v-model="formData.role" class="form-input" required>
+                        <option value="superadmin">Superadmin</option>
                         <option value="admin">Admin</option>
                         <option value="user">User</option>
                     </select>

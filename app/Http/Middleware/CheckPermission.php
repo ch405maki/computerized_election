@@ -16,8 +16,9 @@ class CheckPermission
             abort(401, 'Unauthenticated.');
         }
 
-        // NEW: If the user is an admin, let them through immediately!
-        if (strtolower($user->role) === 'admin') {
+        // If the user is a superadmin or admin, let them through immediately!
+        $role = strtolower($user->role);
+        if ($role === 'superadmin' || $role === 'admin') {
             return $next($request);
         }
 

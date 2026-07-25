@@ -27,7 +27,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,user',
+            'role' => 'required|in:superadmin,admin,user',
             'status' => 'required|in:active,inactive',
             // 'permissions' => 'nullable|array', // Uncomment when adding to migration
         ]);
@@ -85,7 +85,7 @@ class UserController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users,email,' . $id, 
-                'role' => 'required|in:admin,user',
+                'role' => 'required|in:superadmin,admin,user',
                 'status' => 'required|string|in:active,inactive',
                 'permissions' => 'nullable|array',
             ]);

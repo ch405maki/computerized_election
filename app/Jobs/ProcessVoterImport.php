@@ -42,8 +42,8 @@ class ProcessVoterImport implements ShouldQueue
 
             // 1. Create the reader and stream the rows
             SimpleExcelReader::create($fullPath)
-                // Normalize headers: trims spaces and makes them lowercase so "Student_Number" matches "student_number"
-                ->formatHeadersUsing(fn(string $header) => strtolower(trim($header))) 
+                // FIX 1: Replace spaces with underscores so "Middle Name" reliably becomes "middle_name"
+                ->formatHeadersUsing(fn(string $header) => str_replace(' ', '_', strtolower(trim($header)))) 
                 ->getRows()
                 ->each(function (array $rowProperties) use (&$votersBatch, &$studentNumbersBatch, $chunkSize) {
                     
@@ -61,6 +61,9 @@ class ProcessVoterImport implements ShouldQueue
                         return; 
                     }
 
+                    // FIX 2: Safely extract the middle name, checking for a couple of likely header variations
+                    $middleName = trim($rowProperties['middle_name'] ?? '');
+
                     $rawPassword = !empty($rowProperties['password']) 
                         ? trim($rowProperties['password']) 
                         : $studentNumber;
@@ -69,7 +72,8 @@ class ProcessVoterImport implements ShouldQueue
                         'student_number' => $studentNumber,
                         'first_name'     => $firstName,
                         'last_name'      => $lastName,
-                        'middle_name'    => !empty($rowProperties['middle_name']) ? trim($rowProperties['middle_name']) : null,
+                        // FIX 3: Strict check for empty string after trimming to correctly insert NULL 
+                        'middle_name'    => $middleName !== '' ? $middleName : null,
                         'sex'            => trim($rowProperties['sex'] ?? 'Other'),
                         'dob'            => !empty($rowProperties['dob']) ? trim($rowProperties['dob']) : null,
                         'student_year'   => trim($rowProperties['student_year'] ?? ''),
@@ -124,7 +128,7 @@ class ProcessVoterImport implements ShouldQueue
             Voter::upsert(
                 $votersBatch,
                 ['student_number'], 
-                ['first_name', 'last_name', 'middle_name', 'sex', 'dob', 'student_year', 'password', 'updated_at', 'deleted_at'] // Update these fields if student_number already exists
+                ['first_name', 'last_name', 'middle_name', 'sex', 'dob', 'student_year', 'password', 'updated_at', 'deleted_at'] 
             );
 
             // Fetch the IDs of the voters we just inserted/updated
