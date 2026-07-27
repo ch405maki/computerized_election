@@ -77,8 +77,16 @@ class PositionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Position $position)
     {
-        //
+        try {
+            $position->delete();
+            return response()->json(['message' => 'Position deleted successfully!']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to delete position',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

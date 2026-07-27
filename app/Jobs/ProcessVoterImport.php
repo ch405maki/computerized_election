@@ -36,22 +36,18 @@ class ProcessVoterImport implements ShouldQueue
             $fullPath = Storage::path($this->filePath);
             $chunkSize = 1000;
             
-            // We must define these outside the closure and pass them by reference (&$)
             $votersBatch = [];
             $studentNumbersBatch = [];
 
-            // 1. Create the reader and stream the rows
-            SimpleExcelReader::create($fullPath)
-                // FIX 1: Replace spaces with underscores so "Middle Name" reliably becomes "middle_name"
+            SimpleExcelReader::create($fullPath, 'xlsx')
                 ->formatHeadersUsing(fn(string $header) => str_replace(' ', '_', strtolower(trim($header)))) 
                 ->getRows()
                 ->each(function (array $rowProperties) use (&$votersBatch, &$studentNumbersBatch, $chunkSize) {
                     
                     $studentNumber = trim($rowProperties['student_number'] ?? '');
                     
-                    // Skip if no student number exists for this row
                     if (empty($studentNumber)) {
-                        return; // In a Laravel Collection ->each(), 'return' acts like 'continue'
+                        return;
                     }
 
                     $firstName = trim($rowProperties['first_name'] ?? '');
@@ -61,7 +57,6 @@ class ProcessVoterImport implements ShouldQueue
                         return; 
                     }
 
-                    // FIX 2: Safely extract the middle name, checking for a couple of likely header variations
                     $middleName = trim($rowProperties['middle_name'] ?? '');
 
                     $rawPassword = !empty($rowProperties['password']) 
@@ -72,15 +67,11 @@ class ProcessVoterImport implements ShouldQueue
                         'student_number' => $studentNumber,
                         'first_name'     => $firstName,
                         'last_name'      => $lastName,
-                        // FIX 3: Strict check for empty string after trimming to correctly insert NULL 
                         'middle_name'    => $middleName !== '' ? $middleName : null,
                         'sex'            => trim($rowProperties['sex'] ?? 'Other'),
                         'dob'            => !empty($rowProperties['dob']) ? trim($rowProperties['dob']) : null,
-                        'student_year'   => trim($rowProperties['student_year'] ?? ''),
-                        
-                        // OPTIMIZATION: Lower Bcrypt rounds to 8 for speed
+                        'student_year'   => trim($rowProperties['student_year'] ?? ''),                        
                         'password'       => Hash::make($rawPassword, ['rounds' => 8]), 
-                        
                         'created_at'     => now(),
                         'updated_at'     => now(),
                         'deleted_at'     => null,
@@ -88,50 +79,40 @@ class ProcessVoterImport implements ShouldQueue
 
                     $studentNumbersBatch[] = $studentNumber;
 
-                    // 2. Process Chunk when it hits 1000
                     if (count($votersBatch) >= $chunkSize) {
                         $this->processChunk($votersBatch, $studentNumbersBatch);
                         
-                        // Reset batches
                         $votersBatch = [];
                         $studentNumbersBatch = [];
                     }
                 });
 
-            // 3. Process any remaining rows that didn't fill the last chunk
             if (!empty($votersBatch)) {
                 $this->processChunk($votersBatch, $studentNumbersBatch);
             }
 
-            // 4. Update the Cache so the Vue frontend knows it's done
             Cache::put("import_status_{$this->importId}", 'completed', now()->addHours(1));
 
         } catch (\Exception $e) {
             Log::error("Voter Import Failed [{$this->importId}]: " . $e->getMessage());
             Cache::put("import_status_{$this->importId}", 'failed', now()->addHours(1));
         } finally {
-            // 5. Always clean up the temp file
             if (Storage::exists($this->filePath)) {
                 Storage::delete($this->filePath);
             }
         }
     }
 
-    /**
-     * Helper method to handle database insertions via Upsert + Transactions
-     */
     private function processChunk(array $votersBatch, array $studentNumbersBatch)
     {
         DB::transaction(function () use ($votersBatch, $studentNumbersBatch) {
             
-            // Upsert Voters (Creates new ones, updates existing ones based on student_number)
             Voter::upsert(
                 $votersBatch,
                 ['student_number'], 
                 ['first_name', 'last_name', 'middle_name', 'sex', 'dob', 'student_year', 'password', 'updated_at', 'deleted_at'] 
             );
 
-            // Fetch the IDs of the voters we just inserted/updated
             $insertedVoters = Voter::whereIn('student_number', $studentNumbersBatch)->pluck('id');
 
             $statusesBatch = [];
