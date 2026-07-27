@@ -35,8 +35,6 @@ const props = defineProps<{
 
 const page = usePage();
 
-// Safely extract the authenticated user's permissions from Inertia shared props
-// Note: Adjust "page.props.auth.user.permissions" if your backend shares the user object under a different key
 const userPermissions = computed(() => {
   return (page.props.auth as any)?.user?.permissions || {};
 });
@@ -52,10 +50,8 @@ const refreshCandidates = () => {
   });
 };
 
-// State for the search bar
 const searchQuery = ref('');
 
-// Computed property to filter candidates client-side
 const filteredCandidates = computed(() => {
   if (!searchQuery.value) {
     return props.candidates;

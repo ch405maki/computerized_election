@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sheet"; 
 import { Button } from "@/components/ui/button"; 
 import { Checkbox } from "@/components/ui/checkbox"; 
-import { UserRoundPen } from "lucide-vue-next"; 
+import { UserRoundPen, Loader2 } from "lucide-vue-next"; 
 import axios from "axios";
 import { useToast } from "vue-toastification";
 
@@ -25,7 +25,7 @@ interface User {
 }
 
 interface UserProp extends User {
-  permissions?: any; // Changed to 'any' to safely handle stringified JSON from DB
+  permissions?: any;
 }
 
 interface UserData extends User {
@@ -44,6 +44,7 @@ const permissionModules: Record<string, string[]> = {
 };
 
 const selectedModule = ref<string>(Object.keys(permissionModules)[0]);
+const isSaving = ref(false);
 
 const defaultPermissions: Permissions = Object.values(permissionModules)
   .flat()
@@ -57,7 +58,6 @@ const userPermissions = (): UserData => {
 
   let rawPermissions = props.user.permissions;
 
-  // Handle if the backend returns stringified JSON
   if (typeof rawPermissions === 'string') {
     try {
       rawPermissions = JSON.parse(rawPermissions);
@@ -69,7 +69,6 @@ const userPermissions = (): UserData => {
   if (rawPermissions && typeof rawPermissions === 'object') {
     for (const key of Object.keys(defaultPermissions)) {
       if (key in rawPermissions) {
-        // Force boolean evaluation in case DB returns string 'true' or 1
         const val = rawPermissions[key];
         filteredPermissions[key] = val === true || val === 'true' || val === 1;
       }
@@ -87,11 +86,12 @@ const userData = ref<UserData>(userPermissions());
 // Open Dialog
 const openDialog = () => {
   userData.value = userPermissions();
-  selectedModule.value = Object.keys(permissionModules)[0]; // Reset dropdown on open
+  selectedModule.value = Object.keys(permissionModules)[0];
 };
 
 // Update User
 const updateUser = async () => {
+  isSaving.value = true; // Set loading to true
   try {
     await axios.put(`/api/users/${userData.value.id}`, userData.value);
     
@@ -101,6 +101,7 @@ const updateUser = async () => {
     }, 2000);
   } catch (error) {
     toast.error("Failed to update user. Please try again.");
+    isSaving.value = false;
   }
 };
 </script>
@@ -200,8 +201,10 @@ const updateUser = async () => {
               </div>
             </div>
 
-            <!-- Save Changes Button -->
-            <Button type="submit" class="w-full mt-4">Save Changes</Button>
+            <Button type="submit" class="w-full mt-4" :disabled="isSaving">
+              <Loader2 v-if="isSaving" class="w-4 h-4 mr-2 animate-spin" />
+              {{ isSaving ? "Saving..." : "Save Changes" }}
+            </Button>
           </div>
         </form>
       </div>
