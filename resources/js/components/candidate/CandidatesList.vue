@@ -34,37 +34,41 @@ const toast = useToast();
 const isDeleting = ref(false);
 const selectedCandidate = ref<{ id: number; candidate_name: string } | null>(null);
 
-// Dialog states
 const showDeleteDialog = ref(false);
 const showPasswordDialog = ref(false);
 const deletePassword = ref('');
 
-// Robust check for deleteCandidate permission
 const canDeleteCandidate = computed(() => {
   let perms = props.userPermissions;
-  
   if (!perms) return false;
 
-  // 1. If backend sends it as a raw stringified JSON, parse it
   if (typeof perms === 'string') {
     try {
       perms = JSON.parse(perms);
-    } catch (e) {
+    } catch {
       return false;
     }
   }
 
-  // 2. If backend uses an array of strings (e.g. Spatie permissions: ['addCandidate', 'deleteCandidate'])
-  if (Array.isArray(perms)) {
-    return perms.includes('deleteCandidate');
-  }
+  if (Array.isArray(perms)) return perms.includes('deleteCandidate');
 
-  // 3. Default object evaluation (handles booleans, strings, and integers)
-  return perms.deleteCandidate === true || perms.deleteCandidate === 'true' || perms.deleteCandidate === 1;
+  return ['true', true, 1].includes(perms.deleteCandidate);
 });
 
-// --- Sorting Logic ---
-type SortKey = 'candidate_code' | 'candidate_name' | 'candidate_party' | 'position.name' | 'election.name';
+type SortKey = 
+  'candidate_code' | 
+  'candidate_name' | 
+  'candidate_party' | 
+  'position.name' | 
+  'election.name';
+
+const tableColumns: Array<{ key: SortKey; label: string }> = [
+  { key: 'candidate_code', label: 'Code' },
+  { key: 'candidate_name', label: 'Name' },
+  { key: 'candidate_party', label: 'Party' },
+  { key: 'position.name', label: 'Position' },
+  { key: 'election.name', label: 'Election' },
+];
 
 const sortKey = ref<SortKey | null>(null);
 const sortOrder = ref<'asc' | 'desc'>('asc');
@@ -78,32 +82,22 @@ const sortBy = (key: SortKey) => {
   }
 };
 
+const getNestedValue = (obj: any, path: string) => {
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+};
+
 const sortedCandidates = computed(() => {
   if (!sortKey.value) return props.candidates;
 
   return [...props.candidates].sort((a, b) => {
-    let valA = '';
-    let valB = '';
-
-    if (sortKey.value === 'position.name') {
-      valA = a.position?.name?.toLowerCase() || '';
-      valB = b.position?.name?.toLowerCase() || '';
-    } else if (sortKey.value === 'election.name') {
-      valA = a.election?.name?.toLowerCase() || '';
-      valB = b.election?.name?.toLowerCase() || '';
-    } else {
-      // @ts-ignore
-      valA = String(a[sortKey.value] || '').toLowerCase();
-      // @ts-ignore
-      valB = String(b[sortKey.value] || '').toLowerCase();
-    }
+    const valA = String(getNestedValue(a, sortKey.value as string) || '').toLowerCase();
+    const valB = String(getNestedValue(b, sortKey.value as string) || '').toLowerCase();
 
     if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
     if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
     return 0;
   });
 });
-// ---------------------
 
 const openDeleteDialog = (candidate: { id: number; candidate_name: string }) => {
   selectedCandidate.value = candidate;
@@ -164,54 +158,20 @@ const deleteCandidate = async () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Picture</TableHead>
-            
-            <TableHead @click="sortBy('candidate_code')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
+            <TableHead>Picture</TableHead>            
+            <TableHead 
+              v-for="col in tableColumns" 
+              :key="col.key" 
+              @click="sortBy(col.key)" 
+              class="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+            >
               <div class="flex items-center gap-1">
-                Code
-                <ArrowUp v-if="sortKey === 'candidate_code' && sortOrder === 'asc'" class="w-4 h-4" />
-                <ArrowDown v-else-if="sortKey === 'candidate_code' && sortOrder === 'desc'" class="w-4 h-4" />
+                {{ col.label }}
+                <ArrowUp v-if="sortKey === col.key && sortOrder === 'asc'" class="w-4 h-4" />
+                <ArrowDown v-else-if="sortKey === col.key && sortOrder === 'desc'" class="w-4 h-4" />
                 <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
               </div>
-            </TableHead>
-
-            <TableHead @click="sortBy('candidate_name')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
-              <div class="flex items-center gap-1">
-                Name
-                <ArrowUp v-if="sortKey === 'candidate_name' && sortOrder === 'asc'" class="w-4 h-4" />
-                <ArrowDown v-else-if="sortKey === 'candidate_name' && sortOrder === 'desc'" class="w-4 h-4" />
-                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
-              </div>
-            </TableHead>
-
-            <TableHead @click="sortBy('candidate_party')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
-              <div class="flex items-center gap-1">
-                Party
-                <ArrowUp v-if="sortKey === 'candidate_party' && sortOrder === 'asc'" class="w-4 h-4" />
-                <ArrowDown v-else-if="sortKey === 'candidate_party' && sortOrder === 'desc'" class="w-4 h-4" />
-                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
-              </div>
-            </TableHead>
-
-            <TableHead @click="sortBy('position.name')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
-              <div class="flex items-center gap-1">
-                Position
-                <ArrowUp v-if="sortKey === 'position.name' && sortOrder === 'asc'" class="w-4 h-4" />
-                <ArrowDown v-else-if="sortKey === 'position.name' && sortOrder === 'desc'" class="w-4 h-4" />
-                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
-              </div>
-            </TableHead>
-
-            <TableHead @click="sortBy('election.name')" class="cursor-pointer select-none hover:bg-muted/50 transition-colors">
-              <div class="flex items-center gap-1">
-                Election
-                <ArrowUp v-if="sortKey === 'election.name' && sortOrder === 'asc'" class="w-4 h-4" />
-                <ArrowDown v-else-if="sortKey === 'election.name' && sortOrder === 'desc'" class="w-4 h-4" />
-                <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground/50" />
-              </div>
-            </TableHead>
-            
-            <!-- Hide the Actions header entirely if permission is missing -->
+            </TableHead>            
             <TableHead v-if="canDeleteCandidate" class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -225,16 +185,10 @@ const deleteCandidate = async () => {
           <TableRow v-for="candidate in sortedCandidates" :key="candidate.id">
             <TableCell class="w-10 h-10">
               <img 
-                v-if="candidate.candidate_picture" 
-                :src="`/storage/${candidate.candidate_picture}`" 
-                alt="Candidate Picture" 
+                :src="candidate.candidate_picture ? `/storage/${candidate.candidate_picture}` : '/images/anonymous.jpg'" 
+                :alt="candidate.candidate_picture ? 'Candidate Picture' : 'No Uploaded Image'" 
                 class="w-10 h-10 rounded-full object-cover border"
-              />
-              <img
-                v-else 
-                src="/images/anonymous.jpg" 
-                alt="No Uploaded Image" 
-                class="w-10 h-10 rounded-full mx-auto object-cover border"
+                :class="!candidate.candidate_picture && 'mx-auto'"
               />
             </TableCell>
             <TableCell>{{ candidate.candidate_code }}</TableCell>
@@ -243,7 +197,6 @@ const deleteCandidate = async () => {
             <TableCell>{{ candidate.position.name }}</TableCell>
             <TableCell>{{ candidate.election.name }}</TableCell>
             
-            <!-- Hide the TableCell entirely if permission is missing -->
             <TableCell v-if="canDeleteCandidate">
               <div class="text-right">
                 <Button 
@@ -261,7 +214,6 @@ const deleteCandidate = async () => {
       </Table>
     </div>
 
-    <!-- Dialogs stay the same... -->
     <AlertDialog v-model:open="showDeleteDialog">
       <AlertDialogContent>
         <AlertDialogHeader>

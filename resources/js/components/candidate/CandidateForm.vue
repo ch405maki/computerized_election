@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -14,12 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@/components/ui/dialog';
 
 const props = defineProps<{
   positions: Array<{ id: number; name: string }>;
   elections: Array<{ id: number; name: string; status: string }>;
-  userPermissions?: Record<string, boolean>; // Added permissions prop
+  userPermissions?: Record<string, boolean>;
 }>();
 
 const emit = defineEmits(['candidateCreated']);
@@ -31,39 +31,34 @@ const isLoading = ref(false);
 const isOpen = ref(false);
 
 // Filter out active elections
-const availableElections = computed(() => {
-  return props.elections.filter(election => election.status !== 'active');
-});
+const availableElections = computed(() => props.elections.filter(e => e.status !== 'active'));
 
 // Check if user has addCandidate permission
-const canAddCandidate = computed(() => {
-  // If no permissions are passed, we default to false (or true depending on your app's standard)
-  if (!props.userPermissions) return false; 
-  return !!props.userPermissions.addCandidate;
-});
+const canAddCandidate = computed(() => !!props.userPermissions?.addCandidate);
 
-// Form fields
-const election_id = ref<string>('');
-const position_id = ref<string>('');
-const candidate_code = ref<string>('AUTO-GENERATED');
-const candidate_name = ref<string>('');
-const candidate_party = ref<string>('');
-const candidate_picture = ref<File | null>(null);
-
-// Validation errors
-const errors = ref({
+const initialFormState = {
   election_id: '',
   position_id: '',
-  candidate_code: '',
+  candidate_code: 'AUTO-GENERATED',
   candidate_name: '',
-});
+  candidate_party: '',
+  candidate_picture: null as File | null,
+};
+
+const initialErrors = {
+  election_id: '',
+  position_id: '',
+  candidate_name: '',
+};
+
+const form = reactive({ ...initialFormState });
+const errors = ref({ ...initialErrors });
 
 const validateForm = () => {
   errors.value = {
-    election_id: election_id.value ? '' : 'Election is required',
-    position_id: position_id.value ? '' : 'Position is required',
-    candidate_code: '', // Auto-generated
-    candidate_name: candidate_name.value.length >= 2 ? '' : 'Name must be at least 2 characters',
+    election_id: form.election_id ? '' : 'Election is required',
+    position_id: form.position_id ? '' : 'Position is required',
+    candidate_name: form.candidate_name.length >= 2 ? '' : 'Name must be at least 2 characters',
   };
 
   return Object.values(errors.value).every(error => !error);
@@ -71,10 +66,9 @@ const validateForm = () => {
 
 const handleFileChange = (event: Event) => {
   const input = event.target as HTMLInputElement;
-  if (input.files && input.files[0]) {
-    const file = input.files[0];
-    candidate_picture.value = file;
-
+  const file = input.files?.[0];
+  if (file) {
+    form.candidate_picture = file;
     const reader = new FileReader();
     reader.onload = (e) => {
       imagePreview.value = e.target?.result as string;
@@ -88,26 +82,14 @@ const triggerFileInput = () => {
 };
 
 const resetForm = () => {
-  election_id.value = '';
-  position_id.value = '';
-  candidate_code.value = '';
-  candidate_name.value = '';
-  candidate_party.value = '';
-  candidate_picture.value = null;
+  Object.assign(form, initialFormState);
+  errors.value = { ...initialErrors };
   imagePreview.value = null;
   if (fileInput.value) fileInput.value.value = '';
-  errors.value = {
-    election_id: '',
-    position_id: '',
-    candidate_code: '',
-    candidate_name: '',
-  };
 };
 
 watch(isOpen, (newVal) => {
-  if (!newVal) {
-    resetForm();
-  }
+  if (!newVal) resetForm();
 });
 
 const onSubmit = () => {
@@ -118,11 +100,12 @@ const onSubmit = () => {
 
   isLoading.value = true;
   const formData = new FormData();
-  formData.append('election_id', election_id.value);
-  formData.append('position_id', position_id.value);
-  formData.append('candidate_name', candidate_name.value);
-  if (candidate_party.value) formData.append('candidate_party', candidate_party.value);
-  if (candidate_picture.value) formData.append('candidate_picture', candidate_picture.value);
+  
+  Object.entries(form).forEach(([key, value]) => {
+    if (value && key !== 'candidate_code') {
+      formData.append(key, value as string | Blob);
+    }
+  });
 
   axios.post('/api/candidates', formData, {
     headers: {
@@ -147,11 +130,8 @@ const onSubmit = () => {
 
 <template>
   <Dialog v-model:open="isOpen">
-    <!-- Wrap DialogTrigger with v-if to conditionally remove it from the DOM -->
     <DialogTrigger as-child v-if="canAddCandidate">
-      <Button variant="default">
-        Add New Candidate
-      </Button>
+      <Button variant="default">Add New Candidate</Button>
     </DialogTrigger>
     
     <DialogContent class="sm:max-w-[625px]">
@@ -165,11 +145,10 @@ const onSubmit = () => {
       <form @submit.prevent="onSubmit">
         <div class="grid grid-cols-1 gap-2 py-4">
           
-          <!-- Election Field -->
           <FormField v-slot="{ componentField }" name="election_id">
             <FormItem>
               <FormLabel>Election</FormLabel>
-              <Select v-model="election_id" v-bind="componentField">
+              <Select v-model="form.election_id" v-bind="componentField">
                 <SelectTrigger>
                   <SelectValue placeholder="Select election" />
                 </SelectTrigger>
@@ -179,16 +158,15 @@ const onSubmit = () => {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage>{{ errors.election_id }}</FormMessage>
             </FormItem>
           </FormField>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Position Field -->
             <FormField v-slot="{ componentField }" name="position_id">
               <FormItem>
                 <FormLabel>Position</FormLabel>
-                <Select v-model="position_id" v-bind="componentField">
+                <Select v-model="form.position_id" v-bind="componentField">
                   <SelectTrigger>
                     <SelectValue placeholder="Select position" />
                   </SelectTrigger>
@@ -198,34 +176,31 @@ const onSubmit = () => {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <FormMessage />
+                <FormMessage>{{ errors.position_id }}</FormMessage>
               </FormItem>
             </FormField>
           </div>
 
-          <!-- Candidate Name -->
           <FormField v-slot="{ componentField }" name="candidate_name">
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input type="text" v-model="candidate_name" placeholder="Candidate's full name" v-bind="componentField" />
+                <Input type="text" v-model="form.candidate_name" placeholder="Candidate's full name" v-bind="componentField" />
               </FormControl>
-              <FormMessage />
+              <FormMessage>{{ errors.candidate_name }}</FormMessage>
             </FormItem>
           </FormField>
 
-          <!-- Candidate Party -->
           <FormField v-slot="{ componentField }" name="candidate_party">
             <FormItem>
               <FormLabel>Political Party (Optional)</FormLabel>
               <FormControl>
-                <Input type="text" v-model="candidate_party" placeholder="Party affiliation" v-bind="componentField" />
+                <Input type="text" v-model="form.candidate_party" placeholder="Party affiliation" v-bind="componentField" />
               </FormControl>
               <FormMessage />
             </FormItem>
           </FormField>
 
-          <!-- Candidate Picture -->
           <FormField v-slot="{ componentField }" name="candidate_picture">
             <FormItem>
               <FormLabel>Profile Picture</FormLabel>
@@ -253,8 +228,7 @@ const onSubmit = () => {
         <DialogFooter>
           <Button type="button" variant="outline" @click="isOpen = false">Cancel</Button>
           <Button type="submit" :disabled="isLoading">
-            <span v-if="!isLoading">Create Candidate</span>
-            <span v-else>Creating...</span>
+            {{ isLoading ? 'Creating...' : 'Create Candidate' }}
           </Button>
         </DialogFooter>
       </form>
