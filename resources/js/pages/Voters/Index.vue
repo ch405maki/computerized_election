@@ -294,12 +294,6 @@ onMounted(() => {
                 <div class="h-full bg-primary transition-all duration-300" :style="{ width: uploadProgress + '%' }"></div>
               </div>
             </Button>
-
-            <Button size="sm" variant="outline" @click="() => router.get('/voters/status')" :disabled="voters.data.length === 0" class="flex items-center gap-2">
-              <KeyRound class="w-4 h-4" />
-              Activation
-            </Button>
-            
             <VoterRegistrationDialog v-if="currentUser?.permissions?.addVoter" />
           </div>
         </div>
