@@ -2,9 +2,7 @@
 <template>
     <Dialog v-model:open="isOpen" class="dark:bg-gray-800">
         <DialogTrigger as-child>
-            <Button @click="openDialog">
-                <UserRoundPlus class="w-4 h-4 mr-2" /> Create
-            </Button>
+            <Button @click="openDialog"> <UserRoundPlus class="mr-2 h-4 w-4" /> Create </Button>
         </DialogTrigger>
         <DialogContent>
             <DialogHeader>
@@ -29,8 +27,17 @@
                 </div>
 
                 <DialogFooter class="mt-4">
-                    <Button variant="outline" @click="closeDialog" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded border border-gray-300 dark:bg-gray-700 dark:text-gray-200">Cancel</Button>
-                    <Button type="submit" :disabled="loading" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded dark:bg-gray-700 dark:text-gray-200">
+                    <Button
+                        variant="outline"
+                        @click="closeDialog"
+                        class="rounded border border-gray-300 bg-gray-100 px-4 py-2 font-bold text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200"
+                        >Cancel</Button
+                    >
+                    <Button
+                        type="submit"
+                        :disabled="loading"
+                        class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 dark:bg-gray-700 dark:text-gray-200"
+                    >
                         <span v-if="loading">Creating...</span>
                         <span v-else>Create</span>
                     </Button>
@@ -41,17 +48,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserRoundPlus } from "lucide-vue-next";
-import axios from "axios";
-import { useToast } from "vue-toastification";
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import axios from 'axios';
+import { UserRoundPlus } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { useToast } from 'vue-toastification';
 
 const toast = useToast();
 const isOpen = ref(false);
 const loading = ref(false);
-const formData = ref({ name: "", email: "", password: "", role: "user", status: "active" });
+const formData = ref({ name: '', email: '', password: '', role: 'user', status: 'active' });
 
 const openDialog = () => (isOpen.value = true);
 const closeDialog = () => (isOpen.value = false);
@@ -59,11 +66,11 @@ const closeDialog = () => (isOpen.value = false);
 const createUser = async () => {
     loading.value = true;
     try {
-        await axios.post("/api/users", formData.value);
-        toast.success("User created successfully!");
+        await axios.post('/api/users', formData.value);
+        toast.success('User created successfully!');
         setTimeout(() => location.reload(), 2000);
     } catch (error) {
-        toast.error("Failed to create user");
+        toast.error('Failed to create user');
     } finally {
         loading.value = false;
         closeDialog();
@@ -73,6 +80,6 @@ const createUser = async () => {
 
 <style scoped>
 .form-input {
-    @apply p-2 rounded w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700;
+    @apply w-full rounded border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-700;
 }
 </style>

@@ -72,7 +72,7 @@ export function useAppearance() {
 
         if (savedAppearance) {
             appearance.value = savedAppearance;
-        } else{
+        } else {
             appearance.value = 'light';
         }
     });
