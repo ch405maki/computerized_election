@@ -1,27 +1,4 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from "vue-toastification";
-import axios from 'axios';
-import { ref, computed } from 'vue';
-import { toTypedSchema } from '@vee-validate/zod';
-import * as z from 'zod';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog'
-import TitleHeader from '@/components/ui/title-header/header.vue'
-import { ArrowUpDown, ArrowUpWideNarrow, ArrowDownWideNarrow, Trash } from 'lucide-vue-next';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -32,7 +9,22 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
- 
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import TitleHeader from '@/components/ui/title-header/header.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { type BreadcrumbItem } from '@/types';
+import { Head, router } from '@inertiajs/vue3';
+import { toTypedSchema } from '@vee-validate/zod';
+import axios from 'axios';
+import { ArrowDownWideNarrow, ArrowUpDown, ArrowUpWideNarrow, Trash } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
+import { useToast } from 'vue-toastification';
+import * as z from 'zod';
+
 const toast = useToast();
 const isLoading = ref(false);
 const isDialogOpen = ref(false);
@@ -57,7 +49,7 @@ type SortKey = 'id' | 'name' | 'created_at';
 const tableColumns: Array<{ key: SortKey; label: string }> = [
     { key: 'id', label: 'ID' },
     { key: 'name', label: 'Name' },
-    { key: 'created_at', label: 'Created At' }
+    { key: 'created_at', label: 'Created At' },
 ];
 
 const sortKey = ref<SortKey | ''>('');
@@ -94,9 +86,11 @@ const sortedPositions = computed(() => {
 });
 
 // Form validation schema
-const formSchema = toTypedSchema(z.object({
-    name: z.string().min(2, "Name must be at least 2 characters").max(255),
-}));
+const formSchema = toTypedSchema(
+    z.object({
+        name: z.string().min(2, 'Name must be at least 2 characters').max(255),
+    }),
+);
 
 const formData = ref({
     name: '',
@@ -114,8 +108,8 @@ const submitPosition = async () => {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+                Accept: 'application/json',
+            },
         });
 
         toast.success(response.data.message);
@@ -127,9 +121,11 @@ const submitPosition = async () => {
         if (axios.isAxiosError(error) && error.response) {
             if (error.response.status === 422) {
                 const errors = error.response.data.errors;
-                Object.values(errors).flat().forEach(message => {
-                    toast.error(message as string);
-                });
+                Object.values(errors)
+                    .flat()
+                    .forEach((message) => {
+                        toast.error(message as string);
+                    });
             } else {
                 toast.error(error.response.data.message || 'Failed to create position');
             }
@@ -206,9 +202,7 @@ const deletePosition = async () => {
                     <DialogContent class="sm:max-w-[425px]">
                         <DialogHeader>
                             <DialogTitle>Create New Position</DialogTitle>
-                            <DialogDescription>
-                                Enter the details for the new position.
-                            </DialogDescription>
+                            <DialogDescription> Enter the details for the new position. </DialogDescription>
                         </DialogHeader>
 
                         <Form :validation-schema="formSchema" @submit="submitPosition">
@@ -235,22 +229,22 @@ const deletePosition = async () => {
             </div>
 
             <!-- Positions List -->
-            <div class="bg-card rounded-lg [&_th]:text-center [&_td]:text-center">
-                <div class="border rounded-lg overflow-hidden">
+            <div class="rounded-lg bg-card [&_td]:text-center [&_th]:text-center">
+                <div class="overflow-hidden rounded-lg border">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead 
-                                    v-for="col in tableColumns" 
+                                <TableHead
+                                    v-for="col in tableColumns"
                                     :key="col.key"
-                                    class="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                                    class="cursor-pointer select-none transition-colors hover:bg-muted/50"
                                     @click="sortBy(col.key)"
                                 >
                                     <div class="flex items-center justify-center gap-1.5">
                                         {{ col.label }}
-                                        <ArrowDownWideNarrow v-if="sortKey === col.key && sortOrder === 'asc'" class="w-4 h-4" />
-                                        <ArrowUpWideNarrow v-else-if="sortKey === col.key && sortOrder === 'desc'" class="w-4 h-4" />
-                                        <ArrowUpDown v-else class="w-4 h-4 text-muted-foreground opacity-50" />
+                                        <ArrowDownWideNarrow v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4" />
+                                        <ArrowUpWideNarrow v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4" />
+                                        <ArrowUpDown v-else class="h-4 w-4 text-muted-foreground opacity-50" />
                                     </div>
                                 </TableHead>
                                 <TableHead class="text-right">Actions</TableHead>
@@ -258,24 +252,17 @@ const deletePosition = async () => {
                         </TableHeader>
                         <TableBody>
                             <TableRow v-if="sortedPositions.length === 0">
-                                <TableCell colspan="4" class="py-8 text-muted-foreground">
-                                    No positions found
-                                </TableCell>
+                                <TableCell colspan="4" class="py-8 text-muted-foreground"> No positions found </TableCell>
                             </TableRow>
-                            
+
                             <TableRow v-for="position in sortedPositions" :key="position.id">
                                 <TableCell>{{ position.id }}</TableCell>
                                 <TableCell>{{ position.name }}</TableCell>
                                 <TableCell>{{ new Date(position.created_at).toLocaleDateString() }}</TableCell>
                                 <TableCell>
                                     <div>
-                                        <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            @click="openDeleteDialog(position)"
-                                            :disabled="isDeleting"
-                                        >
-                                            <Trash class="w-4 h-4" />
+                                        <Button size="sm" variant="destructive" @click="openDeleteDialog(position)" :disabled="isDeleting">
+                                            <Trash class="h-4 w-4" />
                                         </Button>
                                     </div>
                                 </TableCell>
@@ -291,16 +278,15 @@ const deletePosition = async () => {
                         <AlertDialogTitle>Delete Position Confirmation</AlertDialogTitle>
                         <AlertDialogDescription>
                             <p>
-                                This action cannot be undone. This will permanently delete 
-                                <span class="font-semibold">{{ selectedPosition?.name }}</span>.
+                                This action cannot be undone. This will permanently delete
+                                <span class="font-semibold">{{ selectedPosition?.name }}</span
+                                >.
                             </p>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction @click="proceedToPasswordConfirmation">
-                            Continue
-                        </AlertDialogAction>
+                        <AlertDialogAction @click="proceedToPasswordConfirmation"> Continue </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -311,15 +297,8 @@ const deletePosition = async () => {
                         <AlertDialogTitle>Password Required</AlertDialogTitle>
                         <AlertDialogDescription>
                             <div class="space-y-4 pt-2">
-                                <p class="font-medium text-foreground">
-                                    Confirm your password to delete the position.
-                                </p>
-                                <Input
-                                    type="password"
-                                    v-model="deletePassword"
-                                    placeholder="Enter admin password"
-                                    @keyup.enter="deletePosition"
-                                />
+                                <p class="font-medium text-foreground">Confirm your password to delete the position.</p>
+                                <Input type="password" v-model="deletePassword" placeholder="Enter admin password" @keyup.enter="deletePosition" />
                             </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>

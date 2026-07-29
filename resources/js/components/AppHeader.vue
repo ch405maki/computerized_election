@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import AppLogo from '@/components/VotingAppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
@@ -15,9 +14,10 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
+import AppLogo from '@/components/VotingAppLogo.vue';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem } from '@/types';
-import { Link, usePage, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { Menu } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -47,9 +47,7 @@ const activeItemStyles = computed(
 );
 
 // Update navigation items for voter
-const mainNavItems: NavItem[] = [
-
-];
+const mainNavItems: NavItem[] = [];
 
 const rightNavItems: NavItem[] = [
     // Add voter-specific items if needed
@@ -156,18 +154,14 @@ const rightNavItems: NavItem[] = [
                     <!-- Voter Dropdown Menu -->
                     <DropdownMenu v-if="voter">
                         <DropdownMenuTrigger :as-child="true">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                class=" size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
-                            >
+                            <Button variant="ghost" size="icon" class="size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary">
                                 <Avatar class="size-8 overflow-hidden rounded-full">
                                     <!-- You can add avatar functionality for voters if needed -->
                                     <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
                                         {{ getInitials(voter.full_name) }}
                                     </AvatarFallback>
                                 </Avatar>
-                                <span class="text-white hover:text-gray-800 text-sm font-medium">{{ voter.full_name }}</span>
+                                <span class="text-sm font-medium text-white hover:text-gray-800">{{ voter.full_name }}</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56">
@@ -177,12 +171,12 @@ const rightNavItems: NavItem[] = [
                                     <p class="text-sm font-medium leading-none">{{ voter.full_name }}</p>
                                     <p class="text-xs leading-none text-muted-foreground">{{ voter.student_number }}</p>
                                     <p class="text-xs leading-none text-muted-foreground">Year: {{ voter.student_year }}</p>
-                                    <p v-if="voter.has_voted" class="text-xs text-green-600 font-medium">✓ Voted</p>
-                                    <p v-else class="text-xs text-amber-600 font-medium">Not Voted</p>
+                                    <p v-if="voter.has_voted" class="text-xs font-medium text-green-600">✓ Voted</p>
+                                    <p v-else class="text-xs font-medium text-amber-600">Not Voted</p>
                                 </div>
                             </div>
                             <div class="p-1">
-                                <button 
+                                <button
                                     @click="logout"
                                     class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                                 >
@@ -202,7 +196,7 @@ const rightNavItems: NavItem[] = [
                             >
                                 <Avatar class="size-8 overflow-hidden rounded-full">
                                     <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
-                                        {{ getInitials(user?.name) }} 
+                                        {{ getInitials(user?.name) }}
                                     </AvatarFallback>
                                 </Avatar>
                             </Button>

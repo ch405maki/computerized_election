@@ -1,25 +1,27 @@
 <script setup lang="ts">
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Loader2 } from "lucide-vue-next"; // Import the loader icon
-import * as z from 'zod';
+import { Loader2 } from 'lucide-vue-next'; // Import the loader icon
 import { ref } from 'vue';
+import * as z from 'zod';
 
 const emit = defineEmits(['submit']);
 
 // Form validation schema
-const formSchema = toTypedSchema(z.object({
-    student_number: z.string().min(5, "Student number must be at least 5 characters"),
-    first_name: z.string().min(2, "First name must be at least 2 characters"),
-    middle_name: z.string().optional(),
-    last_name: z.string().min(2, "Last name must be at least 2 characters"),
-    student_year: z.string().min(1, "Please select year"),
-    sex: z.string().min(1, "Please select gender"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-}));
+const formSchema = toTypedSchema(
+    z.object({
+        student_number: z.string().min(5, 'Student number must be at least 5 characters'),
+        first_name: z.string().min(2, 'First name must be at least 2 characters'),
+        middle_name: z.string().optional(),
+        last_name: z.string().min(2, 'Last name must be at least 2 characters'),
+        student_year: z.string().min(1, 'Please select year'),
+        sex: z.string().min(1, 'Please select gender'),
+        password: z.string().min(6, 'Password must be at least 6 characters'),
+    }),
+);
 
 const formData = ref({
     student_number: '',
@@ -40,7 +42,7 @@ const onSubmit = async () => {
     } finally {
         setTimeout(() => {
             isLoading.value = false;
-        }, 1000); 
+        }, 1000);
     }
 };
 </script>
@@ -53,10 +55,10 @@ const onSubmit = async () => {
                 <FormItem>
                     <FormLabel>Student Number</FormLabel>
                     <FormControl>
-                        <Input 
-                            type="text" 
-                            v-bind="componentField" 
-                            v-model="formData.student_number" 
+                        <Input
+                            type="text"
+                            v-bind="componentField"
+                            v-model="formData.student_number"
                             placeholder="e.g. 2023-00123"
                             :disabled="isLoading"
                         />
@@ -69,30 +71,18 @@ const onSubmit = async () => {
                 <FormItem>
                     <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                        <Input 
-                            type="text" 
-                            v-bind="componentField" 
-                            v-model="formData.last_name" 
-                            placeholder="Surname"
-                            :disabled="isLoading"
-                        />
+                        <Input type="text" v-bind="componentField" v-model="formData.last_name" placeholder="Surname" :disabled="isLoading" />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
             </FormField>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <FormField v-slot="{ componentField }" name="first_name">
                     <FormItem>
                         <FormLabel>First Name </FormLabel>
                         <FormControl>
-                            <Input 
-                                type="text" 
-                                v-bind="componentField" 
-                                v-model="formData.first_name" 
-                                placeholder="Given Name"
-                                :disabled="isLoading"
-                            />
+                            <Input type="text" v-bind="componentField" v-model="formData.first_name" placeholder="Given Name" :disabled="isLoading" />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -100,12 +90,12 @@ const onSubmit = async () => {
 
                 <FormField v-slot="{ componentField }" name="middle_name">
                     <FormItem>
-                        <FormLabel>Middle Name <span class="text-muted-foreground text-xs">(Optional)</span></FormLabel>
+                        <FormLabel>Middle Name <span class="text-xs text-muted-foreground">(Optional)</span></FormLabel>
                         <FormControl>
-                            <Input 
-                                type="text" 
-                                v-bind="componentField" 
-                                v-model="formData.middle_name" 
+                            <Input
+                                type="text"
+                                v-bind="componentField"
+                                v-model="formData.middle_name"
                                 placeholder="Middle Name"
                                 :disabled="isLoading"
                             />
@@ -158,21 +148,16 @@ const onSubmit = async () => {
                 <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                        <Input 
-                            type="password" 
-                            v-bind="componentField" 
-                            v-model="formData.password" 
-                            :disabled="isLoading"
-                        />
+                        <Input type="password" v-bind="componentField" v-model="formData.password" :disabled="isLoading" />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
             </FormField>
 
-            <div class="flex justify-end gap-2 mt-2">
+            <div class="mt-2 flex justify-end gap-2">
                 <slot name="actions" :isLoading="isLoading">
                     <Button type="submit" :disabled="isLoading">
-                        <Loader2 v-if="isLoading" class="w-4 h-4 mr-2 animate-spin" />
+                        <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
                         <span v-if="!isLoading">Register Voter</span>
                         <span v-else>Processing...</span>
                     </Button>

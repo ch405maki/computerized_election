@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import TitleHeader from '@/components/ui/title-header/header.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import YearLevelVotingChart from '@/pages/Reports/Logs/YearLevelVotingChart.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import TitleHeader from '@/components/ui/title-header/header.vue';
-import YearLevelVotingChart from '@/pages/Reports/Logs/YearLevelVotingChart.vue';
+import axios from 'axios';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
     logs: Array<{
@@ -44,7 +43,7 @@ const fetchTurnoutData = async () => {
         votingData.value = response.data;
     } catch (error) {
         console.error('Error fetching turnout data:', error);
-        votingData.value = []; 
+        votingData.value = [];
     } finally {
         isLoading.value = false;
     }
@@ -60,29 +59,21 @@ onMounted(() => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <TitleHeader 
-                title="Voter Turnout" 
-                description="Displays graph info of Voted Students per Year Level" 
-            />
-            
-            <div class="relative flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border overflow-hidden">
-                
+            <TitleHeader title="Voter Turnout" description="Displays graph info of Voted Students per Year Level" />
+
+            <div class="relative flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                 <div v-if="canViewChart">
-                    <YearLevelVotingChart 
-                        :votingData="votingData" 
-                        :isLoading="isLoading" 
-                    />
+                    <YearLevelVotingChart :votingData="votingData" :isLoading="isLoading" />
                 </div>
 
-                <div v-else class="flex flex-col items-center justify-center h-96 text-center p-6 bg-card">
-                    <h3 class="text-lg font-semibold mb-2">Chart Unavailable</h3>
+                <div v-else class="flex h-96 flex-col items-center justify-center bg-card p-6 text-center">
+                    <h3 class="mb-2 text-lg font-semibold">Chart Unavailable</h3>
                     <p class="text-muted-foreground">
                         Turnout data is only available for <strong>active</strong> or <strong>completed</strong> elections that have recorded votes.
-                        <br>
+                        <br />
                         Current Status: <span class="capitalize">{{ electionStatus }}</span>
                     </p>
                 </div>
-
             </div>
         </div>
     </AppLayout>
