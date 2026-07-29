@@ -4,10 +4,10 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
+import Toast, { POSITION, type PluginOptions } from 'vue-toastification';
+import 'vue-toastification/dist/index.css';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
-import Toast, {POSITION, type PluginOptions} from 'vue-toastification';
-import 'vue-toastification/dist/index.css';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -34,9 +34,9 @@ const toastOptions: PluginOptions = {
     draggablePercent: 0.6,
     showCloseButtonOnHover: false,
     hideProgressBar: false,
-    closeButton: "button",
+    closeButton: 'button',
     icon: true,
-    rtl: false
+    rtl: false,
 };
 
 createInertiaApp({

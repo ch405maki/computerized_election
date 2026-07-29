@@ -1,29 +1,27 @@
 <script setup lang="ts">
+import ElectionForm from '@/components/election/ElectionForm.vue';
+import ElectionsList from '@/components/election/ElectionsList.vue';
+import TitleHeader from '@/components/ui/title-header/header.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import ElectionForm from '@/components/election/ElectionForm.vue';
-import ElectionsList from '@/components/election/ElectionsList.vue';
-import TitleHeader from '@/components/ui/title-header/header.vue';
 
 type ElectionStatus = 'active' | 'upcoming' | 'completed';
 
 interface Election {
-  id: number;
-  name: string;
-  status: ElectionStatus;
-  start_date: string;
-  end_date: string;
+    id: number;
+    name: string;
+    status: ElectionStatus;
+    start_date: string;
+    end_date: string;
 }
 
 const props = defineProps<{
-    elections: Election[]; 
+    elections: Election[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Elections', href: '/elections' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Elections', href: '/elections' }];
 
 const page = usePage();
 
@@ -57,19 +55,12 @@ const userPermissions = computed<Record<string, boolean>>(() => {
     <Head title="Elections" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-4 p-4">
-            <TitleHeader 
-                    title="Election Management" 
-                    description="Configure election cycles, dates, and active status." 
-            />
-            <div class="flex justify-end gap-2 items-center">
+            <TitleHeader title="Election Management" description="Configure election cycles, dates, and active status." />
+            <div class="flex items-center justify-end gap-2">
                 <ElectionForm :can-create="userPermissions.createElection" />
             </div>
             <div>
-                <ElectionsList 
-                    :elections="elections" 
-                    :can-edit="userPermissions.editElection"
-                    :can-delete="userPermissions.deleteElection"
-                />
+                <ElectionsList :elections="elections" :can-edit="userPermissions.editElection" :can-delete="userPermissions.deleteElection" />
             </div>
         </div>
     </AppLayout>

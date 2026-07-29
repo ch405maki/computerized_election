@@ -14,14 +14,11 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-    <AppShell 
-        class="flex-col" 
-        style="background-image: url('/images/bg.jpg'); 
-        background-repeat: no-repeat; 
-        background-size: cover; 
-        background-position: center;"
+    <AppShell
+        class="flex-col"
+        style="background-image: url('/images/bg.jpg'); background-repeat: no-repeat; background-size: cover; background-position: center"
     >
-        <AppHeader :breadcrumbs="breadcrumbs" class="sticky top-0"/>
+        <AppHeader :breadcrumbs="breadcrumbs" class="sticky top-0" />
         <AppContent>
             <slot />
         </AppContent>
