@@ -91,8 +91,12 @@ const fetchVoteRanking = async () => {
 
         if (Array.isArray(data.rankings)) {
             const grouped = data.rankings.reduce((acc: Record<string, CandidateVote[]>, item: any) => {
+                
+                const isAbstain = item.candidate?.trim().toLowerCase() === 'abstain';                
+                const displayName = isAbstain ? 'Abstain' : (item.candidate || 'Unknown Candidate');
+
                 (acc[item.position] ||= []).push({
-                    name: item.candidate,
+                    name: displayName,
                     party: item.party,
                     votes: item.votes,
                     image: item.image || undefined,

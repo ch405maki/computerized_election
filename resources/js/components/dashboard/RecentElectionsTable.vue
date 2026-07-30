@@ -30,7 +30,7 @@ defineProps<{
                         <TableHead>Election</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Period</TableHead>
-                        <TableHead>Votes</TableHead>
+                        <TableHead>Total Votes</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -42,8 +42,8 @@ defineProps<{
                                     getElectionStatus(election) === 'active'
                                         ? 'default'
                                         : getElectionStatus(election) === 'upcoming'
-                                          ? 'secondary'
-                                          : 'outline'
+                                        ? 'secondary'
+                                        : 'outline'
                                 "
                             >
                                 {{ getElectionStatus(election) }}
