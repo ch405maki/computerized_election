@@ -16,17 +16,22 @@ class CheckPermission
             abort(401, 'Unauthenticated.');
         }
 
-        // If the user is a superadmin or admin, let them through immediately!
         $role = strtolower($user->role);
-        if ($role === 'superadmin' || $role === 'admin') {
+        if ($role === 'superadmin') {
             return $next($request);
         }
 
-        // Get permissions array, default to empty array if null
         $permissions = $user->permissions ?? [];
+        if (is_string($permissions)) {
+            $permissions = json_decode($permissions, true);
+        }
 
-        // Check if the specific permission exists and is true
-        if (!isset($permissions[$permission]) || $permissions[$permission] !== true) {
+        $hasPermission = isset($permissions[$permission]) && 
+                        ($permissions[$permission] === true || 
+                        $permissions[$permission] === 'true' || 
+                        $permissions[$permission] === 1);
+
+        if (!$hasPermission) {
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json(['message' => 'Unauthorized action.'], 403);
             }

@@ -12,58 +12,50 @@ import AppLogo from './AppLogo.vue';
 interface DropdownNavItem extends NavItem {
     children?: NavItem[];
     isOpen?: boolean;
+    permissionKey?: string;
 }
 
 const page = usePage();
 
-// Grab the clean boolean flags we set up in the HandleInertiaRequests middleware
+// 1. Centralize roles & user data
 const isAdmin = computed(() => page.props.isAdmin as boolean);
 const isSuperAdmin = computed(() => page.props.isSuperAdmin as boolean);
+const currentUser = computed(() => (page.props.auth as any)?.user as any);
 
-// Helper to safely check user permissions
-const hasPermission = (permissionName: string) => {
-    // Cast to any to bypass strict typing for the auth object if types aren't fully defined
-    const user = (page.props.auth as any)?.user as any;
+// 2. Parse permissions exactly ONCE and cache them
+const userPermissions = computed(() => {
+    let perms = currentUser.value?.permissions;
+    if (!perms) return null;
 
-    // If the user has a permissions object, check if the specific key is true
-    if (user?.permissions && user.permissions[permissionName] === true) {
-        return true;
+    if (typeof perms === 'string') {
+        try { perms = JSON.parse(perms); } 
+        catch (e) { perms = {}; }
     }
+    return perms;
+});
 
-    return false;
+// Helper is now much faster—it just reads the cached object
+const hasPermission = (permissionName: string) => {
+    if (!userPermissions.value) return false;
+    const val = userPermissions.value[permissionName];
+    return val === true || val === 'true' || val === 1;
 };
 
 const baseMainNavItems = ref<DropdownNavItem[]>([
+    { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid, permissionKey: 'showDashboardTab' },
     {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
+        title: 'Voters', href: '#', icon: Vote, isOpen: false, permissionKey: 'showVoterTab',
+        children: [{ title: 'Voter List', href: '/voters', icon: List }],
     },
     {
-        title: 'Voters',
-        href: '#',
-        icon: Vote,
-        isOpen: false,
-        children: [
-            { title: 'Voter List', href: '/voters', icon: List },
-            // { title: 'Activation', href: '/voters/status', icon: KeyRound },
-        ],
-    },
-    {
-        title: 'Candidates',
-        href: '#',
-        icon: UserRound,
-        isOpen: false,
+        title: 'Candidates', href: '#', icon: UserRound, isOpen: false, permissionKey: 'showCandidateTab',
         children: [
             { title: 'Candidates List', href: '/candidates', icon: UsersRound },
             { title: 'Positions', href: '/candidates/positions', icon: List },
         ],
     },
     {
-        title: 'Reports',
-        href: '#',
-        icon: FileBox,
-        isOpen: false,
+        title: 'Reports', href: '#', icon: FileBox, isOpen: false, permissionKey: 'showReportsTab',
         children: [
             { title: 'Results', href: '/reports/results', icon: Package2 },
             { title: 'Voter Turnout', href: '/reports/log', icon: Logs },
@@ -72,48 +64,45 @@ const baseMainNavItems = ref<DropdownNavItem[]>([
 ]);
 
 const baseConfigNavItems = ref<DropdownNavItem[]>([
+    { title: 'Election', href: '/election', icon: Cog, permissionKey: 'showElectionTab' },
     {
-        title: 'Election',
-        href: '/election',
-        icon: Cog,
-    },
-    {
-        title: 'User Management',
-        href: '#',
-        icon: UserRoundCog,
-        isOpen: false,
+        title: 'User Management', href: '#', icon: UserRoundCog, isOpen: false,
         children: [{ title: 'Users', href: '/users', icon: UsersRound }],
     },
 ]);
 
-// Filter main navigations based on isAdmin OR isSuperAdmin
-const mainNavItems = computed<DropdownNavItem[]>(() => {
-    let items = baseMainNavItems.value;
+const filterNavItems = (
+    baseItems: DropdownNavItem[], 
+    legacyRestrictedTitles: string[], 
+    forceBlockTitles: string[] = []
+) => {
+    if (isSuperAdmin.value) return baseItems;
 
-    // Role-based filtering: If user is neither admin nor superadmin, restrict them
-    if (!isAdmin.value && !isSuperAdmin.value) {
-        const restrictedTitles = ['Voters', 'Voting Page', 'Candidates'];
-        items = items.filter((item) => !restrictedTitles.includes(item.title));
-    }
+    return baseItems.filter((item) => {
+        if (forceBlockTitles.includes(item.title)) return false;
 
-    return items;
-});
+        if (currentUser.value?.permissions) {
+            return !item.permissionKey || hasPermission(item.permissionKey);
+        }
 
-// Filter config navigations - only show Users tab to superadmin
-const configNavItems = computed<DropdownNavItem[]>(() => {
-    // If user is neither admin nor superadmin, hide config entirely
-    if (!isAdmin.value && !isSuperAdmin.value) {
-        return [];
-    }
+        if (!isAdmin.value && legacyRestrictedTitles.includes(item.title)) {
+            return false;
+        }
 
-    // If user is not superadmin (meaning they are just a regular admin at this point), filter out User Management
-    if (!isSuperAdmin.value) {
-        return baseConfigNavItems.value.filter((item) => item.title !== 'User Management');
-    }
+        return true;
+    });
+};
 
-    // Superadmin gets everything
-    return baseConfigNavItems.value;
-});
+const mainNavItems = computed(() => filterNavItems(
+    baseMainNavItems.value, 
+    ['Voters', 'Voting Page', 'Candidates']
+));
+
+const configNavItems = computed(() => filterNavItems(
+    baseConfigNavItems.value, 
+    ['Election', 'User Management'],
+    ['User Management']              
+));
 
 const footerNavItems: NavItem[] = [];
 </script>
@@ -133,7 +122,7 @@ const footerNavItems: NavItem[] = [];
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" group-label="Navigations" />
+            <NavMain v-if="mainNavItems.length > 0" :items="mainNavItems" group-label="Navigations" />
             <NavMain v-if="configNavItems.length > 0" :items="configNavItems" group-label="Configuration" />
         </SidebarContent>
 

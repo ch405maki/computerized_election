@@ -28,54 +28,57 @@ Route::middleware('auth:voter')->group(function () {
 Route::middleware(['auth:web', 'verified'])->group(function () {
     
     // ==========================================
-    // SHARED ROUTES (Admins & Users(COMELEC))
+    // SHARED ROUTES (Handled by Permissions)
     // ==========================================
     
     // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->middleware('permission:showDashboardTab')
+        ->name('dashboard');
 
     // Reports
-    Route::get('/reports/results', [ReportController::class, 'index'])->name('results.index');
-    Route::get('/reports/log', [LogController::class, 'index'])->name('log.index');
-    Route::get('/reports/log/{electionId}/turnout-by-year', [LogController::class, 'getTurnoutByYear'])->name('log.turnout-by-year');
-    
-    Route::post('/results/{election}/verify', [ReportController::class, 'verify'])
-        ->name('results.verify')
-        ->withTrashed();
-
-    Route::get('/results/{election}', [ReportController::class, 'show'])
-        ->name('results.show')
-        ->withTrashed();
-
-    Route::get('/results/{election}/export', [ReportController::class, 'export'])
-        ->name('results.export')
-        ->withTrashed();
-
-
-    // ==========================================
-    // ADMIN & SUPERADMIN ROUTES
-    // ==========================================
-    Route::middleware(['admin', 'verified'])->group(function () {
+    Route::middleware('permission:showReportsTab')->group(function () {
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/results', [ReportController::class, 'index'])->name('results.index');
+        Route::get('/reports/log', [LogController::class, 'index'])->name('log.index');
+        Route::get('/reports/log/{electionId}/turnout-by-year', [LogController::class, 'getTurnoutByYear'])->name('log.turnout-by-year');
         
-        // Voters Management (Admin & Superadmin)
+        Route::post('/results/{election}/verify', [ReportController::class, 'verify'])
+            ->name('results.verify')
+            ->withTrashed();
+
+        Route::get('/results/{election}', [ReportController::class, 'show'])
+            ->name('results.show')
+            ->withTrashed();
+
+        Route::get('/results/{election}/export', [ReportController::class, 'export'])
+            ->name('results.export')
+            ->withTrashed();
+    });
+
+    // Voters Management (Removed 'admin' wrapper so permissions actually govern access)
+    Route::middleware('permission:showVoterTab')->group(function () {
         Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
         Route::get('/voters/status', [VoterStatusController::class, 'index'])->name('status.index');
+    });
 
-        // Candidate Management (Admin & Superadmin)
+    // Candidate Management (Fixed typo: showCandidatesTab -> showCandidateTab)
+    Route::middleware('permission:showCandidateTab')->group(function () {
         Route::get('/candidates', [CandidateController::class, 'index'])->name('candidates.index');
         Route::get('/candidates/positions', [PositionController::class, 'index'])->name('positions.index');
+    });
 
-        // Election Configuration (Admin & Superadmin)
-        Route::get('/election', [ElectionController::class, 'index'])->name('elections.index');
-        Route::post('/election/verify-password', [ElectionController::class, 'verifyPassword'])->name('elections.verify-password');
-        
+    // Election Configuration
+    Route::middleware('permission:showElectionTab')->group(function () {
+        Route::get('/elections', [ElectionController::class, 'index'])->name('elections.index');
+        Route::get('/elections/{election}/edit', [ElectionController::class, 'edit'])->name('elections.edit');
+        Route::get('/elections/{election}/verify-password', [ElectionController::class, 'verifyPassword'])->name('elections.verify-password');
     });
 
     // ==========================================
     // SUPERADMIN-ONLY ROUTES
     // ==========================================
-    Route::middleware(['superadmin', 'verified'])->group(function () {
+    Route::middleware('superadmin')->group(function () {
         
         // User Management (Superadmin Only)
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
