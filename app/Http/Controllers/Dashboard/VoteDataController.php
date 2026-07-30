@@ -12,21 +12,19 @@ class VoteDataController extends Controller
 {
     public function getVoteRanking()
     {
-        $rankings = Vote::selectRaw('candidate_id, position_id, COUNT(*) as vote_count')
+        $rankings = Vote::with(['candidate', 'position'])
+            ->selectRaw('candidate_id, position_id, COUNT(*) as vote_count')
             ->groupBy('candidate_id', 'position_id')
             ->orderBy('position_id')
             ->orderByDesc('vote_count')
             ->get();
 
         $formattedRankings = $rankings->map(function ($rank) {
-            $candidate = Candidate::find($rank->candidate_id);
-            $position = Position::find($rank->position_id);
-
             return [
-                'position' => $position ? $position->name : 'Unknown Position',
-                'candidate' => $candidate ? $candidate->candidate_name : 'Unknown Candidate',
-                'party' => $candidate ? $candidate->candidate_party : 'Unknown Party',
-                'image' => $candidate ? $candidate->candidate_picture : null,
+                'position' => $rank->position ? $rank->position->name : 'Unknown Position',
+                'candidate' => $rank->candidate ? $rank->candidate->candidate_name : 'Unknown Candidate',
+                'party' => $rank->candidate ? $rank->candidate->candidate_party : 'Unknown Party',
+                'image' => $rank->candidate ? $rank->candidate->candidate_picture : null,
                 'votes' => $rank->vote_count,
             ];
         });
