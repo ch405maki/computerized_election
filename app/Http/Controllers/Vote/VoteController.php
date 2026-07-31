@@ -121,7 +121,7 @@ class VoteController extends Controller
             // Log the voting action
             Log::create([
                 'voter_id' => $voterId,
-                'action' => 'Voted in election: ' . $election->name,
+                'action' => 'Vote counted in election: ' . $election->name,
                 'timestamp' => now(),
             ]);
 
