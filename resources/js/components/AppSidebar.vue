@@ -64,7 +64,7 @@ const baseMainNavItems = ref<DropdownNavItem[]>([
 ]);
 
 const baseConfigNavItems = ref<DropdownNavItem[]>([
-    { title: 'Election', href: '/election', icon: Cog, permissionKey: 'showElectionTab' },
+    { title: 'Election', href: '/elections', icon: Cog, permissionKey: 'showElectionTab' },
     {
         title: 'User Management', href: '#', icon: UserRoundCog, isOpen: false,
         children: [{ title: 'Users', href: '/users', icon: UsersRound }],
