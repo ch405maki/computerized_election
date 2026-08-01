@@ -40,27 +40,27 @@ class ProcessVoterImport implements ShouldQueue
             $studentNumbersBatch = [];
 
             SimpleExcelReader::create($fullPath, 'xlsx')
-                ->formatHeadersUsing(fn(string $header) => str_replace(' ', '_', strtolower(trim($header)))) 
+                ->formatHeadersUsing(fn($header) => str_replace(' ', '_', strtolower(trim((string) $header)))) 
                 ->getRows()
                 ->each(function (array $rowProperties) use (&$votersBatch, &$studentNumbersBatch, $chunkSize) {
                     
-                    $studentNumber = trim($rowProperties['student_number'] ?? '');
+                    $studentNumber = trim((string) ($rowProperties['student_number'] ?? ''));
                     
                     if (empty($studentNumber)) {
                         return;
                     }
 
-                    $firstName = trim($rowProperties['first_name'] ?? '');
-                    $lastName  = trim($rowProperties['last_name'] ?? '');
+                    $firstName = trim((string) ($rowProperties['first_name'] ?? ''));
+                    $lastName  = trim((string) ($rowProperties['last_name'] ?? ''));
 
                     if (empty($firstName) || empty($lastName)) {
                         return; 
                     }
 
-                    $middleName = trim($rowProperties['middle_name'] ?? '');
+                    $middleName = trim((string) ($rowProperties['middle_name'] ?? ''));
 
                     $rawPassword = !empty($rowProperties['password']) 
-                        ? trim($rowProperties['password']) 
+                        ? trim((string) $rowProperties['password']) 
                         : $studentNumber;
 
                     $votersBatch[] = [
@@ -68,9 +68,9 @@ class ProcessVoterImport implements ShouldQueue
                         'first_name'     => $firstName,
                         'last_name'      => $lastName,
                         'middle_name'    => $middleName !== '' ? $middleName : null,
-                        'sex'            => trim($rowProperties['sex'] ?? 'Other'),
-                        'dob'            => !empty($rowProperties['dob']) ? trim($rowProperties['dob']) : null,
-                        'student_year'   => trim($rowProperties['student_year'] ?? ''),                        
+                        'sex'            => trim((string) ($rowProperties['sex'] ?? 'Other')),
+                        'dob'            => !empty($rowProperties['dob']) ? trim((string) $rowProperties['dob']) : null,
+                        'student_year'   => trim((string) ($rowProperties['student_year'] ?? '')),                        
                         'password'       => Hash::make($rawPassword, ['rounds' => 8]), 
                         'created_at'     => now(),
                         'updated_at'     => now(),
@@ -93,20 +93,21 @@ class ProcessVoterImport implements ShouldQueue
 
             Cache::put("import_status_{$this->importId}", 'completed', now()->addHours(1));
 
-        } catch (\Exception $e) {
-            Log::error("Voter Import Failed [{$this->importId}]: " . $e->getMessage());
-            Cache::put("import_status_{$this->importId}", 'failed', now()->addHours(1));
-        } finally {
             if (Storage::exists($this->filePath)) {
                 Storage::delete($this->filePath);
             }
-        }
+
+        } catch (\Throwable $e) {
+            Log::error("Voter Import Failed [{$this->importId}]: " . $e->getMessage());
+            Cache::put("import_status_{$this->importId}", 'failed', now()->addHours(1));
+            
+            throw $e; 
+        } 
     }
 
     private function processChunk(array $votersBatch, array $studentNumbersBatch)
     {
         DB::transaction(function () use ($votersBatch, $studentNumbersBatch) {
-            
             Voter::upsert(
                 $votersBatch,
                 ['student_number'], 
@@ -134,5 +135,12 @@ class ProcessVoterImport implements ShouldQueue
                 );
             }
         });
+    }
+
+    public function failed(\Throwable $exception)
+    {
+        if (Storage::exists($this->filePath)) {
+            Storage::delete($this->filePath);
+        }
     }
 }
