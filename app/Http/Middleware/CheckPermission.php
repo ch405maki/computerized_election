@@ -17,7 +17,7 @@ class CheckPermission
         }
 
         $role = strtolower($user->role);
-        if ($role === 'superadmin') {
+        if ($role === 'admin') {
             return $next($request);
         }
 

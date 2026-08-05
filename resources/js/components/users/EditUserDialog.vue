@@ -134,7 +134,6 @@ const updateUser = async () => {
                         <label class="form-field">
                             <span class="field-label">Role</span>
                             <select v-model="userData.role" class="input">
-                                <option value="superadmin">Superadmin</option>
                                 <option value="admin">Admin</option>
                                 <option value="user">User</option>
                             </select>

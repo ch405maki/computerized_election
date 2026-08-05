@@ -56,13 +56,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             ->withTrashed();
     });
 
-    // Voters Management (Removed 'admin' wrapper so permissions actually govern access)
+    // Voters Management
     Route::middleware('permission:showVoterTab')->group(function () {
         Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
         Route::get('/voters/status', [VoterStatusController::class, 'index'])->name('status.index');
     });
 
-    // Candidate Management (Fixed typo: showCandidatesTab -> showCandidateTab)
+    // Candidate Management
     Route::middleware('permission:showCandidateTab')->group(function () {
         Route::get('/candidates', [CandidateController::class, 'index'])->name('candidates.index');
         Route::get('/candidates/positions', [PositionController::class, 'index'])->name('positions.index');
@@ -72,15 +72,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::middleware('permission:showElectionTab')->group(function () {
         Route::get('/elections', [ElectionController::class, 'index'])->name('elections.index');
         Route::get('/elections/{election}/edit', [ElectionController::class, 'edit'])->name('elections.edit');
-        Route::get('/elections/{election}/verify-password', [ElectionController::class, 'verifyPassword'])->name('elections.verify-password');
+        Route::post('/elections/verify-password', [ElectionController::class, 'verifyPassword'])->name('elections.verify-password');
     });
 
     // ==========================================
-    // SUPERADMIN-ONLY ROUTES
+    // ADMIN-ONLY ROUTES
     // ==========================================
-    Route::middleware('superadmin')->group(function () {
+    Route::middleware('admin')->group(function () {
         
-        // User Management (Superadmin Only)
+        // User Management (Admin Only)
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         
     });
