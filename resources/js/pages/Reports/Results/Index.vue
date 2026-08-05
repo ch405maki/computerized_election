@@ -41,7 +41,7 @@ const formattedDate = (dateString: string) => {
 const page = usePage<any>();
 const hasElectionResultsPermission = computed(() => {
     // Adjust this path if your Inertia auth object is structured differently
-    return page.props.auth?.user?.permissions?.electionResults === true;
+    return page.props.auth?.user?.permissions?.showElectionResults === true;
 });
 
 // --- Dialog & Password Verification State ---
