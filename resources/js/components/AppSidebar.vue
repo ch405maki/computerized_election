@@ -19,7 +19,6 @@ const page = usePage();
 
 // 1. Centralize roles & user data
 const isAdmin = computed(() => page.props.isAdmin as boolean);
-const isSuperAdmin = computed(() => page.props.isSuperAdmin as boolean);
 const currentUser = computed(() => (page.props.auth as any)?.user as any);
 
 // 2. Parse permissions exactly ONCE and cache them
@@ -63,7 +62,6 @@ const baseMainNavItems = ref<DropdownNavItem[]>([
     },
 ]);
 
-//
 const baseConfigNavItems = ref<DropdownNavItem[]>([
     { title: 'Election', href: '/elections', icon: Cog, permissionKey: 'showElectionTab' },
     {
@@ -77,7 +75,7 @@ const filterNavItems = (
     legacyRestrictedTitles: string[], 
     forceBlockTitles: string[] = []
 ) => {
-    if (isSuperAdmin.value) return baseItems;
+    if (isAdmin.value) return baseItems;
 
     return baseItems.filter((item) => {
         if (forceBlockTitles.includes(item.title)) return false;
@@ -86,7 +84,7 @@ const filterNavItems = (
             return !item.permissionKey || hasPermission(item.permissionKey);
         }
 
-        if (!isAdmin.value && legacyRestrictedTitles.includes(item.title)) {
+        if (legacyRestrictedTitles.includes(item.title)) {
             return false;
         }
 

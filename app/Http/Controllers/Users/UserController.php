@@ -27,7 +27,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:superadmin,admin,user',
+            'role' => 'required|in:admin,user',
             'status' => 'required|in:active,inactive',
             // 'permissions' => 'nullable|array', // Uncomment when adding to migration
         ]);
@@ -85,7 +85,7 @@ class UserController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users,email,' . $id, 
-                'role' => 'required|in:superadmin,admin,user',
+                'role' => 'required|in:admin,user', // Restricted to admin and user
                 'status' => 'required|string|in:active,inactive',
                 'permissions' => 'nullable|array',
             ]);
@@ -127,7 +127,6 @@ class UserController extends Controller
     public function updatePermissions(Request $request, User $user)
     {
         try {
-            // Later you can change 'array' to match your exact boolean/toggle fields
             $validated = $request->validate([
                 'permissions' => 'required|array',
             ]);

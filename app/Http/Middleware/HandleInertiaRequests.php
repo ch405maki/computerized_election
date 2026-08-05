@@ -51,7 +51,6 @@ class HandleInertiaRequests extends Middleware
                 'voter' => $request->user('voter'), // Voter user (voter guard)
             ],
             'isAdmin' => $user?->role === 'admin',
-            'isSuperAdmin' => $user?->role === 'superadmin',
             'isUser' => $user?->role === 'user',
             'ziggy' => [
                 ...(new Ziggy)->toArray(),

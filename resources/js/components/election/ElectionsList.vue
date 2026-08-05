@@ -82,7 +82,7 @@ const deleteElection = async () => {
     isDeleting.value = true;
 
     try {
-        await axios.post('/election/verify-password', {
+        await axios.post('/elections/verify-password', {
             password: deletePassword.value,
         });
 
@@ -141,7 +141,7 @@ const verifyPasswordAndOpenEdit = async () => {
 
     isVerifying.value = true;
     try {
-        await axios.post('/election/verify-password', {
+        await axios.post('/elections/verify-password', {
             password: adminPassword.value,
         });
 
