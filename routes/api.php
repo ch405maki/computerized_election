@@ -39,6 +39,7 @@ Route::get('/import-status/{importId}', [VoterController::class, 'checkImportSta
 // Candidate Routes
 Route::post('/positions', [PositionController::class, 'store']);
 Route::delete('/positions/{position}', [PositionController::class, 'destroy']);
+Route::patch('/positions/{position}', [PositionController::class, 'update']);
 
 // Election Routes
 Route::post('/elections', [ElectionController::class, 'store']);

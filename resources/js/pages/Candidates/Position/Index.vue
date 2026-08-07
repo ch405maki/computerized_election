@@ -10,7 +10,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,32 +20,35 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { toTypedSchema } from '@vee-validate/zod';
 import axios from 'axios';
-import { ArrowDownWideNarrow, ArrowUpDown, ArrowUpWideNarrow, Trash } from 'lucide-vue-next';
+import { ArrowDownWideNarrow, ArrowUpDown, ArrowUpWideNarrow, Trash, FilePenLine } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useToast } from 'vue-toastification';
 import * as z from 'zod';
 
-const toast = useToast();
-const isLoading = ref(false);
-const isDialogOpen = ref(false);
-const isDeleting = ref(false);
-const showDeleteDialog = ref(false);
-const showPasswordDialog = ref(false);
-const deletePassword = ref('');
-const selectedPosition = ref<{ id: number; name: string } | null>(null);
+// --- Types & Interfaces ---
+type SortKey = 'id' | 'name' | 'created_at';
+type ActionType = 'edit' | 'delete' | null;
+
+interface Position {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+}
 
 const props = defineProps<{
-    positions: Array<{
-        id: number;
-        name: string;
-        created_at: string;
-        updated_at: string;
-    }>;
+    positions: Position[];
 }>();
 
-// --- DRY Sorting Logic ---
-type SortKey = 'id' | 'name' | 'created_at';
+// --- Initialization ---
+const toast = useToast();
 
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Candidates', href: '/candidates' },
+    { title: 'Positions', href: '/candidates/positions' },
+];
+
+// --- Sorting Logic ---
 const tableColumns: Array<{ key: SortKey; label: string }> = [
     { key: 'id', label: 'ID' },
     { key: 'name', label: 'Name' },
@@ -85,105 +88,131 @@ const sortedPositions = computed(() => {
     });
 });
 
-// Form validation schema
+// --- DRY State Management ---
+const selectedPosition = ref<Position | null>(null);
+const pendingAction = ref<ActionType>(null);
+
+// Form Dialog State
+const isFormDialogOpen = ref(false);
+const isSubmitting = ref(false);
+const isEditing = computed(() => !!selectedPosition.value);
+
 const formSchema = toTypedSchema(
     z.object({
         name: z.string().min(2, 'Name must be at least 2 characters').max(255),
     }),
 );
 
-const formData = ref({
-    name: '',
+const formData = ref({ name: '' });
+
+// Password Dialog State
+const isPasswordDialogOpen = ref(false);
+const isProcessingAuth = ref(false);
+const adminPassword = ref('');
+
+// Delete Confirmation State
+const isDeleteDialogOpen = ref(false);
+
+// --- DRY Helpers ---
+const getApiConfig = () => ({
+    headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+    },
 });
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Candidates', href: '/candidates' },
-    { title: 'Positions', href: '/candidates/positions' },
-];
-
-const submitPosition = async () => {
-    isLoading.value = true;
-    try {
-        const response = await axios.post('/api/positions', formData.value, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-            },
-        });
-
-        toast.success(response.data.message);
-        formData.value.name = '';
-        isDialogOpen.value = false;
-
-        router.reload({ only: ['positions'] });
-    } catch (error) {
-        if (axios.isAxiosError(error) && error.response) {
-            if (error.response.status === 422) {
-                const errors = error.response.data.errors;
-                Object.values(errors)
-                    .flat()
-                    .forEach((message) => {
-                        toast.error(message as string);
-                    });
+const handleApiError = (error: unknown, defaultMessage: string) => {
+    if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 422) {
+            const errors = error.response.data.errors;
+            if (errors) {
+                Object.values(errors).flat().forEach((message) => toast.error(message as string));
             } else {
-                toast.error(error.response.data.message || 'Failed to create position');
+                toast.error('Incorrect admin password.');
             }
         } else {
-            toast.error('An unexpected error occurred');
+            toast.error(error.response.data.message || defaultMessage);
         }
-    } finally {
-        isLoading.value = false;
+    } else {
+        toast.error('An unexpected error occurred');
     }
 };
 
-const openDeleteDialog = (position: { id: number; name: string }) => {
+// --- Action Triggers ---
+const openCreate = () => {
+    selectedPosition.value = null;
+    formData.value.name = '';
+    isFormDialogOpen.value = true;
+};
+
+const openEdit = (position: Position) => {
     selectedPosition.value = position;
-    deletePassword.value = '';
-    showDeleteDialog.value = true;
+    pendingAction.value = 'edit';
+    adminPassword.value = '';
+    isPasswordDialogOpen.value = true;
 };
 
-const proceedToPasswordConfirmation = () => {
-    showDeleteDialog.value = false;
-    showPasswordDialog.value = true;
+const openDelete = (position: Position) => {
+    selectedPosition.value = position;
+    isDeleteDialogOpen.value = true;
 };
 
-const deletePosition = async () => {
-    if (!selectedPosition.value) return;
+const confirmDeleteAuth = () => {
+    isDeleteDialogOpen.value = false;
+    pendingAction.value = 'delete';
+    adminPassword.value = '';
+    isPasswordDialogOpen.value = true;
+};
 
-    if (!deletePassword.value) {
-        toast.error('Password is required to confirm deletion');
+// --- Execution Handlers ---
+const verifyPasswordAndProceed = async () => {
+    if (!adminPassword.value) return toast.error('Password is required');
+
+    isProcessingAuth.value = true;
+    try {
+        // 1. Verify Password
+        await axios.post('/elections/verify-password', { password: adminPassword.value });
+
+        // 2. Proceed based on action type
+        if (pendingAction.value === 'edit') {
+            formData.value.name = selectedPosition.value!.name;
+            isPasswordDialogOpen.value = false;
+            isFormDialogOpen.value = true;
+        } else if (pendingAction.value === 'delete') {
+            await axios.delete(`/api/positions/${selectedPosition.value!.id}`, getApiConfig());
+            toast.success('Position deleted successfully!');
+            isPasswordDialogOpen.value = false;
+            router.reload({ only: ['positions'] });
+        }
+    } catch (error) {
+        handleApiError(error, 'An error occurred during verification.');
+    } finally {
+        isProcessingAuth.value = false;
+    }
+};
+
+const submitForm = async () => {
+    if (isEditing.value && formData.value.name === selectedPosition.value?.name) {
+        toast.info('No changes detected');
+        isFormDialogOpen.value = false;
         return;
     }
 
-    isDeleting.value = true;
-
+    isSubmitting.value = true;
     try {
-        await axios.post('/election/verify-password', {
-            password: deletePassword.value,
-        });
+        const method = isEditing.value ? 'patch' : 'post';
+        const url = isEditing.value ? `/api/positions/${selectedPosition.value!.id}` : '/api/positions';
 
-        await axios.delete(`/api/positions/${selectedPosition.value.id}`, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-            },
-        });
+        const response = await axios({ method, url, data: formData.value, ...getApiConfig() });
 
-        toast.success('Position deleted successfully!');
-        showPasswordDialog.value = false;
+        toast.success(response.data.message || `Position ${isEditing.value ? 'updated' : 'created'} successfully`);
+        isFormDialogOpen.value = false;
         router.reload({ only: ['positions'] });
     } catch (error) {
-        if (axios.isAxiosError(error) && error.response) {
-            if (error.response.status === 422) {
-                toast.error('Incorrect admin password.');
-            } else {
-                toast.error(error.response.data.message || 'Failed to delete position');
-            }
-        } else {
-            toast.error('An unexpected error occurred');
-        }
+        handleApiError(error, `Failed to ${isEditing.value ? 'update' : 'create'} position`);
     } finally {
-        isDeleting.value = false;
+        isSubmitting.value = false;
     }
 };
 </script>
@@ -195,37 +224,7 @@ const deletePosition = async () => {
         <div class="flex flex-col gap-4 p-4">
             <div class="flex justify-between gap-2">
                 <TitleHeader title="Positions" description="List of Candidate Positions during Election" />
-                <Dialog v-model:open="isDialogOpen">
-                    <DialogTrigger as-child>
-                        <Button variant="default">Add New Position</Button>
-                    </DialogTrigger>
-                    <DialogContent class="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>Create New Position</DialogTitle>
-                            <DialogDescription> Enter the details for the new position. </DialogDescription>
-                        </DialogHeader>
-
-                        <Form :validation-schema="formSchema" @submit="submitPosition">
-                            <div class="grid gap-4 py-4">
-                                <FormField v-slot="{ componentField }" name="name">
-                                    <FormItem>
-                                        <FormLabel>Position Name</FormLabel>
-                                        <FormControl>
-                                            <Input type="text" placeholder="Enter position name" v-bind="componentField" v-model="formData.name" />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                </FormField>
-                            </div>
-                            <DialogFooter>
-                                <Button type="button" variant="outline" @click="isDialogOpen = false">Cancel</Button>
-                                <Button type="submit" :disabled="isLoading">
-                                    {{ isLoading ? 'Creating...' : 'Create Position' }}
-                                </Button>
-                            </DialogFooter>
-                        </Form>
-                    </DialogContent>
-                </Dialog>
+                <Button variant="default" @click="openCreate">Add New Position</Button>
             </div>
 
             <!-- Positions List -->
@@ -247,7 +246,7 @@ const deletePosition = async () => {
                                         <ArrowUpDown v-else class="h-4 w-4 text-muted-foreground opacity-50" />
                                     </div>
                                 </TableHead>
-                                <TableHead class="text-right">Actions</TableHead>
+                                <TableHead class="text-right pr-6">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -260,11 +259,12 @@ const deletePosition = async () => {
                                 <TableCell>{{ position.name }}</TableCell>
                                 <TableCell>{{ new Date(position.created_at).toLocaleDateString() }}</TableCell>
                                 <TableCell>
-                                    <div>
-                                        <Button size="sm" variant="destructive" @click="openDeleteDialog(position)" :disabled="isDeleting">
+                                        <Button size="sm" variant="outline" class="mr-2" @click="openEdit(position)">
+                                            <FilePenLine class="h-4 w-4" />
+                                        </Button>
+                                        <Button size="sm" variant="destructive" @click="openDelete(position)">
                                             <Trash class="h-4 w-4" />
                                         </Button>
-                                    </div>
                                 </TableCell>
                             </TableRow>
                         </TableBody>
@@ -272,46 +272,85 @@ const deletePosition = async () => {
                 </div>
             </div>
 
-            <AlertDialog v-model:open="showDeleteDialog">
+            <!-- Unified Create/Edit Form Dialog -->
+            <Dialog v-model:open="isFormDialogOpen">
+                <DialogContent class="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>{{ isEditing ? 'Edit Position' : 'Create New Position' }}</DialogTitle>
+                        <DialogDescription>
+                            {{ isEditing ? 'Make changes to the position name here. Click save when you\'re done.' : 'Enter the details for the new position.' }}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <Form :validation-schema="formSchema" @submit="submitForm">
+                        <div class="grid gap-4 py-4">
+                            <FormField v-slot="{ componentField }" name="name">
+                                <FormItem>
+                                    <FormLabel>Position Name</FormLabel>
+                                    <FormControl>
+                                        <Input type="text" placeholder="Enter position name" v-bind="componentField" v-model="formData.name" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" @click="isFormDialogOpen = false">Cancel</Button>
+                            <Button type="submit" :disabled="isSubmitting">
+                                {{ isSubmitting ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Position') }}
+                            </Button>
+                        </DialogFooter>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+
+            <!-- Unified Password Verification Dialog -->
+            <AlertDialog v-model:open="isPasswordDialogOpen">
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Password Required</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <div class="space-y-4 pt-2">
+                                <p class="font-medium text-foreground">
+                                    Confirm your password to {{ pendingAction }} the position.
+                                </p>
+                                <Input type="password" v-model="adminPassword" placeholder="Enter admin password" @keyup.enter="verifyPasswordAndProceed" />
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel @click="adminPassword = ''" :disabled="isProcessingAuth">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            :disabled="isProcessingAuth || !adminPassword"
+                            @click.prevent="verifyPasswordAndProceed"
+                            :class="{ 'bg-red-600 hover:bg-red-700': pendingAction === 'delete' }"
+                        >
+                            <span v-if="!isProcessingAuth">
+                                {{ pendingAction === 'delete' ? 'Delete Position' : 'Continue' }}
+                            </span>
+                            <span v-else>
+                                {{ pendingAction === 'delete' ? 'Deleting...' : 'Verifying...' }}
+                            </span>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <!-- Delete Warning Dialog -->
+            <AlertDialog v-model:open="isDeleteDialogOpen">
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete Position Confirmation</AlertDialogTitle>
                         <AlertDialogDescription>
                             <p>
                                 This action cannot be undone. This will permanently delete
-                                <span class="font-semibold">{{ selectedPosition?.name }}</span
-                                >.
+                                <span class="font-semibold">{{ selectedPosition?.name }}</span>.
                             </p>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction @click="proceedToPasswordConfirmation"> Continue </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            <AlertDialog v-model:open="showPasswordDialog">
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Password Required</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            <div class="space-y-4 pt-2">
-                                <p class="font-medium text-foreground">Confirm your password to delete the position.</p>
-                                <Input type="password" v-model="deletePassword" placeholder="Enter admin password" @keyup.enter="deletePosition" />
-                            </div>
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel @click="deletePassword = ''" :disabled="isDeleting">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            :disabled="isDeleting || !deletePassword"
-                            @click.prevent="deletePosition"
-                            class="bg-red-600 hover:bg-red-700 disabled:opacity-50"
-                        >
-                            <span v-if="!isDeleting">Delete Position</span>
-                            <span v-else>Deleting...</span>
-                        </AlertDialogAction>
+                        <AlertDialogAction @click="confirmDeleteAuth"> Continue </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
