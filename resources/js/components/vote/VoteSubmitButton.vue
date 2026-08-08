@@ -77,50 +77,53 @@ const selectedCandidatesDetails = computed(() => {
             </Button>
 
             <Dialog v-model:open="isDialogOpen">
-                <DialogContent class="h-[90vh] max-h-screen overflow-y-auto">
+                <!-- Changed to flex column and removed overflow-y-auto here -->
+                <DialogContent class="flex max-h-[90vh] flex-col">
                     <DialogHeader>
                         <DialogTitle>Confirm Your Vote</DialogTitle>
                         <DialogDescription> Please review your selections carefully. Votes cannot be changed after submission. </DialogDescription>
                     </DialogHeader>
 
-                    <div class="space-y-4 py-4">
-                        <div v-if="selectedElection">
-                            <h3 class="mb-2 font-semibold">
-                                {{ elections.find((e) => e.id === selectedElection)?.name }}
-                            </h3>
+                    <!-- Added a flex-1 scrolling container around the middle content -->
+                    <div class="flex-1 overflow-y-auto pr-2">
+                        <div class="space-y-4 py-4">
+                            <div v-if="selectedElection">
+                                <h3 class="mb-2 font-semibold">
+                                    {{ elections.find((e) => e.id === selectedElection)?.name }}
+                                </h3>
 
-                            <div v-for="(candidate, index) in selectedCandidatesDetails" :key="index" class="mb-4">
-                                <p class="font-medium">{{ candidate.positionName }}:</p>
-                                <div class="mt-2 flex items-center">
-                                    <img
-                                        v-if="candidate.candidatePicture"
-                                        :src="`/storage/${candidate.candidatePicture}`"
-                                        class="mr-3 h-12 w-12 rounded-full object-cover"
-                                    />
-                                    <img
-                                        v-else
-                                        src="/images/anonymous.jpg"
-                                        alt="No Uploaded Image"
-                                        class="mr-3 h-12 w-12 rounded-full object-cover"
-                                    />
-                                    <span class="text-purple-900"
-                                        ><b class="font-bold">{{ candidate.candidateName }}</b
-                                        ><br />
-                                        <i>{{ candidate.candidateParty }}</i>
-                                    </span>
+                                <div v-for="(candidate, index) in selectedCandidatesDetails" :key="index" class="mb-4">
+                                    <p class="font-medium">{{ candidate.positionName }}:</p>
+                                    <div class="mt-2 flex items-center">
+                                        <img
+                                            v-if="candidate.candidatePicture"
+                                            :src="`/storage/${candidate.candidatePicture}`"
+                                            class="mr-3 h-12 w-12 rounded-full object-cover"
+                                        />
+                                        <img
+                                            v-else
+                                            src="/images/anonymous.jpg"
+                                            alt="No Uploaded Image"
+                                            class="mr-3 h-12 w-12 rounded-full object-cover"
+                                        />
+                                        <span class="text-purple-900"
+                                            ><b class="font-bold">{{ candidate.candidateName }}</b
+                                            ><br />
+                                            <i>{{ candidate.candidateParty }}</i>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="flex items-center space-x-2 py-4">
-                        <Checkbox id="terms" v-model:checked="isConfirmed" class="border-2 border-black data-[state=checked]:bg-purple-900" />
-                        <label for="terms" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            I confirm that my selections are final and I want to submit my vote.
-                        </label>
+                        <div class="flex items-center space-x-2 py-4">
+                            <Checkbox id="terms" v-model:checked="isConfirmed" class="border-2 border-black data-[state=checked]:bg-purple-900" />
+                            <label for="terms" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                I confirm that my selections are final and I want to submit my vote.
+                            </label>
+                        </div>
                     </div>
-
-                    <DialogFooter>
+                    <DialogFooter class="pt-2">
                         <Button variant="outline" @click="isDialogOpen = false"> Cancel </Button>
                         <Button type="submit" :disabled="!isConfirmed" @click="confirmVote" class="bg-purple-900 hover:bg-purple-700">
                             Submit Vote
