@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Candidate;
 use App\Http\Controllers\Controller;
 use App\Models\Position;
 use Illuminate\Http\Request;
-
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class PositionController extends Controller
@@ -21,7 +21,6 @@ class PositionController extends Controller
             'positions' => $positions,
         ]);
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -69,9 +68,33 @@ class PositionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Position $position)
     {
-        //
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                // Ensure the name is unique, but ignore the current position's ID
+                Rule::unique('positions')->ignore($position->id),
+            ],
+        ]);
+
+        try {
+            $position->update([
+                'name' => $validated['name'],
+            ]);
+
+            return response()->json([
+                'message' => 'Position updated successfully!',
+                'data' => $position
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update position',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

@@ -35,9 +35,7 @@
                     >
                     <Button
                         type="submit"
-                        :disabled="loading"
-                        class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 dark:bg-gray-700 dark:text-gray-200"
-                    >
+                        :disabled="loading"                    >
                         <span v-if="loading">Creating...</span>
                         <span v-else>Create</span>
                     </Button>
