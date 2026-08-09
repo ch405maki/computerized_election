@@ -4,10 +4,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { FileDown } from 'lucide-vue-next';
+import { FileDown, Upload } from 'lucide-vue-next';
 import { computed } from 'vue';
-// Import the new PDF utility you just created
 import { exportElectionResultsPdf } from '@/lib/exportElectionResultsPdf';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
 
 interface CandidateResult {
     id: number;
@@ -31,13 +32,6 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
     { title: 'Results History', href: '/reports/results' },
     { title: props.election?.name || 'Election Results', href: route('results.show', props.election?.id) },
 ]);
-
-/*
-const exportToExcel = () => {
-  const exportUrl = route('results.export', props.election?.id);
-  window.open(exportUrl, '_blank');
-};
-*/
 
 // --- NEW PDF DOWNLOAD FUNCTION ---
 const downloadPDF = async () => {
@@ -65,7 +59,7 @@ const formattedDate = (dateString: string) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-8 p-4">
-            <div class="flex items-start justify-between">
+            <div class="flex items-end justify-between">
                 <div>
                     <h1 class="mb-2 text-2xl font-bold">Election Results</h1>
                     <h2 class="text-xl">{{ election?.name || 'Loading...' }}</h2>
@@ -75,13 +69,13 @@ const formattedDate = (dateString: string) => {
                     </p>
                 </div>
 
-                <div class="flex flex-col items-end gap-2">
-                    <!-- <Button @click="exportToExcel" variant="default">
-            <Sheet class="w-4 h-4 mr-2"/>
-            <span>Export to Excel</span>
-          </Button> -->
-
-                    <Button @click="downloadPDF" variant="destructive">
+                <!-- Changed flex-col to flex-row and items-end to items-center -->
+                <div class="flex flex-row items-center gap-2">
+                    <Button @click="" variant="outline">
+                        <Upload class="w-4 h-4 mr-2"/>
+                        <span>Upload your E-Signature</span>
+                    </Button>
+                    <Button @click="downloadPDF" variant="default">
                         <FileDown class="mr-2 h-4 w-4" />
                         <span>Download PDF</span>
                     </Button>

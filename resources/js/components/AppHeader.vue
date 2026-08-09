@@ -154,14 +154,15 @@ const rightNavItems: NavItem[] = [
                     <!-- Voter Dropdown Menu -->
                     <DropdownMenu v-if="voter">
                         <DropdownMenuTrigger :as-child="true">
-                            <Button variant="ghost" size="icon" class="size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary">
+                            <Button variant="ghost" size="icon" class="group size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary">
                                 <Avatar class="size-8 overflow-hidden rounded-full">
-                                    <!-- You can add avatar functionality for voters if needed -->
                                     <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
                                         {{ getInitials(voter.full_name) }}
                                     </AvatarFallback>
                                 </Avatar>
-                                <span class="text-sm font-medium text-white hover:text-gray-800">{{ voter.full_name }}</span>
+                                <span class="text-sm font-medium text-white group-hover:text-black transition-colors duration-200">
+                                    {{ voter.full_name }}
+                                </span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56">

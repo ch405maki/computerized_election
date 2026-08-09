@@ -8,7 +8,7 @@ import TitleHeader from '@/components/ui/title-header/header.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { ScrollText } from 'lucide-vue-next';
+import { ScrollText, Loader2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 interface Election {
@@ -157,7 +157,10 @@ function submitPassword() {
 
                     <DialogFooter>
                         <Button type="button" variant="outline" @click="isDialogOpen = false"> Cancel </Button>
-                        <Button type="submit" :disabled="form.processing"> Confirm </Button>
+                        <Button type="submit" :disabled="form.processing"> 
+                            <Loader2 v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
+                                {{ form.processing ? 'Confirming...' : 'Confirm' }}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
