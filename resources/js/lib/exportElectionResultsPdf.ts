@@ -18,7 +18,6 @@ export interface Election {
 }
 
 /* UTILS */
-
 export function formatDate(dateStr: string): string {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', {
@@ -44,29 +43,24 @@ const getBase64ImageFromURL = (url: string, cropCircle: boolean = false): Promis
             }
 
             if (cropCircle) {
-                // Find the smallest dimension to make a perfect square canvas
                 const size = Math.min(img.width, img.height);
                 canvas.width = size;
                 canvas.height = size;
 
-                // Create a circular clipping path
                 ctx.beginPath();
                 ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2, true);
                 ctx.closePath();
                 ctx.clip();
 
-                // Center the image if it is rectangular
                 const dx = (size - img.width) / 2;
                 const dy = (size - img.height) / 2;
                 ctx.drawImage(img, dx, dy, img.width, img.height);
             } else {
-                // Default behavior for uncropped images
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
             }
 
-            // Export as PNG to preserve the transparent background outside the circle
             resolve(canvas.toDataURL('image/png'));
         };
 
@@ -77,24 +71,41 @@ const getBase64ImageFromURL = (url: string, cropCircle: boolean = false): Promis
 
 /* PDF EXPORT FOR ELECTION RESULTS */
 
-export async function exportElectionResultsPdf(election: Election, positions: Record<string, CandidateResult[]>) {
+// NEW: Added signatureUrl and userName parameters
+export async function exportElectionResultsPdf(
+    election: Election, 
+    positions: Record<string, CandidateResult[]>,
+    signatureUrl?: string | null,
+    userName: string = 'ADMINISTRATOR' 
+) {
     const doc = new jsPDF({ orientation: 'portrait' });
-    const pageHeight = doc.internal.pageSize.getHeight(); // Get standard page height
+    const pageHeight = doc.internal.pageSize.getHeight(); 
 
-    // LOGOS
+    // LOGOS & SIGNATURE FETCHING
+    let leftLogoBase64, rightLogoBase64, signatureBase64;
     try {
-        const leftLogoUrl = '/images/logo/ausl.png';
-        const rightLogoUrl = '/images/logo/comelec-logo.jpg';
-
-        // Pass `true` to the right logo to trigger the circular crop
-        const [leftLogoBase64, rightLogoBase64] = await Promise.all([getBase64ImageFromURL(leftLogoUrl), getBase64ImageFromURL(rightLogoUrl, true)]);
-
-        // Add to Document: addImage(imageData, format, X, Y, Width, Height)
-        doc.addImage(leftLogoBase64, 'PNG', 20, 8, 22, 22);
-        doc.addImage(rightLogoBase64, 'PNG', 160, 8, 22, 22);
+        const [left, right] = await Promise.all([
+            getBase64ImageFromURL('/images/logo/ausl.png'),
+            getBase64ImageFromURL('/images/logo/comelec-logo.jpg', true)
+        ]);
+        leftLogoBase64 = left;
+        rightLogoBase64 = right;
     } catch (error) {
-        console.warn('Could not load one or both logos. Generating PDF without them.', error);
+        console.warn('Could not load one or both logos.', error);
     }
+
+    // Fetch the signature independently so if it fails, the PDF still generates
+    if (signatureUrl) {
+        try {
+            signatureBase64 = await getBase64ImageFromURL(signatureUrl, false);
+        } catch (error) {
+            console.warn('Could not load user signature.', error);
+        }
+    }
+
+    // Add Logos to Document
+    if (leftLogoBase64) doc.addImage(leftLogoBase64, 'PNG', 20, 8, 22, 22);
+    if (rightLogoBase64) doc.addImage(rightLogoBase64, 'PNG', 160, 8, 22, 22);
 
     // HEADER
     doc.setFont('helvetica', 'bold');
@@ -133,18 +144,14 @@ export async function exportElectionResultsPdf(election: Election, positions: Re
 
         tableData.push(['', '', 'TOTAL VOTES', totalVotes.toString()]);
 
-        // --- NEW LOGIC: Estimate space to prevent awkward page breaks ---
-        // With fontSize 10 and cellPadding 2, each row is approximately 9 units tall.
         const estimatedRowHeight = 9;
-        const estimatedTableHeight = (tableData.length + 1) * estimatedRowHeight; // +1 for the header
-        const spaceNeeded = estimatedTableHeight + 15; // +15 buffers the position title and line
+        const estimatedTableHeight = (tableData.length + 1) * estimatedRowHeight;
+        const spaceNeeded = estimatedTableHeight + 15; 
 
-        // If we aren't at the top of the page, and the table + title won't fit, jump to next page
         if (startY > 30 && startY + spaceNeeded > pageHeight - 20) {
             doc.addPage();
-            startY = 20; // Reset coordinate to top of the new page
+            startY = 20; 
         }
-        // -----------------------------------------------------------------
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
@@ -164,14 +171,11 @@ export async function exportElectionResultsPdf(election: Election, positions: Re
                 0: { halign: 'center', cellWidth: 20 },
                 3: { halign: 'right', cellWidth: 30 },
             },
-
             didParseCell: function (data) {
-                // Check if we are in the header row and specifically the 4th column (index 3)
                 if (data.section === 'head' && data.column.index === 3) {
                     data.cell.styles.halign = 'right';
                 }
             },
-
             willDrawCell: function (data) {
                 if (data.row.index === tableData.length - 1) {
                     doc.setFont('helvetica', 'bold');
@@ -185,25 +189,32 @@ export async function exportElectionResultsPdf(election: Election, positions: Re
     }
 
     // FOOTER
-    // Ensure we have at least 40 units of space for the signature
     if (startY > 240) {
         doc.addPage();
         startY = 20;
     }
 
-    // Set the starting X coordinate for the right side
     const rightX = 150;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.text('Prepared by:', rightX, startY + 10);
 
+    // NEW: Render the signature image if it successfully loaded
+    if (signatureBase64) {
+        // Placed nicely in the gap between "Prepared by:" and the drawn line
+        doc.addImage(signatureBase64, 'PNG', rightX + 3, startY + 11, 40, 18);
+    }
+
     doc.setLineWidth(0.5);
     // Line goes from X: 150 to X: 196 (46 units wide)
     doc.line(rightX, startY + 30, rightX + 46, startY + 30);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('ADMINISTRATOR', rightX, startY + 35);
+    
+    // NEW: Replaced hardcoded 'ADMINISTRATOR' with dynamically centered user name
+    const finalName = userName.toUpperCase();
+    doc.text(finalName, rightX + 23, startY + 35, { align: 'center' });
 
     const safeFilename = `${election.name.replace(/\s+/g, ' ')}-RESULTS.pdf`;
     doc.save(safeFilename);
