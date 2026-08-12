@@ -54,6 +54,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/results/{election}/export', [ReportController::class, 'export'])
             ->name('results.export')
             ->withTrashed();
+            
+        Route::post('/signature/upload', [ReportController::class, 'uploadSignature'])->name('signature.upload');
+        Route::delete('/signature/remove', [ReportController::class, 'destroySignature'])->name('signature.destroy');
+
     });
 
     // Voters Management

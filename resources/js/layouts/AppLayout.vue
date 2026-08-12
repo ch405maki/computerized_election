@@ -13,6 +13,10 @@ withDefaults(defineProps<Props>(), {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <slot />
+        <!-- The global responsive wrapper -->
+        <main class="mx-auto flex w-full max-w-full flex-col gap-4 p-4 md:gap-6 md:p-6">
+            <slot />
+        </main>
+        
     </AppLayout>
 </template>
