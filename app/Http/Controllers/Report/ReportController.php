@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Election;
 use App\Models\Candidate;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
@@ -34,15 +35,12 @@ class ReportController extends Controller
         ]);
     }
 
-    // NEW: Verification Method
     public function verify(Request $request, Election $election)
     {
         $request->validate([
-            // 'current_password' automatically checks against the logged-in user
             'password' => ['required', 'current_password'], 
         ]);
 
-        // Set a session flag to authorize viewing this specific election
         session()->put("verified_election_{$election->id}", true);
 
         return redirect()->route('results.show', $election->id);
@@ -50,19 +48,16 @@ class ReportController extends Controller
 
     public function show(Election $election)
     {
-        // Guard against direct URL access
         if (!session()->has("verified_election_{$election->id}")) {
             return redirect()->route('results.index')
                 ->withErrors(['password' => 'Please verify your password to view these results.']);
         }
 
-        // Get candidates with their position and vote count
         $candidates = Candidate::where('election_id', $election->id)
             ->with('position')
             ->withCount('votes')
             ->get();
 
-        // Group by position name and format the output
         $positions = $candidates->groupBy(fn($candidate) => $candidate->position->name)
             ->map(function ($group) {
                 return $group->map(function ($candidate) {
@@ -76,6 +71,9 @@ class ReportController extends Controller
                 });
             });
 
+        $signature = auth()->user()->signature;
+        $signatureUrl = $signature ? asset('storage/' . $signature->file_path) : null;
+
         return Inertia::render('Reports/Results/Show', [
             'election' => [
                 'id' => $election->id,
@@ -84,17 +82,55 @@ class ReportController extends Controller
                 'end_date' => $election->end_date->format('Y-m-d'),
             ],
             'positions' => $positions,
+            'signatureUrl' => $signatureUrl,
         ]);
     }
 
     public function export(Election $election)
     {
-        // You might want to add the session guard here too if exports should also be password protected!
         if (!session()->has("verified_election_{$election->id}")) {
             abort(403, 'Unauthorized action.');
         }
 
         return Excel::download(new ElectionResultsExport($election), 'election_results.xlsx');
+    }
+
+    public function uploadSignature(Request $request)
+    {
+        $request->validate([
+            'signature' => ['required', 'image', 'mimes:png', 'max:2048'],
+        ]);
+
+        $user = $request->user();
+        $file = $request->file('signature');
+
+        $path = $file->store('signatures', 'public');
+
+        if ($user->signature && Storage::disk('public')->exists($user->signature->file_path)) {
+            Storage::disk('public')->delete($user->signature->file_path);
+        }
+
+        $user->signature()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['file_path' => $path]
+        );
+
+        return back()->with('success', 'E-Signature uploaded successfully.');
+    }
+
+    public function destroySignature(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->signature) {
+            if (Storage::disk('public')->exists($user->signature->file_path)) {
+                Storage::disk('public')->delete($user->signature->file_path);
+            }
+            
+            $user->signature()->delete();
+        }
+
+        return back()->with('success', 'E-Signature removed successfully.');
     }
 
 }
