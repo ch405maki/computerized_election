@@ -71,7 +71,6 @@ const getBase64ImageFromURL = (url: string, cropCircle: boolean = false): Promis
 
 /* PDF EXPORT FOR ELECTION RESULTS */
 
-// NEW: Added signatureUrl and userName parameters
 export async function exportElectionResultsPdf(
     election: Election, 
     positions: Record<string, CandidateResult[]>,
@@ -148,7 +147,7 @@ export async function exportElectionResultsPdf(
         const estimatedTableHeight = (tableData.length + 1) * estimatedRowHeight;
         const spaceNeeded = estimatedTableHeight + 15; 
 
-        if (startY > 30 && startY + spaceNeeded > pageHeight - 20) {
+        if (startY > 30 && startY + spaceNeeded > pageHeight - 40) {
             doc.addPage();
             startY = 20; 
         }
@@ -188,29 +187,29 @@ export async function exportElectionResultsPdf(
         startY = (doc as any).lastAutoTable.finalY + 15;
     }
 
-    // FOOTER
-    if (startY > 240) {
+    // FOOTER (Always at the bottom right)
+    const bottomMargin = 40; 
+    
+    // Check if the final table overflowed into the space we need for the footer
+    if (startY > pageHeight - bottomMargin - 10) {
         doc.addPage();
-        startY = 20;
     }
 
     const rightX = 150;
+    // Calculate a fixed Y position based on the page height, not the table's end point
+    const footerStartY = pageHeight - bottomMargin;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.text('Prepared by:', rightX, startY + 10);
+    doc.text('Prepared by:', rightX, footerStartY);
 
-    // NEW: Render the signature image if it successfully loaded
     if (signatureBase64) {
-        // Placed nicely in the gap between "Prepared by:" and the drawn line
-        doc.addImage(signatureBase64, 'PNG', rightX + 3, startY + 11, 30, 13);
+        doc.addImage(signatureBase64, 'PNG', rightX + 3, footerStartY + 1, 30, 13);
     }
 
     doc.setFont('helvetica', 'bold');
-    
-    // NEW: Replaced hardcoded 'ADMINISTRATOR' with dynamically centered user name
     const finalName = userName.toUpperCase();
-    doc.text(finalName, rightX + 23, startY + 30, { align: 'center' });
+    doc.text(finalName, rightX + 23, footerStartY + 20, { align: 'center' });
 
     const safeFilename = `${election.name.replace(/\s+/g, ' ')}-RESULTS.pdf`;
     doc.save(safeFilename);
