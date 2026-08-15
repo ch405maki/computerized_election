@@ -164,7 +164,6 @@ const executeRemoveSignature = () => {
 
             <div v-else class="space-y-8">
                 <template v-if="processedPositions.length > 0">
-                    <!-- DRY: Render using the pre-processed data -->
                     <div v-for="position in processedPositions" :key="position.name" class="rounded-lg border shadow-sm">
                         <h3 class="rounded-t bg-[#6b21a8] px-4 py-2 text-lg font-semibold text-white">
                             {{ position.name }}
@@ -217,7 +216,6 @@ const executeRemoveSignature = () => {
                 </DialogDescription>
             </DialogHeader>
 
-            <!-- STATE 1: PREVIEW -->
             <div v-if="signatureUrl && !isReplacing" class="flex flex-col gap-4 py-4">
                 <div class="flex items-center justify-center rounded-lg border border-dashed p-6 bg-white shadow-sm">
                     <img :src="signatureUrl" alt="Your E-Signature" class="max-h-32 object-contain" />
@@ -238,7 +236,6 @@ const executeRemoveSignature = () => {
                 </DialogFooter>
             </div>
 
-            <!-- STATE 2: UPLOAD FORM -->
             <form v-else @submit.prevent="submitSignature">
                 <div class="grid gap-4 py-4">
                     <div class="flex flex-col gap-2">

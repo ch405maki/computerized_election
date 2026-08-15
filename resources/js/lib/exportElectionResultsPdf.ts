@@ -206,10 +206,6 @@ export async function exportElectionResultsPdf(
         doc.addImage(signatureBase64, 'PNG', rightX + 3, startY + 11, 40, 18);
     }
 
-    doc.setLineWidth(0.5);
-    // Line goes from X: 150 to X: 196 (46 units wide)
-    doc.line(rightX, startY + 30, rightX + 46, startY + 30);
-
     doc.setFont('helvetica', 'bold');
     
     // NEW: Replaced hardcoded 'ADMINISTRATOR' with dynamically centered user name

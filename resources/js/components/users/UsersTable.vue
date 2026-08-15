@@ -1,31 +1,34 @@
 <template>
-    <Table>
-        <TableHeader>
-            <TableRow>
-                <TableHead>User Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead class="text-right">Action</TableHead>
-            </TableRow>
-        </TableHeader>
-        <TableBody>
-            <TableRow v-for="user in users" :key="user.id">
-                <TableCell class="font-medium">{{ user.name }}</TableCell>
-                <TableCell>{{ user.email }}</TableCell>
-                <TableCell>{{ user.role }}</TableCell>
-                <TableCell>
-                    <CustomSwitch :checked="user.status === 'active'" @update:checked="(checked) => handleToggle(user, checked)" />
-                </TableCell>
-                <TableCell class="flex items-center justify-end text-right">
-                    <!-- Edit User -->
-                    <EditUserDialog :user="user" />
-                    <!-- Delete User -->
-                    <DeleteUserDialog :user="user" />
-                </TableCell>
-            </TableRow>
-        </TableBody>
-    </Table>
+    <div class="overflow-hidden rounded-lg border">
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>User Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead class="text-right">Action</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <TableRow v-for="user in users" :key="user.id">
+                    <TableCell class="font-medium">{{ user.name }}</TableCell>
+                    <TableCell>{{ user.email }}</TableCell>
+                    <TableCell>{{ user.role }}</TableCell>
+                    <TableCell>
+                        <CustomSwitch :checked="user.status === 'active'" @update:checked="(checked) => handleToggle(user, checked)" />
+                    </TableCell>
+                    <TableCell class="flex items-center justify-end text-right">
+                        <!-- Edit User -->
+                        <EditUserDialog :user="user" />
+                        <!-- Delete User -->
+                        <DeleteUserDialog :user="user" />
+                    </TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
+    </div>
+    
 </template>
 
 <script setup lang="ts">
