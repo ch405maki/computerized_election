@@ -20,7 +20,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { toTypedSchema } from '@vee-validate/zod';
 import axios from 'axios';
-import { ArrowDownWideNarrow, ArrowUpDown, ArrowUpWideNarrow, Trash, FilePenLine } from 'lucide-vue-next';
+import { ArrowDown, ArrowUpDown, ArrowUp, Trash, FilePenLine } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useToast } from 'vue-toastification';
 import * as z from 'zod';
@@ -236,14 +236,14 @@ const submitForm = async () => {
                                 <TableHead
                                     v-for="col in tableColumns"
                                     :key="col.key"
-                                    class="cursor-pointer select-none transition-colors hover:bg-muted/50"
+                                    class="cursor-pointer select-none transition-colors"
                                     @click="sortBy(col.key)"
                                 >
                                     <div class="flex items-center justify-center gap-1.5">
                                         {{ col.label }}
-                                        <ArrowDownWideNarrow v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4" />
-                                        <ArrowUpWideNarrow v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4" />
-                                        <ArrowUpDown v-else class="h-4 w-4 text-muted-foreground opacity-50" />
+                                        <ArrowDown v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4 text-white" />
+                                        <ArrowUp v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4 text-white" />
+                                        <ArrowUpDown v-else class="h-4 w-4 text-white" />
                                     </div>
                                 </TableHead>
                                 <TableHead class="text-right pr-6">Actions</TableHead>

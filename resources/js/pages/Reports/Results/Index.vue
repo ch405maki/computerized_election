@@ -111,7 +111,7 @@ function submitPassword() {
                                 <Button
                                     v-if="election.status === 'completed'"
                                     @click="openPasswordDialog(election.id)"
-                                    class="inline-flex items-center rounded bg-zinc-800 px-4 py-2 text-white transition-colors hover:bg-zinc-700"
+                                    class="inline-flex items-center rounded px-4 py-2"
                                 >
                                     <ScrollText class="mr-2 h-4 w-4" />
                                     View Results

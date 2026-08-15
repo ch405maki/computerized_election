@@ -157,13 +157,13 @@ const deleteCandidate = async () => {
                             v-for="col in tableColumns"
                             :key="col.key"
                             @click="sortBy(col.key)"
-                            class="cursor-pointer select-none transition-colors hover:bg-muted/50"
+                            class="cursor-pointer select-none transition-colors"
                         >
                             <div class="flex items-center gap-1">
                                 {{ col.label }}
-                                <ArrowUp v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4" />
-                                <ArrowDown v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4" />
-                                <ArrowUpDown v-else class="h-4 w-4 text-muted-foreground/50" />
+                                <ArrowUp v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4 text-white" />
+                                <ArrowDown v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4 text-white" />
+                                <ArrowUpDown v-else class="h-4 w-4 text-white" />
                             </div>
                         </TableHead>
                         <TableHead v-if="canDeleteCandidate" class="text-right">Actions</TableHead>

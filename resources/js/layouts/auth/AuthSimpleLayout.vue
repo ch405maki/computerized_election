@@ -14,8 +14,16 @@ defineProps<{
             <div class="flex flex-col gap-8">
                 <div class="flex flex-col items-center gap-4">
                     <Link :href="route('home')" class="flex flex-col items-center gap-2 font-medium">
-                        <div class="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                            <AppLogoIcon class="size-9 fill-current text-[var(--foreground)] dark:text-white" />
+                        <!-- Removed w-9, added w-auto and gap-3 to place them side-by-side -->
+                        <div class="mb-1 flex h-9 w-auto items-center justify-center gap-3 rounded-md">
+                            
+                            <AppLogoIcon class="size-9 fill-current text-[var(--foreground)] dark:text-white" />                            
+                            <!-- Second Logo -->
+                            <img 
+                                src="/images/logo/comelec-logo.jpg" 
+                                alt="Second Logo" 
+                                class="size-9 rounded-full object-cover" 
+                            />                            
                         </div>
                         <span class="sr-only">{{ title }}</span>
                     </Link>

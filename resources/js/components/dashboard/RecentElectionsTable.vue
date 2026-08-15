@@ -24,36 +24,38 @@ defineProps<{
             <CardTitle>Recent Elections</CardTitle>
         </CardHeader>
         <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Election</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Period</TableHead>
-                        <TableHead>Total Votes</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    <TableRow v-for="election in elections" :key="election.id">
-                        <TableCell class="font-medium">{{ election.name }}</TableCell>
-                        <TableCell>
-                            <Badge
-                                :variant="
-                                    getElectionStatus(election) === 'active'
-                                        ? 'default'
-                                        : getElectionStatus(election) === 'upcoming'
-                                        ? 'secondary'
-                                        : 'outline'
-                                "
-                            >
-                                {{ getElectionStatus(election) }}
-                            </Badge>
-                        </TableCell>
-                        <TableCell>{{ formatDate(election.start_date) }} to {{ formatDate(election.end_date) }}</TableCell>
-                        <TableCell>{{ election.votes_count }}</TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
+            <div class="overflow-hidden rounded-lg border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Election</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Period</TableHead>
+                            <TableHead>Total Votes</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="election in elections" :key="election.id">
+                            <TableCell class="font-medium">{{ election.name }}</TableCell>
+                            <TableCell>
+                                <Badge
+                                    :variant="
+                                        getElectionStatus(election) === 'active'
+                                            ? 'default'
+                                            : getElectionStatus(election) === 'upcoming'
+                                            ? 'secondary'
+                                            : 'outline'
+                                    "
+                                >
+                                    {{ getElectionStatus(election) }}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>{{ formatDate(election.start_date) }} to {{ formatDate(election.end_date) }}</TableCell>
+                            <TableCell>{{ election.votes_count }}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </div>
         </CardContent>
     </Card>
 </template>

@@ -48,40 +48,43 @@ const updateLocalList = (updatedVoter: Voter) => {
 </script>
 
 <template>
-    <Table>
-        <TableHeader>
-            <TableRow>
-                <TableHead>Student Number</TableHead>
-                <TableHead>Full Name</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Sex</TableHead>
-                <TableHead v-if="hasAnyActionPermission" class="text-right">Actions</TableHead>
-            </TableRow>
-        </TableHeader>
-
-        <TableBody>
-            <template v-if="localVoters.length > 0">
-                <TableRow v-for="voter in localVoters" :key="voter.id">
-                    <TableCell class="font-medium">{{ voter.student_number }}</TableCell>
-                    <TableCell>{{ voter.full_name }}</TableCell>
-                    <TableCell>{{ voter.student_year }}</TableCell>
-                    <TableCell>{{ voter.sex }}</TableCell>
-
-                    <TableCell v-if="hasAnyActionPermission" class="flex items-center justify-end space-x-2 text-right">
-                        <Button v-if="canEdit" variant="outline" size="sm" @click="editingVoter = voter">
-                            <FilePenLine class="h-4 w-4" />
-                        </Button>
-
-                        <DeleteVoterDialog v-if="canDelete" :voter="voter" />
-                    </TableCell>
+    <div class="overflow-hidden rounded-lg border">
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Student Number</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Year</TableHead>
+                    <TableHead>Sex</TableHead>
+                    <TableHead v-if="hasAnyActionPermission" class="text-right">Actions</TableHead>
                 </TableRow>
-            </template>
+            </TableHeader>
 
-            <TableRow v-else>
-                <TableCell :colspan="hasAnyActionPermission ? 5 : 4" class="py-4 text-center text-muted-foreground"> No voters found </TableCell>
-            </TableRow>
-        </TableBody>
-    </Table>
+            <TableBody>
+                <template v-if="localVoters.length > 0">
+                    <TableRow v-for="voter in localVoters" :key="voter.id">
+                        <TableCell class="font-medium">{{ voter.student_number }}</TableCell>
+                        <TableCell>{{ voter.full_name }}</TableCell>
+                        <TableCell>{{ voter.student_year }}</TableCell>
+                        <TableCell>{{ voter.sex }}</TableCell>
+
+                        <TableCell v-if="hasAnyActionPermission" class="flex items-center justify-end space-x-2 text-right">
+                            <Button v-if="canEdit" variant="outline" size="sm" @click="editingVoter = voter">
+                                <FilePenLine class="h-4 w-4" />
+                            </Button>
+
+                            <DeleteVoterDialog v-if="canDelete" :voter="voter" />
+                        </TableCell>
+                    </TableRow>
+                </template>
+
+                <TableRow v-else>
+                    <TableCell :colspan="hasAnyActionPermission ? 5 : 4" class="py-4 text-center text-muted-foreground"> No voters found </TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
+    </div>
+    
 
     <VoterEditSheet v-if="editingVoter" :voter="editingVoter" @close="editingVoter = null" @updated="updateLocalList" />
 </template>
