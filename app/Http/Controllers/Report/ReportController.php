@@ -98,7 +98,7 @@ class ReportController extends Controller
     public function uploadSignature(Request $request)
     {
         $request->validate([
-            'signature' => ['required', 'image', 'mimes:png', 'max:2048'],
+            'signature' => ['required', 'image', 'mimes:png,bmp,jpg,jpeg', 'max:2048'],
         ]);
 
         $user = $request->user();

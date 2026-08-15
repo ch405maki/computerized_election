@@ -19,8 +19,9 @@
                         <CustomSwitch :checked="user.status === 'active'" @update:checked="(checked) => handleToggle(user, checked)" />
                     </TableCell>
                     <TableCell class="flex items-center justify-end text-right">
-                        <!-- Edit User -->
-                        <EditUserDialog :user="user" />
+                        <!-- Edit User: Hidden if the user's role is admin -->
+                        <EditUserDialog v-if="user.role.toLowerCase() !== 'admin'" :user="user" />
+                        
                         <!-- Delete User -->
                         <DeleteUserDialog :user="user" />
                     </TableCell>
@@ -28,7 +29,6 @@
             </TableBody>
         </Table>
     </div>
-    
 </template>
 
 <script setup lang="ts">
