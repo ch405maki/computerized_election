@@ -203,14 +203,14 @@ export async function exportElectionResultsPdf(
     // NEW: Render the signature image if it successfully loaded
     if (signatureBase64) {
         // Placed nicely in the gap between "Prepared by:" and the drawn line
-        doc.addImage(signatureBase64, 'PNG', rightX + 3, startY + 11, 40, 18);
+        doc.addImage(signatureBase64, 'PNG', rightX + 3, startY + 11, 30, 13);
     }
 
     doc.setFont('helvetica', 'bold');
     
     // NEW: Replaced hardcoded 'ADMINISTRATOR' with dynamically centered user name
     const finalName = userName.toUpperCase();
-    doc.text(finalName, rightX + 23, startY + 35, { align: 'center' });
+    doc.text(finalName, rightX + 23, startY + 30, { align: 'center' });
 
     const safeFilename = `${election.name.replace(/\s+/g, ' ')}-RESULTS.pdf`;
     doc.save(safeFilename);
