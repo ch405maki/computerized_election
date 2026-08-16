@@ -4,11 +4,9 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 use App\Http\Controllers\Users\UserController;
-use App\Http\Controllers\Voter\VoterController;
-use App\Http\Controllers\Candidate\CandidateController;
-use App\Http\Controllers\Candidate\PositionController;
+use App\Http\Controllers\Voter\{VoterController, VoterStatusController};
+use App\Http\Controllers\Candidate\{CandidateController, PositionController};
 use App\Http\Controllers\Vote\VoteController;
-use App\Http\Controllers\Voter\VoterStatusController;
 use App\Http\Controllers\Log\LogController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Election\ElectionController;
