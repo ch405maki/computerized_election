@@ -89,6 +89,16 @@ const submit = () => {
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
                     Log in
                 </Button>
+
+                <div className="flex justify-center items-center text-sm text-muted-foreground">
+                            Don't have an account? Please contact
+                            <img
+                                src="/images/logo/itc-logo.png"
+                                className="mx-2 inline-block h-4 w-4 rounded-xs"
+                                alt="itc logo"
+                            />
+                            I.T.Center
+                </div>
             </div>
             <!--
                 <div class="text-center text-sm text-muted-foreground">
