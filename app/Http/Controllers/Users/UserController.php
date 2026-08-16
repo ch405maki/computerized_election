@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\Users;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\{Request, JsonResponse};
 use App\Imports\UsersImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
@@ -85,10 +84,18 @@ class UserController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users,email,' . $id, 
-                'role' => 'required|in:admin,user', // Restricted to admin and user
+                'password' => 'nullable|string|min:8', // Validate password if provided
+                'role' => 'required|in:admin,user', 
                 'status' => 'required|string|in:active,inactive',
                 'permissions' => 'nullable|array',
             ]);
+
+            // If a new password was provided, hash it. Otherwise, remove it from the array so we don't overwrite it with null.
+            if (!empty($validated['password'])) {
+                $validated['password'] = bcrypt($validated['password']);
+            } else {
+                unset($validated['password']);
+            }
 
             $user->update($validated);
 
