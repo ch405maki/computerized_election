@@ -116,7 +116,7 @@ const deleteCandidate = async () => {
     isDeleting.value = true;
 
     try {
-        await axios.post('/election/verify-password', {
+        await axios.post('/elections/verify-password', {
             password: deletePassword.value,
         });
 
