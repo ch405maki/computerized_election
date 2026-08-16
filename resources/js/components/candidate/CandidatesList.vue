@@ -16,6 +16,7 @@ import axios from 'axios';
 import { ArrowDown, ArrowUp, ArrowUpDown, Trash } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useToast } from 'vue-toastification';
+import { router } from '@inertiajs/vue3';
 
 const props = defineProps<{
     candidates: Array<{
@@ -128,10 +129,8 @@ const deleteCandidate = async () => {
 
         toast.success('Candidate deleted successfully!');
         showPasswordDialog.value = false;
+        router.reload({ only: ['candidates'] });
 
-        setTimeout(() => {
-            window.location.reload();
-        }, 2000);
     } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 422) {
             toast.error('Incorrect admin password.');

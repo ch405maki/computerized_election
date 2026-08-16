@@ -13,13 +13,14 @@ use App\Http\Controllers\Log\LogController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Election\ElectionController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Middleware\PreventBackHistory;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-// Voting page (restricted to logged-in voters via 'voter' guard)
-Route::middleware('auth:voter')->group(function () {
+// Voting page (restricted to logged-in voters AND prevents back button caching)
+Route::middleware(['auth:voter', PreventBackHistory::class])->group(function () {
     Route::get('/vote', [VoteController::class, 'index'])->name('vote.index');
     Route::get('/voting', [VoteController::class, 'votingPage'])->name('vote.voting');
 });
