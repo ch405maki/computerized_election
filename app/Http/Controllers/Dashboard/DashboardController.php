@@ -34,7 +34,7 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'stats' => [
-                'total_elections' => Election::withTrashed()->count(),
+                'total_elections' => Election::count(),
 
                 'active_elections' => Election::where('status', 'active')->count(),
                 
