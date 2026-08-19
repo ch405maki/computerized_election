@@ -60,10 +60,15 @@ const baseMainNavItems = ref<DropdownNavItem[]>([
             { title: 'Voter Turnout', href: '/reports/log', icon: Logs },
         ],
     },
+    {
+        title: 'Election', href: '#', icon: Cog, isOpen: false, permissionKey: 'showElectionTab',
+        children: [
+            { title: 'Elections List', href: '/elections', icon: List },
+        ],
+    },
 ]);
 
 const baseConfigNavItems = ref<DropdownNavItem[]>([
-    { title: 'Election', href: '/elections', icon: Cog, permissionKey: 'showElectionTab' },
     {
         title: 'User Management', href: '#', icon: UserRoundCog, isOpen: false,
         children: [{ title: 'Users', href: '/users', icon: UsersRound }],

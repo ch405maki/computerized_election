@@ -11,12 +11,17 @@ import { useToast } from 'vue-toastification';
 import * as z from 'zod';
 
 // Types
+interface VotingThreshold {
+    required_percentage: number | string | null;
+}
+
 interface Election {
     id: number;
     name: string;
     status: 'active' | 'completed' | 'upcoming';
     start_date: string;
     end_date: string;
+    voting_threshold?: VotingThreshold;
 }
 
 interface ElectionUpdatePayload {
@@ -24,6 +29,7 @@ interface ElectionUpdatePayload {
     status?: 'active' | 'completed' | 'upcoming';
     start_date?: string;
     end_date?: string;
+    required_percentage?: number | null;
 }
 
 interface ApiResponse<T> {
@@ -38,11 +44,9 @@ interface ElectionResponse extends ApiResponse<Election> {}
 const toast = useToast();
 const isLoading = ref(false);
 
-// Get CSRF token safely with type assertion
 const csrfTokenMeta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
 const csrfToken = csrfTokenMeta?.content ?? '';
 
-// Props with explicit type
 const props = defineProps<{
     election: Election;
 }>();
@@ -52,72 +56,75 @@ const emit = defineEmits<{
     (e: 'updated', election: Election): void;
 }>();
 
-// Enhanced validation schema with date validation
+// Helpers
+const emptyToNull = (val: unknown) => (val === '' || val === null ? null : Number(val));
+
+// Formats dates safely to local YYYY-MM-DD
+const formatDate = (dateInput?: string | Date | null): string => {
+    if (!dateInput) return '';
+    const d = new Date(dateInput);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const todayDateString = formatDate(new Date());
+
+const getInitialFormData = (election: Election): ElectionUpdatePayload => ({
+    name: election.name,
+    status: election.status,
+    start_date: formatDate(election.start_date),
+    end_date: formatDate(election.end_date),
+    // Ensure strict number typing for accurate change comparison later
+    required_percentage: election.voting_threshold?.required_percentage ? Number(election.voting_threshold.required_percentage) : null,
+});
+
+// Computed & Validation
+const minEndDate = computed(() => formData.value.start_date || todayDateString);
+
 const dateSchema = z
     .string()
     .min(1, 'Date is required')
-    .refine((val) => !isNaN(Date.parse(val)), {
-        message: 'Invalid date format',
-    });
-
-const date = new Date();
-const todayDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-const minEndDate = computed(() => {
-    return formData.value.start_date ? formData.value.start_date : todayDateString;
-});
+    .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid date format' });
 
 const formSchema = toTypedSchema(
-    z
-        .object({
-            name: z.string().min(2, 'Name must be at least 2 characters').max(255).optional(),
-            status: z.enum(['active', 'completed', 'upcoming']).optional(),
-            start_date: dateSchema.optional(),
-            end_date: dateSchema.optional(),
-        })
-        .refine(
-            (data) => {
-                // Only validate if both dates are present
-                if (data.start_date && data.end_date) {
-                    return new Date(data.end_date) >= new Date(data.start_date);
-                }
-                return true;
-            },
-            {
-                message: 'End date cannot be earlier than start date',
-                path: ['end_date'],
-            },
-        ),
+    z.object({
+        name: z.string().min(2, 'Name must be at least 2 characters').max(255).optional(),
+        status: z.enum(['active', 'completed', 'upcoming']).optional(),
+        start_date: dateSchema.optional(),
+        end_date: dateSchema.optional(),
+        required_percentage: z.preprocess(emptyToNull, z.number().min(0, 'Min is 0').max(100, 'Max is 100').nullable().optional()),
+    }).refine(
+        (data) => !(data.start_date && data.end_date) || new Date(data.end_date) >= new Date(data.start_date),
+        { message: 'End date cannot be earlier than start date', path: ['end_date'] }
+    ),
 );
 
-const currentDate = (dateString: string) => {
-    if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
-};
+// State Initialization & Syncing
+const formData = ref<ElectionUpdatePayload>(getInitialFormData(props.election));
 
-// Form data with explicit type and safe initialization
-const formData = ref<ElectionUpdatePayload>({
-    name: props.election.name,
-    status: props.election.status,
-    start_date: currentDate(props.election.start_date),
-    end_date: currentDate(props.election.end_date),
-});
-
-// Ensures the form updates if the parent passes a different election
 watch(
     () => props.election,
     (newElection) => {
-        formData.value = {
-            name: newElection.name,
-            status: newElection.status,
-            start_date: currentDate(newElection.start_date),
-            end_date: currentDate(newElection.end_date),
-        };
+        formData.value = getInitialFormData(newElection);
     },
     { deep: true },
 );
 
-// Improved update function with proper typing
+// Actions
+const getChangedFields = (): Partial<ElectionUpdatePayload> => {
+    const payload: Partial<ElectionUpdatePayload> = {};
+    const originalData = getInitialFormData(props.election);
+
+    // Dynamically check for changes instead of hardcoding each property
+    for (const [key, value] of Object.entries(formData.value)) {
+        const k = key as keyof ElectionUpdatePayload;
+        if (value !== originalData[k]) {
+            payload[k] = value as any;
+        }
+    }
+
+    return payload;
+};
+
 const updateElection = async () => {
     const payload = getChangedFields();
 
@@ -148,58 +155,34 @@ const updateElection = async () => {
     }
 };
 
-// Type-safe changed fields detection
-const getChangedFields = (): ElectionUpdatePayload => {
-    return (Object.keys(formData.value) as Array<keyof ElectionUpdatePayload>).reduce((acc, key) => {
-        const formValue = formData.value[key];
-        const propValue = props.election[key];
-
-        if (JSON.stringify(formValue) !== JSON.stringify(propValue)) {
-            // For dates, ensure consistent formatting
-            if ((key === 'start_date' || key === 'end_date') && formValue) {
-                acc[key] = new Date(formValue).toISOString().split('T')[0];
-            } else {
-                acc[key] = formValue as 'active' | 'completed' | 'upcoming';
-            }
-        }
-        return acc;
-    }, {} as ElectionUpdatePayload);
-};
-
-// Comprehensive error handling
+// Error Handling
 const handleUpdateError = (error: unknown) => {
     if (axios.isAxiosError<{ message?: string; errors?: Record<string, string[]> }>(error)) {
         if (error.response?.status === 422 && error.response.data.errors) {
-            handleValidationErrors(error.response.data.errors);
+            Object.entries(error.response.data.errors).forEach(([field, messages]) => {
+                messages.forEach((msg) => toast.error(`${field}: ${msg}`));
+            });
         } else {
             toast.error(error.response?.data?.message || 'Failed to update election');
         }
-    } else if (error instanceof Error) {
-        toast.error(error.message || 'An unexpected error occurred');
-        console.error('Update error:', error);
     } else {
-        toast.error('An unexpected error occurred');
-        console.error('Unknown error:', error);
+        toast.error((error as Error).message || 'An unexpected error occurred');
+        console.error('Update error:', error);
     }
-};
-
-// Validation error handler
-const handleValidationErrors = (errors: Record<string, string[]>) => {
-    Object.entries(errors).forEach(([field, messages]) => {
-        messages.forEach((message) => toast.error(`${field}: ${message}`));
-    });
 };
 </script>
 
 <template>
     <Sheet defaultOpen @update:open="(val) => !val && $emit('close')">
-        <SheetContent side="right" class="w-full sm:max-w-md">
+        <SheetContent side="right" class="w-full sm:max-w-md overflow-y-auto">
             <SheetHeader>
                 <SheetTitle>Edit Election</SheetTitle>
                 <SheetDescription> Make changes to the election here. Click save when you're done. </SheetDescription>
             </SheetHeader>
 
             <Form :validation-schema="formSchema" @submit="updateElection" class="mt-4 space-y-6">
+                
+                <!-- Main fields -->
                 <FormField v-slot="{ componentField }" name="name">
                     <FormItem>
                         <FormLabel>Election Name</FormLabel>
@@ -229,43 +212,58 @@ const handleValidationErrors = (errors: Record<string, string[]>) => {
                     </FormItem>
                 </FormField>
 
-                <FormField v-slot="{ componentField }" name="start_date">
-                    <FormItem>
-                        <FormLabel>Start Date</FormLabel>
-                        <FormControl>
-                            <Input type="date" v-bind="componentField" v-model="formData.start_date" :min="todayDateString" />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                </FormField>
+                <div class="grid grid-cols-2 gap-4">
+                    <FormField v-slot="{ componentField }" name="start_date">
+                        <FormItem>
+                            <FormLabel>Start Date</FormLabel>
+                            <FormControl>
+                                <Input type="date" v-bind="componentField" v-model="formData.start_date" :min="todayDateString" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    </FormField>
 
-                <FormField v-slot="{ componentField }" name="end_date">
-                    <FormItem>
-                        <FormLabel>End Date</FormLabel>
-                        <FormControl>
-                            <Input type="date" v-bind="componentField" v-model="formData.end_date" :min="minEndDate" />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                </FormField>
+                    <FormField v-slot="{ componentField }" name="end_date">
+                        <FormItem>
+                            <FormLabel>End Date</FormLabel>
+                            <FormControl>
+                                <Input type="date" v-bind="componentField" v-model="formData.end_date" :min="minEndDate" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    </FormField>
+                </div>
 
-                <div class="flex justify-end gap-4 pt-4">
+                <!-- Threshold fields -->
+                <div class="border-t pt-4 space-y-4">
+                    <h3 class="font-medium text-sm text-muted-foreground">Winning Thresholds (Optional)</h3>
+                    
+                    <FormField v-slot="{ componentField }" name="required_percentage">
+                        <FormItem>
+                            <FormLabel>Required Percentage (%)</FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="e.g., 50.01"
+                                    v-bind="componentField"
+                                    :model-value="formData.required_percentage ?? undefined"
+                                    @update:model-value="formData.required_percentage = $event === '' ? null : Number($event)"
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    </FormField>
+                </div>
+
+                <div class="flex justify-end gap-4 pt-4 pb-8">
                     <Button type="button" variant="outline" @click="$emit('close')"> Cancel </Button>
                     <Button type="submit" :disabled="isLoading">
                         <span v-if="!isLoading">Save Changes</span>
                         <span v-else>
-                            <svg
-                                class="-ml-1 mr-2 inline h-4 w-4 animate-spin text-white"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
+                            <svg class="-ml-1 mr-2 inline h-4 w-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path
-                                    class="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                             Saving...
                         </span>
