@@ -3,11 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Models\Election;
-use App\Models\Log;
-use App\Models\User;
-use App\Models\Voter;
-use App\Models\Vote;
+use App\Models\{Election, Log, User, Voter, Vote};
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,12 +26,12 @@ class DashboardController extends Controller
             }
         ])->latest()->get();
 
-        // 1. Fetch the active election with its voting threshold
+        // Fetch the active election with its voting threshold
         $activeElection = Election::with('votingThreshold')
             ->where('status', 'active')
             ->first();
 
-        // 2. Compute the threshold data
+        // Compute the threshold data
         $voteThreshold = null;
         if ($activeElection?->votingThreshold && $activeElection->votingThreshold->required_percentage !== null) {
             $percentage = (float) $activeElection->votingThreshold->required_percentage;

@@ -13,7 +13,6 @@ interface Election {
 
 defineProps<{
     elections: Election[];
-    getElectionStatus: (election: { start_date: string; end_date: string }) => string;
     formatDate: (dateString: string) => string;
 }>();
 </script>
@@ -29,27 +28,13 @@ defineProps<{
                     <TableHeader>
                         <TableRow>
                             <TableHead>Election</TableHead>
-                            <TableHead>Status</TableHead>
                             <TableHead>Period</TableHead>
                             <TableHead>Total Votes</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         <TableRow v-for="election in elections" :key="election.id">
-                            <TableCell class="font-medium">{{ election.name }}</TableCell>
-                            <TableCell>
-                                <Badge
-                                    :variant="
-                                        getElectionStatus(election) === 'active'
-                                            ? 'default'
-                                            : getElectionStatus(election) === 'upcoming'
-                                            ? 'secondary'
-                                            : 'outline'
-                                    "
-                                >
-                                    {{ getElectionStatus(election) }}
-                                </Badge>
-                            </TableCell>
+                            <TableCell>{{ election.name }}</TableCell>
                             <TableCell>{{ formatDate(election.start_date) }} to {{ formatDate(election.end_date) }}</TableCell>
                             <TableCell>{{ election.votes_count }}</TableCell>
                         </TableRow>
