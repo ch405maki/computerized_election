@@ -32,6 +32,14 @@ const formSchema = toTypedSchema(
         status: z.enum(['active', 'completed', 'upcoming']),
         start_date: z.string().min(1, 'Start date is required'),
         end_date: z.string().min(1, 'End date is required'),
+        // Return undefined for empty values
+        required_percentage: z.preprocess(
+            (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+            z.number()
+                .min(0, 'Percentage cannot be less than 0')
+                .max(100, 'Percentage cannot exceed 100')
+                .optional() // Use optional instead of nullable
+        ),
     }),
 );
 
@@ -40,6 +48,8 @@ const formData = ref({
     status: 'upcoming' as 'active' | 'completed' | 'upcoming',
     start_date: '',
     end_date: '',
+    // Change from null to undefined
+    required_percentage: undefined as number | undefined, 
 });
 
 const date = new Date();
@@ -64,6 +74,7 @@ const submitElection = async () => {
             status: formData.value.status,
             start_date: startDate.value,
             end_date: endDate.value,
+            required_percentage: formData.value.required_percentage,
         };
 
         const response = await axios.post('/api/elections', payload, {
@@ -93,6 +104,7 @@ const resetForm = () => {
         status: 'upcoming',
         start_date: '',
         end_date: '',
+        required_percentage: undefined, 
     };
     startDate.value = '';
     endDate.value = '';
@@ -174,6 +186,16 @@ const handleError = (error: unknown) => {
                             <FormLabel>End Date</FormLabel>
                             <FormControl>
                                 <Input type="date" v-bind="componentField" v-model="endDate" :min="minEndDate" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    </FormField>
+                    
+                    <FormField v-slot="{ componentField }" name="required_percentage">
+                        <FormItem>
+                            <FormLabel>Voting Threshold % (Optional)</FormLabel>
+                            <FormControl>
+                                <Input type="number" step="0.01" min="0" max="100" placeholder="e.g., 50.00" v-bind="componentField" v-model="formData.required_percentage" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

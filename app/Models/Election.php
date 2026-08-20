@@ -17,13 +17,16 @@ class Election extends Model
         'end_date' => 'datetime',
     ];
 
-    // Relationship: An election has many votes
+    public function votingThreshold()
+    {
+        return $this->hasOne(VotingThreshold::class);
+    }
+
     public function votes()
     {
         return $this->hasMany(Vote::class);
     }
 
-    // Relationship: An election has many candidates
     public function candidates()
     {
         return $this->hasMany(Candidate::class);
@@ -33,5 +36,4 @@ class Election extends Model
     {
         return $this->hasMany(Position::class);
     }
-
 }

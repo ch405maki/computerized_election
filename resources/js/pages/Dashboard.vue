@@ -25,7 +25,13 @@ interface PositionVotes {
     candidates: CandidateVote[];
 }
 
+interface VoteThreshold {
+    percentage: number;
+    required_votes: number;
+}
+
 const props = defineProps<{
+    vote_threshold?: VoteThreshold | null;
     stats: {
         total_elections: number;
         active_elections: number;
@@ -91,8 +97,7 @@ const fetchVoteRanking = async () => {
 
         if (Array.isArray(data.rankings)) {
             const grouped = data.rankings.reduce((acc: Record<string, CandidateVote[]>, item: any) => {
-                
-                const isAbstain = item.candidate?.trim().toLowerCase() === 'abstain';                
+                const isAbstain = item.candidate?.trim().toLowerCase() === 'abstain';
                 const displayName = isAbstain ? 'Abstain' : (item.candidate || 'Unknown Candidate');
 
                 (acc[item.position] ||= []).push({
@@ -158,7 +163,12 @@ const toggleChart = () => (showChart.value = !showChart.value);
                 <VoteRankingTable v-if="showRanking && canShowRanking" :voteRanking="voteRanking" :isLoading="isLoading" />
 
                 <template v-if="showChart && canShowChart">
-                    <VoteRankingChart :voteRanking="voteRanking" :isLoading="isLoading" />
+                    <!-- Pass the threshold data here -->
+                    <VoteRankingChart
+                        :voteRanking="voteRanking"
+                        :isLoading="isLoading"
+                        :voteThreshold="vote_threshold"
+                    />
 
                     <ParticipationChart
                         :participationData="participation_data"

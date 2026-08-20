@@ -23,6 +23,7 @@ interface UserProp extends User {
 
 interface UserData extends User {
     permissions: Permissions;
+    password?: string; // Added optional password field
 }
 
 const props = defineProps<{ user: UserProp }>();
@@ -71,6 +72,7 @@ const userPermissions = (): UserData => {
     return {
         ...props.user,
         permissions: filteredPermissions,
+        password: '', // Initialize as empty
     };
 };
 
@@ -84,9 +86,17 @@ const openDialog = () => {
 
 // Update User
 const updateUser = async () => {
-    isSaving.value = true; // Set loading to true
+    isSaving.value = true;
     try {
-        await axios.put(`/api/users/${userData.value.id}`, userData.value);
+        // Clone the payload so we can manipulate it before sending
+        const payload = { ...userData.value };
+        
+        // Remove password from payload if it wasn't filled out
+        if (!payload.password) {
+            delete payload.password;
+        }
+
+        await axios.put(`/api/users/${payload.id}`, payload);
 
         toast.success('User updated successfully!');
         setTimeout(() => {
@@ -128,6 +138,12 @@ const updateUser = async () => {
                         <label class="form-field">
                             <span class="field-label">Email</span>
                             <input v-model="userData.email" type="email" class="input" required />
+                        </label>
+
+                        <!-- Password Field -->
+                        <label class="form-field">
+                            <span class="field-label">Password <span class="text-xs font-normal text-gray-500 dark:text-gray-400">(Leave blank to keep current)</span></span>
+                            <input v-model="userData.password" type="password" class="input" placeholder="Enter new password" />
                         </label>
 
                         <!-- Role Field -->
@@ -207,7 +223,6 @@ const updateUser = async () => {
     @apply w-full rounded-md border border-gray-300 bg-gray-100 p-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200;
 }
 
-/* Scrollbar Styles */
 .overflow-y-auto::-webkit-scrollbar {
     width: 6px;
 }

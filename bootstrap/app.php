@@ -1,15 +1,14 @@
 <?php
 
-use App\Http\Middleware\HandleAppearance;
-use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\PreventMixedAuthentication;
-use App\Http\Middleware\HandleUserRole;
-use App\Http\Middleware\HandleSuperAdminRole;
-use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\{ 
+    HandleAppearance, HandleInertiaRequests, 
+    PreventMixedAuthentication, 
+    HandleUserRole, HandleSuperAdminRole, 
+    CheckPermission, PreventBackHistory};
 use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Configuration\{Exceptions, Middleware};
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,12 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance']);
         
-        // Register middleware aliases
         $middleware->alias([
             'prevent.mixed.auth' => PreventMixedAuthentication::class,
             'admin' => HandleUserRole::class,
             'superadmin' => HandleSuperAdminRole::class,
             'permission' => CheckPermission::class,
+            'prevent-back-history' => PreventBackHistory::class,
         ]);
 
         $middleware->web(append: [
@@ -34,6 +33,12 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // 1. Where to send NOT logged in users (Voters trying to access protected routes)
+        $middleware->redirectGuestsTo(fn (Request $request) => route('home'));
+
+        // 2. Where to send ALREADY logged in users (Admins trying to access /login)
+        $middleware->redirectUsersTo(fn (Request $request) => route('dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
