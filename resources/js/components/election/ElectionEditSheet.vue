@@ -57,33 +57,42 @@ const emit = defineEmits<{
 }>();
 
 // Helpers
-const emptyToNull = (val: unknown) => (val === '' || val === null ? null : Number(val));
+// FIX 1: Safely handle `undefined` so Zod doesn't evaluate untouched inputs as `NaN`
+const emptyToNull = (val: unknown) => (val === '' || val === null || val === undefined ? null : Number(val));
 
-// Formats dates safely to local YYYY-MM-DD
-const formatDate = (dateInput?: string | Date | null): string => {
+// Formats dates safely to local YYYY-MM-DDThh:mm for datetime-local
+const formatDateTime = (dateInput?: string | Date | null): string => {
     if (!dateInput) return '';
     const d = new Date(dateInput);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (isNaN(d.getTime())) return '';
+    
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-const todayDateString = formatDate(new Date());
+const todayDateTimeString = formatDateTime(new Date());
 
 const getInitialFormData = (election: Election): ElectionUpdatePayload => ({
     name: election.name,
     status: election.status,
-    start_date: formatDate(election.start_date),
-    end_date: formatDate(election.end_date),
-    // Ensure strict number typing for accurate change comparison later
-    required_percentage: election.voting_threshold?.required_percentage ? Number(election.voting_threshold.required_percentage) : null,
+    start_date: formatDateTime(election.start_date),
+    end_date: formatDateTime(election.end_date),
+    // FIX 2: Use `!= null` instead of truthiness `?` so that an existing `0` percentage doesn't resolve to `null`
+    required_percentage: election.voting_threshold?.required_percentage != null ? Number(election.voting_threshold.required_percentage) : null,
 });
 
 // Computed & Validation
-const minEndDate = computed(() => formData.value.start_date || todayDateString);
+const minEndDate = computed(() => formData.value.start_date || todayDateTimeString);
 
 const dateSchema = z
     .string()
-    .min(1, 'Date is required')
-    .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid date format' });
+    .min(1, 'Date and time are required')
+    .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid datetime format' });
 
 const formSchema = toTypedSchema(
     z.object({
@@ -94,7 +103,7 @@ const formSchema = toTypedSchema(
         required_percentage: z.preprocess(emptyToNull, z.number().min(0, 'Min is 0').max(100, 'Max is 100').nullable().optional()),
     }).refine(
         (data) => !(data.start_date && data.end_date) || new Date(data.end_date) >= new Date(data.start_date),
-        { message: 'End date cannot be earlier than start date', path: ['end_date'] }
+        { message: 'End time cannot be earlier than start time', path: ['end_date'] }
     ),
 );
 
@@ -212,12 +221,12 @@ const handleUpdateError = (error: unknown) => {
                     </FormItem>
                 </FormField>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid gap-4">
                     <FormField v-slot="{ componentField }" name="start_date">
                         <FormItem>
-                            <FormLabel>Start Date</FormLabel>
+                            <FormLabel>Start Date & Time</FormLabel>
                             <FormControl>
-                                <Input type="date" v-bind="componentField" v-model="formData.start_date" :min="todayDateString" />
+                                <Input type="datetime-local" v-bind="componentField" v-model="formData.start_date" :min="todayDateTimeString" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -225,9 +234,9 @@ const handleUpdateError = (error: unknown) => {
 
                     <FormField v-slot="{ componentField }" name="end_date">
                         <FormItem>
-                            <FormLabel>End Date</FormLabel>
+                            <FormLabel>End Date & Time</FormLabel>
                             <FormControl>
-                                <Input type="date" v-bind="componentField" v-model="formData.end_date" :min="minEndDate" />
+                                <Input type="datetime-local" v-bind="componentField" v-model="formData.end_date" :min="minEndDate" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toTypedSchema } from '@vee-validate/zod';
 import axios from 'axios';
 import { computed, ref } from 'vue';
@@ -29,9 +28,8 @@ const endDate = ref<string>('');
 const formSchema = toTypedSchema(
     z.object({
         name: z.string().min(2, 'Name must be at least 2 characters').max(255),
-        status: z.enum(['active', 'completed', 'upcoming']),
-        start_date: z.string().min(1, 'Start date is required'),
-        end_date: z.string().min(1, 'End date is required'),
+        start_date: z.string().min(1, 'Start date and time are required'),
+        end_date: z.string().min(1, 'End date and time are required'),
         // Return undefined for empty values
         required_percentage: z.preprocess(
             (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
@@ -45,19 +43,23 @@ const formSchema = toTypedSchema(
 
 const formData = ref({
     name: '',
-    status: 'upcoming' as 'active' | 'completed' | 'upcoming',
     start_date: '',
     end_date: '',
-    // Change from null to undefined
     required_percentage: undefined as number | undefined, 
 });
 
+// Create the YYYY-MM-DDThh:mm string for datetime-local min attributes
 const date = new Date();
-const todayDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+const year = date.getFullYear();
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const day = String(date.getDate()).padStart(2, '0');
+const hours = String(date.getHours()).padStart(2, '0');
+const minutes = String(date.getMinutes()).padStart(2, '0');
+const todayDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
 
 // Ensure the end date cannot be earlier than the chosen start date (or today)
 const minEndDate = computed(() => {
-    return startDate.value ? startDate.value : todayDateString;
+    return startDate.value ? startDate.value : todayDateTimeString;
 });
 
 const submitElection = async () => {
@@ -71,7 +73,6 @@ const submitElection = async () => {
     try {
         const payload = {
             name: formData.value.name,
-            status: formData.value.status,
             start_date: startDate.value,
             end_date: endDate.value,
             required_percentage: formData.value.required_percentage,
@@ -101,7 +102,6 @@ const submitElection = async () => {
 const resetForm = () => {
     formData.value = {
         name: '',
-        status: 'upcoming',
         start_date: '',
         end_date: '',
         required_percentage: undefined, 
@@ -152,30 +152,11 @@ const handleError = (error: unknown) => {
                         </FormItem>
                     </FormField>
 
-                    <FormField v-slot="{ componentField }" name="status">
-                        <FormItem>
-                            <FormLabel>Status</FormLabel>
-                            <Select v-bind="componentField" v-model="formData.status">
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="upcoming">Upcoming</SelectItem>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    </FormField>
-
                     <FormField v-slot="{ componentField }" name="start_date">
                         <FormItem>
-                            <FormLabel>Start Date</FormLabel>
+                            <FormLabel>Start Date & Time</FormLabel>
                             <FormControl>
-                                <Input type="date" v-bind="componentField" v-model="startDate" :min="todayDateString" />
+                                <Input type="datetime-local" v-bind="componentField" v-model="startDate" :min="todayDateTimeString" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -183,9 +164,9 @@ const handleError = (error: unknown) => {
 
                     <FormField v-slot="{ componentField }" name="end_date">
                         <FormItem>
-                            <FormLabel>End Date</FormLabel>
+                            <FormLabel>End Date & Time</FormLabel>
                             <FormControl>
-                                <Input type="date" v-bind="componentField" v-model="endDate" :min="minEndDate" />
+                                <Input type="datetime-local" v-bind="componentField" v-model="endDate" :min="minEndDate" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -231,7 +212,7 @@ const handleError = (error: unknown) => {
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                 ></path>
                             </svg>
-                            Creating...
+                                Creating...
                         </span>
                     </Button>
                 </div>

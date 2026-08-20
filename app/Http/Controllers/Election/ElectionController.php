@@ -41,14 +41,17 @@ class ElectionController extends Controller
             'name' => 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
-            'status' => 'required|in:active,completed,upcoming',
-            
-            // New validation for the threshold field
             'required_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        // Create the election using only the election-specific fields
-        $election = Election::create($request->only(['name', 'start_date', 'end_date', 'status']));
+        // Merge the request data with the forced 'upcoming' status
+        $electionData = array_merge(
+            $request->only(['name', 'start_date', 'end_date']),
+            ['status' => 'upcoming']
+        );
+
+        // Create the election
+        $election = Election::create($electionData);
 
         // Check if a required_percentage was provided and create the relationship
         if ($request->filled('required_percentage')) {
@@ -72,7 +75,7 @@ class ElectionController extends Controller
             'name' => 'sometimes|string|max:255',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after:start_date',
-            'status' => 'sometimes|in:active,completed,upcoming',
+            'status' => 'sometimes|in:active,completed,upcoming', // Kept for editing purposes
             
             // Validation for threshold fields
             'required_percentage' => 'nullable|numeric|min:0|max:100',
@@ -101,12 +104,11 @@ class ElectionController extends Controller
             );
         }
 
-        // Return data matching your Vue component's expectations (response.data.data)
-        // Ensure relationship is loaded so the frontend gets the fresh threshold
+        // Return data matching your Vue component's expectations
         return response()->json([
             'message' => 'Election updated successfully.',
             'data' => $election->load('votingThreshold'),
-            'election' => $election // kept for backwards compatibility if needed elsewhere
+            'election' => $election
         ]);
     }
 
