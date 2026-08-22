@@ -43,7 +43,7 @@ class ReportController extends Controller
 
         session()->put("verified_election_{$election->id}", true);
 
-        return redirect()->route('results.show', $election->id);
+        return back();
     }
 
     public function show(Election $election)

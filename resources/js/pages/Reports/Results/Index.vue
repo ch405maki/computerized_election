@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import TitleHeader from '@/components/ui/title-header/header.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import { ScrollText, Loader2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -40,12 +40,12 @@ const formattedDate = (dateString: string) => {
 // --- Check User Permission ---
 const page = usePage<any>();
 const hasElectionResultsPermission = computed(() => {
-    // Adjust this path if your Inertia auth object is structured differently
     return page.props.auth?.user?.permissions?.showElectionResults === true;
 });
 
 // --- Dialog & Password Verification State ---
 const isDialogOpen = ref(false);
+const isLoaderOpen = ref(false);
 const selectedElectionId = ref<number | string | null>(null);
 
 const form = useForm({
@@ -62,11 +62,16 @@ function openPasswordDialog(id: number | string) {
 function submitPassword() {
     if (!selectedElectionId.value) return;
 
-    // Post to a new verification route
     form.post(route('results.verify', selectedElectionId.value), {
         preserveScroll: true,
         onSuccess: () => {
             isDialogOpen.value = false;
+            isLoaderOpen.value = true;
+
+            setTimeout(() => {
+                const targetUrl = route('results.show', selectedElectionId.value as string).toString();
+                router.get(targetUrl);
+            }, 5000);
         },
     });
 }
@@ -84,7 +89,6 @@ function submitPassword() {
                             <TableHead>Election Name</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Election Period</TableHead>
-                            <!-- Conditionally render Action header -->
                             <TableHead v-if="hasElectionResultsPermission" class="text-right">Action</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -106,7 +110,6 @@ function submitPassword() {
                                 {{ formattedDate(election.start_date) }} -
                                 {{ formattedDate(election.end_date) }}
                             </TableCell>
-                            <!-- Conditionally render Action cell -->
                             <TableCell v-if="hasElectionResultsPermission" class="text-right">
                                 <Button
                                     v-if="election.status === 'completed'"
@@ -120,7 +123,6 @@ function submitPassword() {
                             </TableCell>
                         </TableRow>
                         <TableRow v-if="elections.length === 0">
-                            <!-- Dynamically adjust colspan based on visibility of Action column -->
                             <TableCell :colspan="hasElectionResultsPermission ? 4 : 3" class="py-4 text-center text-muted-foreground">
                                 No elections found
                             </TableCell>
@@ -163,6 +165,20 @@ function submitPassword() {
                         </Button>
                     </DialogFooter>
                 </form>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog :open="isLoaderOpen">
+            <DialogContent 
+                class="sm:max-w-[425px] flex flex-col items-center justify-center p-8 gap-4"
+                @pointer-down-outside.prevent
+                @escape-keydown.prevent
+            >
+                <Loader2 class="h-16 w-16 animate-spin text-primary" />
+                <DialogTitle class="text-xl">Processing Election Results</DialogTitle>
+                <DialogDescription class="text-center">
+                    Please wait while we securely retrieve the election results. This may take a few seconds...
+                </DialogDescription>
             </DialogContent>
         </Dialog>
     </AppLayout>
