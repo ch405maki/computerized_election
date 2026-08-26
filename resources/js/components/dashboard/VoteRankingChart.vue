@@ -4,6 +4,8 @@ import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { computed, ref } from 'vue';
 import { Bar } from 'vue-chartjs';
+import { Eye, EyeOff } from 'lucide-vue-next';
+
 
 // Register ChartJS components including the annotation plugin
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, annotationPlugin);
@@ -193,6 +195,9 @@ const chartOptions = computed(() => {
                 @click="showActualNames = !showActualNames"
                 class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm transition-colors hover:bg-muted hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
+                <EyeOff v-if="showActualNames" class="h-4 w-7" />
+                <Eye v-else class="h-4 w-7" />
+
                 {{ showActualNames ? 'Hide Names' : 'Reveal Names' }}
             </button>
         </CardHeader>
