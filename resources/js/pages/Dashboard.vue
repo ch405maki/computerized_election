@@ -76,6 +76,7 @@ const hasPermission = (permission: string) => {
 
 const canShowRanking = computed(() => hasPermission('showRanking'));
 const canShowChart = computed(() => hasPermission('showChart'));
+const canShowCandidateNames = computed(() => hasPermission('showCandidateNames'));
 
 const maxVotes = computed(() => (props.participation_data.length ? Math.max(...props.participation_data.map((d) => d.votes)) : 1));
 
@@ -160,14 +161,14 @@ const toggleChart = () => (showChart.value = !showChart.value);
 
                 <StatsGrid :stats="stats" />
 
-                <VoteRankingTable v-if="showRanking && canShowRanking" :voteRanking="voteRanking" :isLoading="isLoading" />
+                <VoteRankingTable v-if="showRanking && canShowRanking" :voteRanking="voteRanking" :isLoading="isLoading" :canShowCandidateNames="canShowCandidateNames"/>
 
                 <template v-if="showChart && canShowChart">
-                    <!-- Pass the threshold data here -->
                     <VoteRankingChart
                         :voteRanking="voteRanking"
                         :isLoading="isLoading"
                         :voteThreshold="vote_threshold"
+                        :canShowCandidateNames="canShowCandidateNames"
                     />
 
                     <ParticipationChart
