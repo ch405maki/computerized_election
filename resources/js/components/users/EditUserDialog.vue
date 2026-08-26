@@ -30,11 +30,11 @@ const props = defineProps<{ user: UserProp }>();
 const toast = useToast();
 
 const permissionModules: Record<string, string[]> = {
-    Dashboard: ['showDashboardTab', 'showRanking', 'showChart'],
-    'Voter List': ['showVoterTab', 'uploadExcel', 'addVoter', 'editVoter', 'deleteVoter'],
+    Dashboard: ['showDashboardTab', 'showRanking', 'showChart', 'showCandidateNames'],
+    Voters: ['showVoterTab', 'uploadExcel', 'addVoter', 'editVoter', 'deleteVoter'],
     Candidates: ['showCandidateTab', 'addCandidate', 'deleteCandidate'],
     Reports: ['showReportsTab', 'showElectionResults'],
-    'Election': ['showElectionTab', 'createElection', 'editElection', 'deleteElection'],
+    Election: ['showElectionTab', 'createElection', 'editElection', 'deleteElection'],
 };
 
 const selectedModule = ref<string>(Object.keys(permissionModules)[0]);

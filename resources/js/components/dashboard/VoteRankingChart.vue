@@ -28,6 +28,7 @@ const props = defineProps<{
     voteRanking: PositionVotes[];
     isLoading: boolean;
     voteThreshold?: VoteThreshold | null;
+    canShowCandidateNames?: boolean;
 }>();
 
 // State for toggling actual names
@@ -188,6 +189,7 @@ const chartOptions = computed(() => {
             <CardTitle>Vote Ranking</CardTitle>
             
             <button 
+                v-if="canShowCandidateNames"
                 @click="showActualNames = !showActualNames"
                 class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm transition-colors hover:bg-muted hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
