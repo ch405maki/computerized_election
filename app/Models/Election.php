@@ -10,11 +10,20 @@ class Election extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'start_date', 'end_date', 'status'];
+    protected $fillable = [
+        'name', 
+        'start_date', 
+        'end_date', 
+        'voting_start_time', 
+        'voting_end_time', 
+        'status'
+    ];
 
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
+        'voting_start_time' => 'datetime',
+        'voting_end_time' => 'datetime',
     ];
 
     public function votingThreshold()

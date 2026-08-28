@@ -6,6 +6,7 @@ use App\Models\Election;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 use Inertia\Inertia;
 
 class ElectionController extends Controller
@@ -41,14 +42,27 @@ class ElectionController extends Controller
             'name' => 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
+            'voting_start_time' => 'nullable|date_format:H:i',
+            'voting_end_time' => 'nullable|date_format:H:i|after:voting_start_time',
             'required_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        // Merge the request data with the forced 'upcoming' status
+        // Setup base election data
         $electionData = array_merge(
             $request->only(['name', 'start_date', 'end_date']),
             ['status' => 'upcoming']
         );
+
+        // Convert strict HTML time (H:i) to a valid DateTime by prepending the start_date
+        if ($request->filled('voting_start_time')) {
+            $baseDate = Carbon::parse($request->start_date)->format('Y-m-d');
+            $electionData['voting_start_time'] = $baseDate . ' ' . $request->voting_start_time . ':00';
+        }
+
+        if ($request->filled('voting_end_time')) {
+            $baseDate = Carbon::parse($request->start_date)->format('Y-m-d');
+            $electionData['voting_end_time'] = $baseDate . ' ' . $request->voting_end_time . ':00';
+        }
 
         // Create the election
         $election = Election::create($electionData);
@@ -75,9 +89,9 @@ class ElectionController extends Controller
             'name' => 'sometimes|string|max:255',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after:start_date',
-            'status' => 'sometimes|in:active,completed,upcoming', // Kept for editing purposes
-            
-            // Validation for threshold fields
+            'voting_start_time' => 'nullable|date_format:H:i',
+            'voting_end_time' => 'nullable|date_format:H:i|after:voting_start_time',
+            'status' => 'sometimes|in:active,completed,upcoming,close', // Included 'close'
             'required_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
@@ -91,10 +105,29 @@ class ElectionController extends Controller
             }
         }
 
-        // Process main election update
-        $election->update($request->only(['name', 'start_date', 'end_date', 'status']));
+        // Gather standard fields
+        $updateData = $request->only(['name', 'start_date', 'end_date', 'status']);
 
-        // Process voting threshold update using updateOrCreate
+        // Handle daily voting times update
+        if ($request->has('voting_start_time') || $request->has('voting_end_time')) {
+            $startDateStr = $request->input('start_date', $election->start_date);
+            $baseDate = Carbon::parse($startDateStr)->format('Y-m-d');
+
+            if ($request->filled('voting_start_time')) {
+                $updateData['voting_start_time'] = $baseDate . ' ' . $request->voting_start_time . ':00';
+            } else {
+                $updateData['voting_start_time'] = null;
+            }
+
+            if ($request->filled('voting_end_time')) {
+                $updateData['voting_end_time'] = $baseDate . ' ' . $request->voting_end_time . ':00';
+            } else {
+                $updateData['voting_end_time'] = null;
+            }
+        }
+
+        $election->update($updateData);
+
         if ($request->has('required_percentage')) {
             $election->votingThreshold()->updateOrCreate(
                 ['election_id' => $election->id],
@@ -104,7 +137,6 @@ class ElectionController extends Controller
             );
         }
 
-        // Return data matching your Vue component's expectations
         return response()->json([
             'message' => 'Election updated successfully.',
             'data' => $election->load('votingThreshold'),

@@ -211,6 +211,25 @@ export async function exportElectionResultsPdf(
     const finalName = userName.toUpperCase();
     doc.text(finalName, rightX + 23, footerStartY + 20, { align: 'center' });
 
+    // =========================================================
+    // ADD PAGE NUMBERS TO ALL PAGES
+    // =========================================================
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i); // Go to each page
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        
+        // Output format: "Page X of Y"
+        const pageText = `Page ${i} of ${pageCount}`;
+        
+        // Positioned at the bottom right. 
+        // 196 matches the right-side boundary of your table lines.
+        doc.text(pageText, 196, pageHeight - 10, { align: 'right' });
+    }
+    // =========================================================
+
     const safeFilename = `${election.name.replace(/\s+/g, ' ')}-RESULTS.pdf`;
     doc.save(safeFilename);
 }
