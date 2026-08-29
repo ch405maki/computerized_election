@@ -18,8 +18,8 @@ export interface Election {
 }
 
 /* UTILS */
-export function formatDate(dateStr: string): string {
-    const date = new Date(dateStr);
+export function formatDate(dateStr: string | Date): string {
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
     return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -37,10 +37,7 @@ const getBase64ImageFromURL = (url: string, cropCircle: boolean = false): Promis
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
-            if (!ctx) {
-                reject(new Error('Failed to get 2D context'));
-                return;
-            }
+            if (!ctx) return reject(new Error('Failed to get 2D context'));
 
             if (cropCircle) {
                 const size = Math.min(img.width, img.height);
@@ -64,9 +61,20 @@ const getBase64ImageFromURL = (url: string, cropCircle: boolean = false): Promis
             resolve(canvas.toDataURL('image/png'));
         };
 
-        img.onerror = (error) => reject(error);
+        img.onerror = reject;
         img.src = url;
     });
+};
+
+// DRY Wrapper for safe image loading without repetitive try-catch blocks
+const safeLoadImage = async (url: string | null | undefined, crop: boolean = false): Promise<string | null> => {
+    if (!url) return null;
+    try {
+        return await getBase64ImageFromURL(url, crop);
+    } catch (error) {
+        console.warn(`Could not load image at ${url}`, error);
+        return null;
+    }
 };
 
 /* PDF EXPORT FOR ELECTION RESULTS */
@@ -75,79 +83,59 @@ export async function exportElectionResultsPdf(
     election: Election, 
     positions: Record<string, CandidateResult[]>,
     signatureUrl?: string | null,
-    userName: string = 'ADMINISTRATOR' 
-) {
+    userName: string = 'ADMINISTRATOR',
+    returnAsBlob: boolean = false
+): Promise<Blob | void> { 
     const doc = new jsPDF({ orientation: 'portrait' });
     const pageHeight = doc.internal.pageSize.getHeight(); 
 
-    // LOGOS & SIGNATURE FETCHING
-    let leftLogoBase64, rightLogoBase64, signatureBase64;
-    try {
-        const [left, right] = await Promise.all([
-            getBase64ImageFromURL('/images/logo/ausl.png'),
-            getBase64ImageFromURL('/images/logo/comelec-logo.jpg', true)
-        ]);
-        leftLogoBase64 = left;
-        rightLogoBase64 = right;
-    } catch (error) {
-        console.warn('Could not load one or both logos.', error);
-    }
+    // 1. ASSET LOADING (DRY Promise.all array)
+    const [leftLogo, rightLogo, signatureBase64] = await Promise.all([
+        safeLoadImage('/images/logo/ausl.png'),
+        safeLoadImage('/images/logo/comelec-logo.jpg', true),
+        safeLoadImage(signatureUrl)
+    ]);
 
-    // Fetch the signature independently so if it fails, the PDF still generates
-    if (signatureUrl) {
-        try {
-            signatureBase64 = await getBase64ImageFromURL(signatureUrl, false);
-        } catch (error) {
-            console.warn('Could not load user signature.', error);
-        }
-    }
+    // 2. HEADER
+    if (leftLogo) doc.addImage(leftLogo, 'PNG', 20, 8, 22, 22);
+    if (rightLogo) doc.addImage(rightLogo, 'PNG', 160, 8, 22, 22);
 
-    // Add Logos to Document
-    if (leftLogoBase64) doc.addImage(leftLogoBase64, 'PNG', 20, 8, 22, 22);
-    if (rightLogoBase64) doc.addImage(rightLogoBase64, 'PNG', 160, 8, 22, 22);
+    // DRY Helper for centered text
+    const addCenterText = (text: string, y: number, size: number, weight: 'normal' | 'bold' = 'normal') => {
+        doc.setFont('helvetica', weight);
+        doc.setFontSize(size);
+        doc.text(text, 105, y, { align: 'center' });
+    };
 
-    // HEADER
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text('ARELLANO LAW FOUNDATION', 105, 14, { align: 'center' });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text('Taft Ave, Cor. Menlo St. Pasay City · Tel. No. 404-3089 to 93', 105, 19, { align: 'center' });
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('ELECTION RESULTS', 105, 28, { align: 'center' });
-
-    doc.setFontSize(11);
-    doc.text(election.name, 105, 34, { align: 'center' });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    const dateRange = `${formatDate(election.start_date)} - ${formatDate(election.end_date)}`;
-    doc.text(dateRange, 105, 39, { align: 'center' });
+    addCenterText('ARELLANO LAW FOUNDATION', 14, 12, 'bold');
+    addCenterText('Taft Ave, Cor. Menlo St. Pasay City · Tel. No. 404-3089 to 93', 19, 9);
+    addCenterText('ELECTION RESULTS', 28, 14, 'bold');
+    addCenterText(election.name, 34, 11);
+    addCenterText(`${formatDate(election.start_date)} - ${formatDate(election.end_date)}`, 39, 10);
 
     let startY = 48;
 
-    // TABLES
+    // 3. TABLES
     for (const [positionName, candidates] of Object.entries(positions)) {
-        const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
-        const totalVotes = sortedCandidates.reduce((sum, c) => sum + c.votes, 0);
-
-        const tableData: any[] = sortedCandidates.map((c, idx) => [
-            (idx + 1).toString(),
-            c.candidate_name,
-            c.candidate_party || 'Independent',
-            c.votes.toString(),
-        ]);
+        let totalVotes = 0;
+        
+        // DRY: Sort and accumulate totals simultaneously
+        const tableData: any[] = [...candidates]
+            .sort((a, b) => b.votes - a.votes)
+            .map((c, idx) => {
+                totalVotes += c.votes;
+                return [
+                    (idx + 1).toString(),
+                    c.candidate_name,
+                    c.candidate_party || 'Independent',
+                    c.votes.toString()
+                ];
+            });
 
         tableData.push(['', '', 'TOTAL VOTES', totalVotes.toString()]);
 
-        const estimatedRowHeight = 9;
-        const estimatedTableHeight = (tableData.length + 1) * estimatedRowHeight;
-        const spaceNeeded = estimatedTableHeight + 15; 
-
-        if (startY > 30 && startY + spaceNeeded > pageHeight - 40) {
+        const estimatedTableHeight = (tableData.length + 1) * 9; 
+        if (startY > 30 && startY + estimatedTableHeight + 15 > pageHeight - 40) {
             doc.addPage();
             startY = 20; 
         }
@@ -170,12 +158,13 @@ export async function exportElectionResultsPdf(
                 0: { halign: 'center', cellWidth: 20 },
                 3: { halign: 'right', cellWidth: 30 },
             },
-            didParseCell: function (data) {
+            didParseCell: (data) => {
                 if (data.section === 'head' && data.column.index === 3) {
                     data.cell.styles.halign = 'right';
                 }
             },
-            willDrawCell: function (data) {
+            willDrawCell: (data) => {
+                // Style the 'TOTAL VOTES' row dynamically
                 if (data.row.index === tableData.length - 1) {
                     doc.setFont('helvetica', 'bold');
                     data.cell.styles.fontStyle = 'bold';
@@ -187,16 +176,11 @@ export async function exportElectionResultsPdf(
         startY = (doc as any).lastAutoTable.finalY + 15;
     }
 
-    // FOOTER (Always at the bottom right)
+    // 4. FOOTER (Signatures)
     const bottomMargin = 40; 
-    
-    // Check if the final table overflowed into the space we need for the footer
-    if (startY > pageHeight - bottomMargin - 10) {
-        doc.addPage();
-    }
+    if (startY > pageHeight - bottomMargin - 10) doc.addPage();
 
     const rightX = 150;
-    // Calculate a fixed Y position based on the page height, not the table's end point
     const footerStartY = pageHeight - bottomMargin;
 
     doc.setFont('helvetica', 'normal');
@@ -208,28 +192,32 @@ export async function exportElectionResultsPdf(
     }
 
     doc.setFont('helvetica', 'bold');
-    const finalName = userName.toUpperCase();
-    doc.text(finalName, rightX + 23, footerStartY + 20, { align: 'center' });
+    doc.text(userName.toUpperCase(), rightX + 23, footerStartY + 20, { align: 'center' });
 
-    // =========================================================
-    // ADD PAGE NUMBERS TO ALL PAGES
-    // =========================================================
+    // 5. GLOBAL PAGINATION & TIMESTAMPS
     const pageCount = (doc as any).internal.getNumberOfPages();
+    const now = new Date();
+    const timestampText = `System Report Generated on: ${formatDate(now)} at ${now.toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit'
+    })}`;
     
     for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i); // Go to each page
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
+        doc.setPage(i); 
         
-        // Output format: "Page X of Y"
-        const pageText = `Page ${i} of ${pageCount}`;
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(128, 128, 128); 
+        doc.setFontSize(8);
         
-        // Positioned at the bottom right. 
-        // 196 matches the right-side boundary of your table lines.
-        doc.text(pageText, 196, pageHeight - 10, { align: 'right' });
+        // Bottom Left: Timestamp
+        doc.text(timestampText, 14, pageHeight - 10);
+        // Bottom Right: Pagination
+        doc.text(`Page ${i} of ${pageCount}`, 196, pageHeight - 10, { align: 'right' });
     }
-    // =========================================================
 
-    const safeFilename = `${election.name.replace(/\s+/g, ' ')}-RESULTS.pdf`;
-    doc.save(safeFilename);
+    // 6. EXPORT
+    if (returnAsBlob) {
+        return doc.output('blob');
+    }
+
+    doc.save(`${election.name.replace(/\s+/g, ' ')}-RESULTS.pdf`);
 }
