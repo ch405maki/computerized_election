@@ -7,7 +7,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
-type ElectionStatus = 'active' | 'upcoming' | 'completed';
+type ElectionStatus = 'active' | 'upcoming' | 'completed' | 'closed';
 
 interface Election {
     id: number;

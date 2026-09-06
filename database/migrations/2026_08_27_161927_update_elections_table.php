@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('elections', function (Blueprint $table) {
-            $table->enum('status', ['active', 'completed', 'upcoming', 'close'])
+            $table->enum('status', ['active', 'completed', 'upcoming', 'closed'])
                 ->default('upcoming')
                 ->change();
 

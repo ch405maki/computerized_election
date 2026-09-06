@@ -32,17 +32,17 @@ Schedule::call(function () {
         })
         ->update(['status' => 'active']);
 
-    // 3. CLOSE: Mark elections as close if they are within the start/end date 
+    // 3. CLOSED: Mark elections as closed if they are within the start/end date 
     // BUT the current time is outside the daily scheduled hours
     Election::where('start_date', '<=', $now)
         ->where('end_date', '>=', $now)
-        ->where('status', '!=', 'close')
+        ->where('status', '!=', 'closed')
         ->whereNotNull('voting_start_time')
         ->whereNotNull('voting_end_time')
         ->where(function ($query) use ($currentTime) {
             $query->whereTime('voting_start_time', '>', $currentTime)
                 ->orWhereTime('voting_end_time', '<', $currentTime);
         })
-        ->update(['status' => 'close']);
+        ->update(['status' => 'closed']);
 
 })->everyMinute();

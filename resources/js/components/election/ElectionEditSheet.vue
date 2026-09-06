@@ -10,7 +10,7 @@ import { computed, ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
 import * as z from 'zod';
 
-// Types
+// --- Types ---
 interface VotingThreshold {
     required_percentage: number | string | null;
 }
@@ -21,6 +21,8 @@ interface Election {
     status: 'active' | 'completed' | 'upcoming';
     start_date: string;
     end_date: string;
+    voting_start_time?: string | null;
+    voting_end_time?: string | null;
     voting_threshold?: VotingThreshold;
 }
 
@@ -29,6 +31,8 @@ interface ElectionUpdatePayload {
     status?: 'active' | 'completed' | 'upcoming';
     start_date?: string;
     end_date?: string;
+    voting_start_time?: string | null;
+    voting_end_time?: string | null;
     required_percentage?: number | null;
 }
 
@@ -38,41 +42,40 @@ interface ApiResponse<T> {
     errors?: Record<string, string[]>;
 }
 
-interface ElectionResponse extends ApiResponse<Election> {}
-
-// Constants and reactive state
+// --- Constants & Emits ---
 const toast = useToast();
 const isLoading = ref(false);
+const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
-const csrfTokenMeta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
-const csrfToken = csrfTokenMeta?.content ?? '';
-
-const props = defineProps<{
-    election: Election;
-}>();
-
+const props = defineProps<{ election: Election }>();
 const emit = defineEmits<{
     (e: 'close'): void;
     (e: 'updated', election: Election): void;
 }>();
 
-// Helpers
-// FIX 1: Safely handle `undefined` so Zod doesn't evaluate untouched inputs as `NaN`
+// --- Formatting Helpers (DRY applied) ---
 const emptyToNull = (val: unknown) => (val === '' || val === null || val === undefined ? null : Number(val));
+const pad = (num: number) => String(num).padStart(2, '0');
 
-// Formats dates safely to local YYYY-MM-DDThh:mm for datetime-local
-const formatDateTime = (dateInput?: string | Date | null): string => {
-    if (!dateInput) return '';
+// Shared date validation logic
+const getValidDate = (dateInput?: string | Date | null): Date | null => {
+    if (!dateInput) return null;
     const d = new Date(dateInput);
-    if (isNaN(d.getTime())) return '';
-    
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return isNaN(d.getTime()) ? null : d;
+};
+
+// Uses shared validation and pad helper for YYYY-MM-DDThh:mm
+const formatDateTime = (dateInput?: string | Date | null): string => {
+    const d = getValidDate(dateInput);
+    if (!d) return '';
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+// Uses shared validation and pad helper for HH:MM
+const extractTime = (dateInput?: string | null): string => {
+    const d = getValidDate(dateInput);
+    if (!d) return '';
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
 const todayDateTimeString = formatDateTime(new Date());
@@ -82,17 +85,20 @@ const getInitialFormData = (election: Election): ElectionUpdatePayload => ({
     status: election.status,
     start_date: formatDateTime(election.start_date),
     end_date: formatDateTime(election.end_date),
-    // FIX 2: Use `!= null` instead of truthiness `?` so that an existing `0` percentage doesn't resolve to `null`
-    required_percentage: election.voting_threshold?.required_percentage != null ? Number(election.voting_threshold.required_percentage) : null,
+    voting_start_time: extractTime(election.voting_start_time),
+    voting_end_time: extractTime(election.voting_end_time),
+    required_percentage: election.voting_threshold?.required_percentage != null 
+        ? Number(election.voting_threshold.required_percentage) 
+        : null,
 });
 
-// Computed & Validation
+// --- Computed & Validation ---
 const minEndDate = computed(() => formData.value.start_date || todayDateTimeString);
 
 const dateSchema = z
     .string()
     .min(1, 'Date and time are required')
-    .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid datetime format' });
+    .refine((val) => getValidDate(val) !== null, { message: 'Invalid datetime format' });
 
 const formSchema = toTypedSchema(
     z.object({
@@ -100,37 +106,38 @@ const formSchema = toTypedSchema(
         status: z.enum(['active', 'completed', 'upcoming']).optional(),
         start_date: dateSchema.optional(),
         end_date: dateSchema.optional(),
+        voting_start_time: z.string().nullable().optional(),
+        voting_end_time: z.string().nullable().optional(),
         required_percentage: z.preprocess(emptyToNull, z.number().min(0, 'Min is 0').max(100, 'Max is 100').nullable().optional()),
     }).refine(
         (data) => !(data.start_date && data.end_date) || new Date(data.end_date) >= new Date(data.start_date),
         { message: 'End time cannot be earlier than start time', path: ['end_date'] }
-    ),
+    ).refine(
+        (data) => !data.voting_start_time || !data.voting_end_time || data.voting_end_time > data.voting_start_time, 
+        { message: 'Closing time must be after opening time', path: ['voting_end_time'] }
+    )
 );
 
-// State Initialization & Syncing
+// --- State Initialization & Syncing ---
 const formData = ref<ElectionUpdatePayload>(getInitialFormData(props.election));
 
-watch(
-    () => props.election,
-    (newElection) => {
-        formData.value = getInitialFormData(newElection);
-    },
-    { deep: true },
-);
+watch(() => props.election, (newElection) => {
+    formData.value = getInitialFormData(newElection);
+}, { deep: true });
 
-// Actions
+// --- Actions ---
 const getChangedFields = (): Partial<ElectionUpdatePayload> => {
     const payload: Partial<ElectionUpdatePayload> = {};
     const originalData = getInitialFormData(props.election);
 
-    // Dynamically check for changes instead of hardcoding each property
     for (const [key, value] of Object.entries(formData.value)) {
         const k = key as keyof ElectionUpdatePayload;
+        
         if (value !== originalData[k]) {
-            payload[k] = value as any;
+            // Generalize empty string logic: cleanly unset ANY cleared optional string fields
+            payload[k] = value === '' ? null : (value as any);
         }
     }
-
     return payload;
 };
 
@@ -146,7 +153,7 @@ const updateElection = async () => {
     isLoading.value = true;
 
     try {
-        const response = await axios.patch<ElectionResponse>(`/api/elections/${props.election.id}`, payload, {
+        const response = await axios.patch<ApiResponse<Election>>(`/api/elections/${props.election.id}`, payload, {
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
@@ -164,7 +171,7 @@ const updateElection = async () => {
     }
 };
 
-// Error Handling
+// --- Error Handling ---
 const handleUpdateError = (error: unknown) => {
     if (axios.isAxiosError<{ message?: string; errors?: Record<string, string[]> }>(error)) {
         if (error.response?.status === 422 && error.response.data.errors) {
@@ -176,7 +183,6 @@ const handleUpdateError = (error: unknown) => {
         }
     } else {
         toast.error((error as Error).message || 'An unexpected error occurred');
-        console.error('Update error:', error);
     }
 };
 </script>
@@ -190,7 +196,6 @@ const handleUpdateError = (error: unknown) => {
             </SheetHeader>
 
             <Form :validation-schema="formSchema" @submit="updateElection" class="mt-4 space-y-6">
-                
                 <!-- Main fields -->
                 <FormField v-slot="{ componentField }" name="name">
                     <FormItem>
@@ -237,6 +242,26 @@ const handleUpdateError = (error: unknown) => {
                             <FormLabel>End Date & Time</FormLabel>
                             <FormControl>
                                 <Input type="datetime-local" v-bind="componentField" v-model="formData.end_date" :min="minEndDate" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    </FormField>
+                    
+                    <FormField v-slot="{ componentField }" name="voting_start_time">
+                        <FormItem>
+                            <FormLabel>Daily Opening Time (Optional)</FormLabel>
+                            <FormControl>
+                                <Input type="time" v-bind="componentField" v-model="formData.voting_start_time" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    </FormField>
+
+                    <FormField v-slot="{ componentField }" name="voting_end_time">
+                        <FormItem>
+                            <FormLabel>Daily Closing Time (Optional)</FormLabel>
+                            <FormControl>
+                                <Input type="time" v-bind="componentField" v-model="formData.voting_end_time" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

@@ -91,7 +91,7 @@ class ElectionController extends Controller
             'end_date' => 'sometimes|date|after:start_date',
             'voting_start_time' => 'nullable|date_format:H:i',
             'voting_end_time' => 'nullable|date_format:H:i|after:voting_start_time',
-            'status' => 'sometimes|in:active,completed,upcoming,close', // Included 'close'
+            'status' => 'sometimes|in:active,completed,upcoming,closed',
             'required_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
