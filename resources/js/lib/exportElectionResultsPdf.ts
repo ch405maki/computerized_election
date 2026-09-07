@@ -89,37 +89,29 @@ export async function exportElectionResultsPdf(
     const doc = new jsPDF({ orientation: 'portrait' });
     const pageHeight = doc.internal.pageSize.getHeight(); 
 
-    // 1. ASSET LOADING (DRY Promise.all array)
-    const [leftLogo, rightLogo, signatureBase64] = await Promise.all([
-        safeLoadImage('/images/logo/ausl.png'),
-        safeLoadImage('/images/logo/comelec-logo.jpg', true),
+    // 1. ASSET LOADING (Replaced unused logos with the new header)
+    const [headerBase64, signatureBase64] = await Promise.all([
+        safeLoadImage('/images/logo/Header-copy.png'), // Ensure this path correctly points to your image
         safeLoadImage(signatureUrl)
     ]);
 
-    // 2. HEADER
-    if (leftLogo) doc.addImage(leftLogo, 'PNG', 20, 8, 22, 22);
-    if (rightLogo) doc.addImage(rightLogo, 'PNG', 160, 8, 22, 22);
-
-    // DRY Helper for centered text
     const addCenterText = (text: string, y: number, size: number, weight: 'normal' | 'bold' = 'normal') => {
         doc.setFont('helvetica', weight);
         doc.setFontSize(size);
         doc.text(text, 105, y, { align: 'center' });
     };
 
-    addCenterText('ARELLANO LAW FOUNDATION', 14, 12, 'bold');
-    addCenterText('Taft Ave, Cor. Menlo St. Pasay City · Tel. No. 404-3089 to 93', 19, 9);
-    addCenterText('ELECTION RESULTS', 28, 14, 'bold');
-    addCenterText(election.name, 34, 11);
-    addCenterText(`${formatDate(election.start_date)} - ${formatDate(election.end_date)}`, 39, 10);
+    // 2. TOP TEXT (Pushed down to accommodate the ~35-40px header)
+    addCenterText('ELECTION RESULTS', 55, 14, 'bold');
+    addCenterText(election.name, 61, 11);
+    addCenterText(`${formatDate(election.start_date)} - ${formatDate(election.end_date)}`, 66, 10);
 
-    let startY = 48;
+    let startY = 75; // Pushed down from 48
 
     // 3. TABLES
     for (const [positionName, candidates] of Object.entries(positions)) {
         let totalVotes = 0;
         
-        // DRY: Sort and accumulate totals simultaneously
         const tableData: any[] = [...candidates]
             .sort((a, b) => b.votes - a.votes)
             .map((c, idx) => {
@@ -135,9 +127,11 @@ export async function exportElectionResultsPdf(
         tableData.push(['', '', 'TOTAL VOTES', totalVotes.toString()]);
 
         const estimatedTableHeight = (tableData.length + 1) * 9; 
-        if (startY > 30 && startY + estimatedTableHeight + 15 > pageHeight - 40) {
+        
+        // Pushed the threshold condition down to account for the header
+        if (startY > 50 && startY + estimatedTableHeight + 15 > pageHeight - 40) {
             doc.addPage();
-            startY = 20; 
+            startY = 55; // Pushed down from 20 so it doesn't overlap the header on new pages
         }
 
         doc.setFont('helvetica', 'bold');
@@ -164,7 +158,6 @@ export async function exportElectionResultsPdf(
                 }
             },
             willDrawCell: (data) => {
-                // Style the 'TOTAL VOTES' row dynamically
                 if (data.row.index === tableData.length - 1) {
                     doc.setFont('helvetica', 'bold');
                     data.cell.styles.fontStyle = 'bold';
@@ -188,13 +181,14 @@ export async function exportElectionResultsPdf(
     doc.text('Prepared by:', rightX, footerStartY);
 
     if (signatureBase64) {
+        // Because safeLoadImage converts everything to PNG base64, we specify 'PNG' here
         doc.addImage(signatureBase64, 'PNG', rightX + 3, footerStartY + 1, 30, 13);
     }
 
     doc.setFont('helvetica', 'bold');
     doc.text(userName.toUpperCase(), rightX + 23, footerStartY + 20, { align: 'center' });
 
-    // 5. GLOBAL PAGINATION & TIMESTAMPS
+    // 5. GLOBAL PAGINATION, TIMESTAMPS, & HEADER INJECTION
     const pageCount = (doc as any).internal.getNumberOfPages();
     const now = new Date();
     const timestampText = `System Report Generated on: ${formatDate(now)} at ${now.toLocaleTimeString('en-US', {
@@ -204,6 +198,13 @@ export async function exportElectionResultsPdf(
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i); 
         
+        // Add the header to every page
+        if (headerBase64) {
+            // (Base64, Format, X, Y, Width, Height)
+            // Note: Since your getBase64ImageFromURL forces image/png, we use 'PNG'
+            doc.addImage(headerBase64, 'PNG', 10, 5, 180, 35);
+        }
+
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(128, 128, 128); 
         doc.setFontSize(8);
