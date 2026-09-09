@@ -19,7 +19,7 @@ import { FilePenLine, Trash } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useToast } from 'vue-toastification';
 
-type ElectionStatus = 'active' | 'upcoming' | 'completed';
+type ElectionStatus = 'active' | 'upcoming' | 'completed' | 'closed';
 
 interface Election {
     id: number;
@@ -195,6 +195,7 @@ const handleElectionUpdated = () => {
                                     'text-green-600': election.status === 'active',
                                     'text-blue-600': election.status === 'upcoming',
                                     'text-gray-600': election.status === 'completed',
+                                    'text-red-600': election.status === 'closed',
                                 }"
                             >
                                 {{ election.status }}
