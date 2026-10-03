@@ -160,9 +160,9 @@ const deleteCandidate = async () => {
                         >
                             <div class="flex items-center gap-1">
                                 {{ col.label }}
-                                <ArrowUp v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4 text-white" />
-                                <ArrowDown v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4 text-white" />
-                                <ArrowUpDown v-else class="h-4 w-4 text-white" />
+                                <ArrowUp v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4 text-purple-600" />
+                                <ArrowDown v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4 text-purple-600" />
+                                <ArrowUpDown v-else class="h-4 w-4 text-purple-600" />
                             </div>
                         </TableHead>
                         <TableHead v-if="canDeleteCandidate" class="text-right">Actions</TableHead>

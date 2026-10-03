@@ -367,7 +367,7 @@ onMounted(() => {
                 >
                     <div class="flex flex-col items-center gap-2">
                         <Loader2 class="h-8 w-8 animate-spin text-primary" />
-                        <span class="text-xs font-medium text-muted-foreground">Updating...</span>
+                        <span class="text-xs font-medium text-muted-foreground">Loading...</span>
                     </div>
                 </div>
                 <VotersTable :voters="voters.data" :class="{ 'opacity-40': isFetching }" />

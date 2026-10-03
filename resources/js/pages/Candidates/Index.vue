@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import CandidateForm from '@/components/candidate/CandidateForm.vue';
 import CandidatesList from '@/components/candidate/CandidatesList.vue';
+import { Input } from '@/components/ui/input';
 import TitleHeader from '@/components/ui/title-header/header.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
+import { Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{
@@ -77,13 +79,19 @@ const filteredCandidates = computed(() => {
         <div class="flex flex-col gap-4 p-4">
             <div class="flex items-center justify-between gap-2">
                 <TitleHeader title="Candidates List" description="Manage election candidates, their affiliations, and profiles." />
-                <div class="flex items-center gap-3">
-                    <input
-                        v-model="searchQuery"
-                        type="text"
-                        placeholder="Search candidates..."
-                        class="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                    />
+                
+                <div class="flex items-center space-x-2">
+                    <!-- Search Bar Updated to match Voters Page -->
+                    <div class="relative w-full max-w-xs">
+                        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+                        <Input
+                            v-model="searchQuery"
+                            type="text"
+                            placeholder="Search candidates..."
+                            class="h-9 w-full pl-9"
+                        />
+                    </div>
+                    
                     <CandidateForm
                         :positions="positions"
                         :elections="elections"
@@ -92,6 +100,7 @@ const filteredCandidates = computed(() => {
                     />
                 </div>
             </div>
+            
             <div>
                 <CandidatesList :candidates="filteredCandidates" :userPermissions="userPermissions" />
             </div>
