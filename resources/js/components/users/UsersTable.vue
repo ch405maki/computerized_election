@@ -15,12 +15,11 @@
                     <TableCell class="font-medium">{{ user.name }}</TableCell>
                     <TableCell>{{ user.email }}</TableCell>
                     <TableCell>{{ user.role }}</TableCell>
-                    <TableCell>
+                    <TableCell v-if="user.role.toLowerCase() !== 'admin'">
                         <CustomSwitch :checked="user.status === 'active'" @update:checked="(checked) => handleToggle(user, checked)" />
                     </TableCell>
-                    <TableCell class="flex items-center justify-end text-right">
-                        <!-- Edit User: Hidden if the user's role is admin -->
-                        <EditUserDialog v-if="user.role.toLowerCase() !== 'admin'" :user="user" />
+                    <TableCell v-if="user.role.toLowerCase() !== 'admin'" class="flex items-center justify-end text-right">
+                        <EditUserDialog :user="user" />
                         
                         <!-- Delete User -->
                         <DeleteUserDialog :user="user" />

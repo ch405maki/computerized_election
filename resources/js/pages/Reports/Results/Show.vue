@@ -284,7 +284,7 @@ const downloadFromPreview = async () => {
             <form v-else @submit.prevent="submitSignature">
                 <div class="grid gap-4 py-4">
                     <div class="flex flex-col gap-2">
-                        <label for="signature" class="text-sm font-medium">Signature File (PNG and BMP format only)</label>
+                        <label for="signature" class="text-sm font-medium">Signature File (PNG or BMP format only)</label>
                         <input 
                             id="signature" 
                             type="file" 

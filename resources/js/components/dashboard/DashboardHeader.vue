@@ -18,13 +18,21 @@ const emit = defineEmits(['refresh', 'toggleRanking', 'toggleChart']);
         <h1 class="text-3xl font-bold">Election Dashboard</h1>
         <div class="flex gap-2">
             <!-- Show Ranking Button -->
-            <Button v-if="canShowRanking" variant="outline" @click="emit('toggleRanking')">
+            <Button 
+                v-if="canShowRanking" 
+                :variant="showRanking ? 'default' : 'outline'" 
+                @click="emit('toggleRanking')"
+            >
                 <Table class="mr-2 h-4 w-4" />
                 {{ showRanking ? 'Hide Ranking' : 'Show Ranking' }}
             </Button>
 
             <!-- Show Chart Button -->
-            <Button v-if="canShowChart" variant="outline" @click="emit('toggleChart')">
+            <Button 
+                v-if="canShowChart" 
+                :variant="showChart ? 'default' : 'outline'" 
+                @click="emit('toggleChart')"
+            >
                 <BarChart2 class="mr-2 h-4 w-4" />
                 {{ showChart ? 'Hide Chart' : 'Show Chart' }}
             </Button>
