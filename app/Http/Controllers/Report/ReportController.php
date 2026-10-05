@@ -15,7 +15,7 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $elections = Election::withTrashed()
+        $elections = Election::where('status', 'completed')
             ->withCount('votes')
             ->latest()
             ->get()
@@ -34,7 +34,6 @@ class ReportController extends Controller
             'elections' => $elections
         ]);
     }
-
     public function verify(Request $request, Election $election)
     {
         $request->validate([

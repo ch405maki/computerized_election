@@ -87,7 +87,6 @@ function submitPassword() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Election Name</TableHead>
-                            <TableHead>Status</TableHead>
                             <TableHead>Election Period</TableHead>
                             <TableHead v-if="hasElectionResultsPermission" class="text-right">Action</TableHead>
                         </TableRow>
@@ -95,35 +94,24 @@ function submitPassword() {
                     <TableBody>
                         <TableRow v-for="election in elections" :key="election.id">
                             <TableCell class="font-medium">{{ election.name }}</TableCell>
-                            <TableCell>
-                                <span
-                                    :class="{
-                                        'text-green-600': election.status === 'completed',
-                                        'text-blue-600': election.status === 'active',
-                                        'text-gray-600': election.status === 'upcoming',
-                                    }"
-                                >
-                                    {{ election.status.charAt(0).toUpperCase() + election.status.slice(1) }}
-                                </span>
-                            </TableCell>
+                            
                             <TableCell>
                                 {{ formattedDate(election.start_date) }} -
                                 {{ formattedDate(election.end_date) }}
                             </TableCell>
                             <TableCell v-if="hasElectionResultsPermission" class="text-right">
+                                <!-- Removed the v-if="election.status === 'completed'" since the backend filters it -->
                                 <Button
-                                    v-if="election.status === 'completed'"
                                     @click="openPasswordDialog(election.id)"
                                     class="inline-flex items-center rounded px-4 py-2"
                                 >
                                     <ScrollText class="mr-2 h-4 w-4" />
                                     View Results
                                 </Button>
-                                <span v-else class="text-gray-500"> Results unavailable </span>
                             </TableCell>
                         </TableRow>
                         <TableRow v-if="elections.length === 0">
-                            <TableCell :colspan="hasElectionResultsPermission ? 4 : 3" class="py-4 text-center text-muted-foreground">
+                            <TableCell :colspan="hasElectionResultsPermission ? 3 : 2" class="py-4 text-center text-muted-foreground">
                                 No elections found
                             </TableCell>
                         </TableRow>
