@@ -35,10 +35,12 @@ const toast = useToast();
 const props = withDefaults(
     defineProps<{
         elections: Election[];
+        activeFilter?: string;
         canEdit?: boolean;
         canDelete?: boolean;
     }>(),
     {
+        activeFilter: 'all',
         canEdit: false,
         canDelete: false,
     },
@@ -184,18 +186,19 @@ const handleElectionUpdated = () => {
                     <TableRow v-if="elections.length === 0">
                         <!-- Dynamically adjust colspan based on whether the action column exists -->
                         <TableCell :colspan="canEdit || canDelete ? 5 : 4" class="py-8 text-center text-muted-foreground">
-                            No elections found
+                            No {{ activeFilter && activeFilter !== 'all' ? activeFilter + ' ' : '' }}elections found
                         </TableCell>
                     </TableRow>
                     <TableRow v-for="election in elections" :key="election.id">
                         <TableCell>{{ election.name }}</TableCell>
                         <TableCell>
                             <span
+                                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
                                 :class="{
-                                    'text-green-600': election.status === 'active',
-                                    'text-blue-600': election.status === 'upcoming',
-                                    'text-gray-600': election.status === 'completed',
-                                    'text-red-600': election.status === 'closed',
+                                    'bg-green-100 text-green-800': election.status === 'active',
+                                    'bg-blue-100 text-blue-800': election.status === 'upcoming',
+                                    'bg-gray-100 text-gray-800': election.status === 'completed',
+                                    'bg-red-100 text-red-800': election.status === 'closed',
                                 }"
                             >
                                 {{ election.status }}

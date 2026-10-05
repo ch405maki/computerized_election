@@ -15,9 +15,20 @@ class ElectionController extends Controller
     {
         // Eager load the votingThreshold relationship
         $elections = Election::with('votingThreshold')->latest()->get();
-        
+
+        $grouped = $elections->groupBy('status')->map->count()->toArray();
+
+        $statusCounts = [
+            'all' => $elections->count(),
+            'upcoming' => $grouped['upcoming'] ?? 0,
+            'active' => $grouped['active'] ?? 0,
+            'closed' => $grouped['closed'] ?? 0,
+            'completed' => $grouped['completed'] ?? 0,
+        ];
+
         return Inertia::render('Elections/Index', [
-            'elections' => $elections
+            'elections' => $elections,
+            'statusCounts' => $statusCounts,
         ]);
     }
 
