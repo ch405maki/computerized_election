@@ -241,9 +241,9 @@ const submitForm = async () => {
                                 >
                                     <div class="flex items-center justify-center gap-1.5">
                                         {{ col.label }}
-                                        <ArrowDown v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4 text-white" />
-                                        <ArrowUp v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4 text-white" />
-                                        <ArrowUpDown v-else class="h-4 w-4 text-white" />
+                                        <ArrowDown v-if="sortKey === col.key && sortOrder === 'asc'" class="h-4 w-4 text-purple-600" />
+                                        <ArrowUp v-else-if="sortKey === col.key && sortOrder === 'desc'" class="h-4 w-4 text-purple-600" />
+                                        <ArrowUpDown v-else class="h-4 w-4 text-purple-600" />
                                     </div>
                                 </TableHead>
                                 <TableHead class="text-right pr-6">Actions</TableHead>
