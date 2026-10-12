@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import InputError from '@/components/InputError.vue';
-import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -12,11 +11,10 @@ import { Card, CardContent } from '@/components/ui/card';
 
 defineProps<{
     status?: string;
-    canResetPassword: boolean;
 }>();
 
 const form = useForm({
-    email: '',
+    username: '',
     password: '',
     remember: false,
 });
@@ -33,7 +31,7 @@ const submit = () => {
 
     <div class="min-h-screen flex items-center justify-center p-4">
         <Card class="w-full max-w-md shadow-sm">      
-            <AuthBase title="AUSL Election System" description="Enter your email and password below to log in">
+            <AuthBase title="AUSL Election System" description="Enter your username and password below to log in">
                 <CardContent>
                     <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
                         {{ status }}
@@ -42,18 +40,18 @@ const submit = () => {
                     <form @submit.prevent="submit" class="flex flex-col gap-6">
                         <div class="grid gap-6">
                             <div class="grid gap-2">
-                                <Label for="email">Email Address</Label>
+                                <Label for="username">Username</Label>
                                 <Input
-                                    id="email"
-                                    type="email"
+                                    id="username"
+                                    type="text"
                                     required
                                     autofocus
                                     :tabindex="1"
-                                    autocomplete="email"
-                                    v-model="form.email"
-                                    placeholder="email@example.com"
+                                    autocomplete="username"
+                                    v-model="form.username"
+                                    placeholder="Username"
                                 />
-                                <InputError :message="form.errors.email" />
+                                <InputError :message="form.errors.username" />
                             </div>
 
                             <div class="grid gap-2">

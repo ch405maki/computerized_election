@@ -29,7 +29,7 @@ class ProfileUpdateTest extends TestCase
             ->actingAs($user)
             ->patch('/settings/profile', [
                 'name' => 'Test User',
-                'email' => 'test@example.com',
+                'username' => 'testuser',
             ]);
 
         $response
@@ -39,11 +39,10 @@ class ProfileUpdateTest extends TestCase
         $user->refresh();
 
         $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertSame('testuser', $user->username);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
+    public function test_profile_information_is_unchanged_with_the_same_username()
     {
         $user = User::factory()->create();
 
@@ -51,14 +50,14 @@ class ProfileUpdateTest extends TestCase
             ->actingAs($user)
             ->patch('/settings/profile', [
                 'name' => 'Test User',
-                'email' => $user->email,
+                'username' => $user->username,
             ]);
 
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect('/settings/profile');
 
-        $this->assertNotNull($user->refresh()->email_verified_at);
+        $this->assertSame($user->username, $user->refresh()->username);
     }
 
     public function test_user_can_delete_their_account()

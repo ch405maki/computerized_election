@@ -4,7 +4,7 @@
             <TableHeader>
                 <TableRow>
                     <TableHead>User Name</TableHead>
-                    <TableHead>Email</TableHead>
+                    <TableHead>Username</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead class="text-right">Action</TableHead>
@@ -13,7 +13,7 @@
             <TableBody>
                 <TableRow v-for="user in users" :key="user.id">
                     <TableCell class="font-medium">{{ user.name }}</TableCell>
-                    <TableCell>{{ user.email }}</TableCell>
+                    <TableCell>{{ user.username }}</TableCell>
                     <TableCell>{{ user.role }}</TableCell>
                     <TableCell v-if="user.role.toLowerCase() !== 'admin'">
                         <CustomSwitch :checked="user.status === 'active'" @update:checked="(checked) => handleToggle(user, checked)" />
@@ -43,7 +43,7 @@ import CustomSwitch from '../../components/ui/customswitch/CustomSwitch.vue';
 interface User {
     id: number;
     name: string;
-    email: string;
+    username: string;
     role: string;
     status: string;
 }
