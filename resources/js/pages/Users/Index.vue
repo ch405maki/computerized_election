@@ -53,7 +53,7 @@ import { useToast } from 'vue-toastification';
 interface User {
     id: number;
     name: string;
-    email: string;
+    username: string;
     role: string;
     status: string;
 }
@@ -77,7 +77,7 @@ const filteredUsers = computed(() => {
     return props.users.filter(
         (user) =>
             user.name.toLowerCase().includes(query) ||
-            user.email.toLowerCase().includes(query) ||
+            user.username.toLowerCase().includes(query) ||
             user.role.toLowerCase().includes(query) ||
             user.status.toLowerCase().includes(query),
     );

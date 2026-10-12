@@ -24,7 +24,7 @@ class UserController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'username' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|in:admin,user',
             'status' => 'required|in:active,inactive',
@@ -33,7 +33,7 @@ class UserController extends Controller
 
         $user = User::create([
             'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
+            'username' => $validatedData['username'],
             'password' => bcrypt($validatedData['password']),
             'role' => $validatedData['role'],
             'status' => $validatedData['status'],
@@ -83,7 +83,7 @@ class UserController extends Controller
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users,email,' . $id, 
+                'username' => 'required|string|max:255|unique:users,username,' . $id, 
                 'password' => 'nullable|string|min:8', // Validate password if provided
                 'role' => 'required|in:admin,user', 
                 'status' => 'required|string|in:active,inactive',

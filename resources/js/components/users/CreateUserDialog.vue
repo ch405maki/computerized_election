@@ -13,7 +13,7 @@
             <form @submit.prevent="createUser">
                 <div class="grid gap-4">
                     <input v-model="formData.name" type="text" placeholder="Name" class="form-input" required />
-                    <input v-model="formData.email" type="email" placeholder="Email" class="form-input" required />
+                    <input v-model="formData.username" type="text" placeholder="Username" class="form-input" required />
                     <input v-model="formData.password" type="password" placeholder="Password" class="form-input" required />
                     <select v-model="formData.role" class="form-input" required>
                         <option value="superadmin">Superadmin</option>
@@ -56,7 +56,7 @@ import { useToast } from 'vue-toastification';
 const toast = useToast();
 const isOpen = ref(false);
 const loading = ref(false);
-const formData = ref({ name: '', email: '', password: '', role: 'user', status: 'active' });
+const formData = ref({ name: '', username: '', password: '', role: 'user', status: 'active' });
 
 const openDialog = () => (isOpen.value = true);
 const closeDialog = () => (isOpen.value = false);

@@ -36,7 +36,7 @@ import { useToast } from 'vue-toastification';
 interface User {
     id: number;
     name: string;
-    email: string;
+    username: string;
     role: string;
     status: string;
 }

@@ -12,7 +12,7 @@ type Permissions = Record<string, boolean>;
 interface User {
     id: number;
     name: string;
-    email: string;
+    username: string;
     role: string;
     status: string;
 }
@@ -134,10 +134,10 @@ const updateUser = async () => {
                             <input v-model="userData.name" type="text" class="input" required />
                         </label>
 
-                        <!-- Email Field -->
+                        <!-- Username Field -->
                         <label class="form-field">
-                            <span class="field-label">Email</span>
-                            <input v-model="userData.email" type="email" class="input" required />
+                            <span class="field-label">Username</span>
+                            <input v-model="userData.username" type="text" class="input" required />
                         </label>
 
                         <!-- Password Field -->
